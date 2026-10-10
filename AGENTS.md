@@ -200,7 +200,7 @@ Each rule has an ID so you can cite it in reports and reviews.
 | --- | --- |
 | Frontend | Next.js + TypeScript, Tailwind CSS, shadcn/ui, Recharts |
 | Dependency graph | Backend returns `{nodes, edges}`; frontend draws a **static, non-interactive** SVG; layout method is Open |
-| Backend | FastAPI (Python), SQLAlchemy ORM, Alembic |
+| Backend | FastAPI (Python 3.12), SQLAlchemy ORM, Alembic |
 | Database | PostgreSQL |
 | Parsing | Tree-sitter for all supported languages |
 | Metrics | Hybrid: own Tree-sitter code, plus a library only where verified to match a required definition |
@@ -280,6 +280,15 @@ Defaults for anything the documents do not specify. All **[Proposed]**; the huma
 - Pin versions. Prefer well-maintained, widely used libraries. Add a dependency only when a task needs it, and mention it in your report.
 - For libraries whose APIs change (Tree-sitter bindings, OpenAI SDK, GitHub endpoints, Next.js conventions), read the **current** documentation before coding; do not rely on memory.
 
+### 7.6 Environment and file handling **[Decided]**
+
+- **Machine:** Windows 11, VS Code, PowerShell terminal, project folder `C:\GitHub\RepoPulse`. Use commands that work in PowerShell and Docker Desktop. Chain commands with `;`. Do not use Linux-only commands (`rm -rf`, `export`, shell scripts) or `sudo`.
+- **Python:** 3.12. The backend virtual environment is `backend/.venv`, created with `py -3.12 -m venv .venv`. Run tools as `backend\.venv\Scripts\python.exe -m <tool>`; do not rely on `activate`. Do not change the PowerShell execution policy; if a command is blocked, tell the human.
+- **Line endings:** `.gitattributes` normalizes text files to LF.
+- **File encoding:** write every file as UTF-8 **without BOM**, with LF line endings. **Never create or modify files with PowerShell redirection or cmdlets** such as `>`, `>>`, `Set-Content`, `Add-Content`, or `Out-File`; they can re-encode text and corrupt non-ASCII characters. Use the editor or file-editing tools.
+- **ASCII-only files:** `Progress.md`, `.env`, `.env.example`, and source-code comments are ASCII-only. Use `-`, `section`, `Yes`/`No`, `[x]`/`[ ]`; no em dashes, box-drawing characters, or emoji. The other documents may contain UTF-8 characters, but never re-encode them.
+- **After editing a file,** check for garbled sequences such as `â€”` or `Â§`. If you find any, fix them immediately and say so in your report.
+
 ---
 
 ## 8. Testing Rules
@@ -298,12 +307,14 @@ Defaults for anything the documents do not specify. All **[Proposed]**; the huma
 
 ## 9. Git, CI, and Documentation Upkeep
 
-### 9.1 Git workflow **[Proposed]**
+### 9.1 Git workflow **[Decided]**
 
-- Short-lived branches per task (for example `feat/2.4-file-discovery`), merged to `main` through pull requests, even when working solo.
-- `main` must always pass CI.
-- Commit messages say *why*, and reference the task ID. Keep commits small and focused.
-- Tag at the end of each phase (`v0.1` after Phase 1 through `v1.0` after Phase 7).
+- **The human makes every commit.** You never run `git add`, `git commit`, `git push`, `git reset`, `git clean`, `git checkout`, `git restore`, `git stash`, or any other command that stages, commits, publishes, rewrites history, or discards changes. Read-only commands (`git status`, `git diff`, `git log`) are fine.
+- After each task, show `git status` and suggest a one-line commit message in the form `type(scope): summary (task X.Y)`. The human reviews and commits.
+- Work happens directly on `main`, one commit per task, committed by the human. Branches and pull requests are optional and used only if the human asks. This replaces the pull-request workflow marked [Proposed] in `Phases.md` section 2.1.
+- `main` must always pass CI once CI exists (task 0.8).
+- Commit messages say *why* and reference the task ID. Keep commits small and focused.
+- Tag at the end of each phase (`v0.1` after Phase 1 through `v1.0` after Phase 7). Suggest the tag command; the human runs it.
 
 ### 9.2 CI
 
@@ -319,7 +330,7 @@ CI runs lint, tests, and build on every push; Docker image builds are part of it
 
 ### 9.4 Keeping the documents current
 
-- **Never silently edit `PRD.md`, `Architecture.md`, or `Phases.md`.** `Progress.md` is the one file you update on your own, after every task and at the end of every session (see its section 9).
+- **Never silently edit `PRD.md`, `Architecture.md`, or `Phases.md`.** `Progress.md` is the one file you update on your own, after every task and at the end of every session (see its section 9). Keep it ASCII-only (section 7.6).
 - When the human makes or confirms a decision, add it to the decision logs (`PRD.md` §17 and `Architecture.md` decision log) and remove it from the Open Decisions tables **after the human confirms**.
 - If you discover a document error or gap, list it in your report with the exact location and a suggested fix. Apply it only after the human approves.
 - Keep `ml/README.md` current: dataset provenance and SHA-256, preprocessing decisions, compatibility matrix, metrics, limitations.
@@ -401,12 +412,14 @@ The few things most likely to go wrong. Full detail is in `Phases.md`.
 16. **Starting the next phase** before the human approves the exit criteria.
 17. **Editing the documents quietly** instead of reporting the issue.
 18. **Relying on remembered library APIs** instead of reading current documentation.
+19. **Writing files with PowerShell redirection or `Set-Content`**, which can corrupt non-ASCII characters.
+20. **Running `git add`, `commit`, or `push`.** The human commits.
 
 ---
 
 ## 13. First-Session Checklist
 
-1. Read this file, then `Progress.md`, then `docs/Phases.md` (overview and §2–§3) and the section for the current phase (Phase 0 at the start).
+1. Read this file, then `Progress.md`, then `docs/Phases.md` (overview and §2–§3) and the section for the current phase (Phase 0 at the start). Also read section 7.6 of this file (environment and file handling).
 2. Read `docs/Architecture.md` §40 (folder structure), §45 (invariants), and the decision log.
 3. Read `docs/PRD.md` §2 (goals and non-goals), §16 (open decisions), and §17 (decision log).
 4. Confirm with the human: current phase (Phase 0), tooling available on their machine (Docker, Python, Node.js, `git`), and any open decision due now.
