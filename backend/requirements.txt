@@ -1,0 +1,9 @@
+# Backend runtime dependencies — Phase 0, task 0.2
+# Pin exact versions. Add new packages only when a task requires them.
+# Verified: all packages have prebuilt wheels for Python 3.12 (confirmed 2026-10-10
+#   via pip install --dry-run --only-binary=:all:)
+
+fastapi==0.143.0
+uvicorn==0.54.0
+pydantic==2.14.0
+pydantic-settings==2.15.0
