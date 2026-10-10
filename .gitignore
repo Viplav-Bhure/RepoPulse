@@ -1,0 +1,48 @@
+# ── Secrets and environment ──────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+dist/
+build/
+
+# ── Node / Next.js ────────────────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+.turbo/
+
+# ── Datasets and archives ────────────────────────────────────────────────────
+*.zip
+*.tar.gz
+*.gz
+
+# ── OS / editor ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.log
+*.swp
+.idea/
+.vscode/
+
+# ── Docker ───────────────────────────────────────────────────────────────────
+*.pid
+
+# ── Alembic ──────────────────────────────────────────────────────────────────
+# (migrations are tracked; only per-run artefacts are excluded)
+
+# ── Temporary analysis clones ────────────────────────────────────────────────
+tmp/
+temp/
