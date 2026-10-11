@@ -1,0 +1,6 @@
+-r requirements.txt
+
+# Development and testing dependencies -- Phase 0, task 0.3
+pytest==9.1.1
+ruff==0.17.0
+httpx2==2.13.1

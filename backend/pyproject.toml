@@ -1,0 +1,14 @@
+# Tool configuration for RepoPulse backend
+# Tool settings only: [tool.ruff] and [tool.pytest.ini_options].
+# No [project] or [build-system] tables; dependencies stay in requirements files.
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

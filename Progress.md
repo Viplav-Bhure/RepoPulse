@@ -4,8 +4,8 @@
 
 | | |
 | --- | --- |
-| **Last updated** | 2026-10-10 |
-| **Updated by** | AI builder (task 0.2); reviewer encoding fix |
+| **Last updated** | 2026-10-11 |
+| **Updated by** | AI builder (task 0.3) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -14,9 +14,9 @@
 
 | | |
 | --- | --- |
-| **Overall status** | **In progress.** Phase 0 started. Tasks 0.1 and 0.2 complete. |
+| **Overall status** | **In progress.** Phase 0 started. Tasks 0.1, 0.2, and 0.3 complete. |
 | **Current phase** | Phase 0 - Foundations (**in progress**) |
-| **Next task** | **0.3** - Ruff linter/formatter, pytest, one passing smoke test for GET /health (see `Phases.md`, Phase 0) |
+| **Next task** | **0.4** - Frontend skeleton: Next.js with TypeScript, Tailwind CSS, shadcn/ui, Recharts (see `Phases.md`, Phase 0) |
 | **Blocked?** | No. See section 5 for decisions and setup the human must provide first. |
 | **Last human approval** | Planning documents reviewed on 2026-10-09 |
 
@@ -46,8 +46,8 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 
 | | |
 | --- | --- |
-| **Task ID** | 0.3 |
-| **Title** | Ruff linter/formatter, pytest, one passing smoke test for GET /health |
+| **Task ID** | 0.4 |
+| **Title** | Frontend skeleton: Next.js with TypeScript, Tailwind CSS, shadcn/ui initialized, Recharts installed |
 | **Status** | Not started |
 | **Plan** | *(AI writes plan before starting)* |
 | **Notes / problems** | - |
@@ -62,6 +62,7 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 |---|---|---|---|---|
 | 0.1 | 2026-10-10 | awaiting human commit | None required (infrastructure only) | Done; `.gitignore`, `.env.example`, `README.md`, `frontend/`, `backend/`, `ml/` `.gitkeep` files created. Ignore rules verified with `git check-ignore`. |
 | 0.2 | 2026-10-10 | awaiting human commit | `GET /health` -> `{"status":"ok"}` verified via `Invoke-WebRequest` (200 OK) | `backend/requirements.txt`, `backend/app/__init__.py`, `backend/app/main.py`, `backend/app/config.py`, `backend/.env` created. `.env.example` SESSION_SECRET_KEY -> SESSION_SECRET corrected. `.venv` created with `py -3.12`. |
+| 0.3 | 2026-10-11 | awaiting human commit | ruff check (0 errors), ruff format (0 changes), pytest -v (2 passed, 0 warnings: test_health.py smoke test 200 OK + test_config.py missing required env var fail-fast ValidationError) | Done; created `backend/requirements-dev.txt` (pytest==9.1.1, ruff==0.17.0, httpx2==2.13.1), `backend/pyproject.toml`, `backend/tests/conftest.py`, `backend/tests/test_health.py`, `backend/tests/test_config.py`. Decision: replaced httpx with httpx2==2.13.1 to eliminate StarletteDeprecationWarning from starlette.testclient. Correcting note: tasks 0.1 and 0.2 are committed (0.1 = dab2b9b, 0.2 = de48014); .env lives at repo root, not backend/.env. |
 
 ---
 
@@ -138,6 +139,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-10-11 | Task 0.3 complete (awaiting human commit). Created backend/requirements-dev.txt, pyproject.toml, tests/conftest.py, tests/test_health.py, tests/test_config.py. Installed pinned pytest==9.1.1, ruff==0.17.0, httpx2==2.13.1 in backend/.venv (httpx replaced with httpx2 to resolve StarletteDeprecationWarning). Verified ruff check, ruff format, and pytest -v (2 passed, 0 warnings). Noted commits for 0.1 (dab2b9b) and 0.2 (de48014), and root .env location. | 0.3 | None |
 | 2026-10-10 | Housekeeping by reviewer: `Progress.md` re-encoded as ASCII (UTF-8 without BOM, LF line endings) to remove garbled characters. `AGENTS.md` gained section 7.6 (environment and file handling) and a rewritten section 9.1 (the human makes every commit). No code changed. | None | None |
 | 2026-10-10 | Task 0.2 complete. Python 3.12 decision recorded in Architecture and Progress.md. Created `backend/requirements.txt`, `backend/app/__init__.py`, `backend/app/main.py`, `backend/app/config.py`, `backend/.env`. Fixed `SESSION_SECRET_KEY` -> `SESSION_SECRET` in `.env.example`. Venv created with `py -3.12`. `/health` verified 200 OK. | 0.2 | Doc issue: `.env.example` had `SESSION_SECRET_KEY`; corrected to `SESSION_SECRET` (Architecture section 41). PostgreSQL driver still open (ask before task 0.6). |
 | 2026-10-10 | Task 0.1 complete (awaiting human commit). Created `.gitignore`, `.env.example`, `README.md` stub, `frontend/`, `backend/`, `ml/` `.gitkeep` files. Verified ignore rules with `git check-ignore`. docs/ confirmed untouched. | 0.1 | None |
