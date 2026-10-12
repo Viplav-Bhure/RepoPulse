@@ -1,5 +1,5 @@
 # Normalize line endings on check-in; check out as-is on Windows
-* text=auto
+* text=auto eol=lf
 
 # Force LF for source and config files
 *.py     text eol=lf
