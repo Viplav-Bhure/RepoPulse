@@ -1,0 +1,16 @@
+.env*
+.git
+node_modules
+.venv
+venv
+.next
+out
+.turbo
+coverage
+__pycache__
+*.py[cod]
+.pytest_cache
+.ruff_cache
+.mypy_cache
+dist
+build
