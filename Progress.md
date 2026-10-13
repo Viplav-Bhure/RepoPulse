@@ -4,8 +4,8 @@
 
 | | |
 | --- | --- |
-| **Last updated** | 2026-10-12 |
-| **Updated by** | AI builder (task 0.4) |
+| **Last updated** | 2026-10-13 |
+| **Updated by** | AI builder (task 0.5) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -14,10 +14,10 @@
 
 | | |
 | --- | --- |
-| **Overall status** | **In progress.** Phase 0 started. Tasks 0.1, 0.2, 0.3, and 0.4 complete. |
+| **Overall status** | **In progress.** Phase 0 started. Tasks 0.1, 0.2, 0.3, 0.4, and 0.5 complete. |
 | **Current phase** | Phase 0 - Foundations (**in progress**) |
-| **Next task** | **0.5** - Frontend tooling: ESLint, TypeScript type-check script, and build script (see `Phases.md`, Phase 0) |
-| **Blocked?** | No. See section 5 for decisions and setup the human must provide first. |
+| **Next task** | **0.6** - Database: SQLAlchemy session/models and Alembic baseline migration (see `Phases.md`, Phase 0) |
+| **Blocked?** | Yes. Decide the PostgreSQL driver before task 0.6; see section 5.2. |
 | **Last human approval** | Planning documents reviewed on 2026-10-09 |
 
 ---
@@ -46,11 +46,11 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 
 | | |
 | --- | --- |
-| **Task ID** | 0.5 |
-| **Title** | Frontend tooling: ESLint, TypeScript type-check script, and build script |
+| **Task ID** | 0.6 |
+| **Title** | Database: SQLAlchemy session/models and Alembic baseline migration |
 | **Status** | Not started |
 | **Plan** | *(AI writes plan before starting)* |
-| **Notes / problems** | - |
+| **Notes / problems** | PostgreSQL driver decision required before starting; see section 5.2. |
 
 ---
 
@@ -64,6 +64,7 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 | 0.2 | 2026-10-10 | awaiting human commit | `GET /health` -> `{"status":"ok"}` verified via `Invoke-WebRequest` (200 OK) | `backend/requirements.txt`, `backend/app/__init__.py`, `backend/app/main.py`, `backend/app/config.py`, `backend/.env` created. `.env.example` SESSION_SECRET_KEY -> SESSION_SECRET corrected. `.venv` created with `py -3.12`. |
 | 0.3 | 2026-10-11 | awaiting human commit | ruff check (0 errors), ruff format (0 changes), pytest -v (2 passed, 0 warnings: test_health.py smoke test 200 OK + test_config.py missing required env var fail-fast ValidationError) | Done; created `backend/requirements-dev.txt` (pytest==9.1.1, ruff==0.17.0, httpx2==2.13.1), `backend/pyproject.toml`, `backend/tests/conftest.py`, `backend/tests/test_health.py`, `backend/tests/test_config.py`. Decision: replaced httpx with httpx2==2.13.1 to eliminate StarletteDeprecationWarning from starlette.testclient. Correcting note: tasks 0.1 and 0.2 are committed (0.1 = dab2b9b, 0.2 = de48014); .env lives at repo root, not backend/.env. |
 | 0.4 | 2026-10-12 | awaiting human commit | Frontend landing page returned HTTP 200; direct dependency pins match package-lock.json; Recharts 3.10.1 installed. No lint/build/tests run (task 0.5). | Done; created the frontend skeleton, shadcn configuration, `frontend/lib/api.ts`, and local frontend env file. Removed generated button component and frontend AGENTS.md. Correcting note: 0.3 committed as b0bf50d. |
+| 0.5 | 2026-10-13 | awaiting human commit | `npm run lint`, `npm run type-check`, and `npm run build` with and without `.env.local` all passed (exit 0). | Done; added `type-check`: `tsc --noEmit`. Correcting note: 0.4 committed as 6c8eba6. |
 
 ---
 
@@ -108,7 +109,7 @@ Later decisions (aggregation rule, risk thresholds, ML targets, graph layout, Op
 |---|---|---|---|
 | - | No blockers yet | - | - |
 | Watch 1 | `npm audit`: 9 high (7 with `--omit=dev`), all via `shadcn@4.21.4` (`ts-morph` and `@shadcn/registry`) -> `fast-glob` -> `micromatch` -> `braces`. `shadcn` is a dependency but only needed at build time (`globals.css` imports `shadcn/tailwind.css`). | Decide in task 0.7 / Phase 7 whether it moves to `devDependencies`; never run `npm audit fix --force`. | Open |
-| Watch 2 | `unrs-resolver@1.12.2` postinstall was blocked via `eslint-config-next` -> `eslint-import-resolver-typescript`. | Verify `npm run lint` in task 0.5. | Pending |
+| Watch 2 | `unrs-resolver@1.12.2` postinstall was blocked via `eslint-config-next` -> `eslint-import-resolver-typescript`. | `npm run lint` passed (exit 0, no lint diagnostics) despite the blocked postinstall. | Verified |
 | Watch 3 | `next dev` regenerates `frontend/AGENTS.md` and `node_modules/next/AGENTS.md` on every run. Do not commit; delete before commits. Notice says read `node_modules/next/dist/docs/` before writing Next code. | Ask the human how to handle before Phase 6. | Open |
 
 **Watch items from the start:**
@@ -143,6 +144,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-10-13 | Task 0.5 complete. Added the frontend `type-check` script. Lint, type-check, and production builds with and without `.env.local` passed. The local env file was restored and verified; build made no tracked changes beyond `package.json`, and no frontend AGENTS.md appeared. Correcting note: 0.4 committed as 6c8eba6. | 0.5 | PostgreSQL driver decision required before task 0.6. |
 | 2026-10-11 | Task 0.3 complete (awaiting human commit). Created backend/requirements-dev.txt, pyproject.toml, tests/conftest.py, tests/test_health.py, tests/test_config.py. Installed pinned pytest==9.1.1, ruff==0.17.0, httpx2==2.13.1 in backend/.venv (httpx replaced with httpx2 to resolve StarletteDeprecationWarning). Verified ruff check, ruff format, and pytest -v (2 passed, 0 warnings). Noted commits for 0.1 (dab2b9b) and 0.2 (de48014), and root .env location. | 0.3 | None |
 | 2026-10-12 | Task 0.4 complete. Created the frontend skeleton with exact direct dependency pins, shadcn defaults, Recharts, API base helper, and placeholder page. HTTP 200 verified; dev server stopped and port 3000 confirmed free. No lint/build/tests run (task 0.5). Removed generated frontend AGENTS.md and shadcn button component. Correcting note: 0.3 committed as b0bf50d. | 0.4 | None |
 | 2026-10-10 | Housekeeping by reviewer: `Progress.md` re-encoded as ASCII (UTF-8 without BOM, LF line endings) to remove garbled characters. `AGENTS.md` gained section 7.6 (environment and file handling) and a rewritten section 9.1 (the human makes every commit). No code changed. | None | None |
