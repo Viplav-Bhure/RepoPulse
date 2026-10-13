@@ -5,7 +5,7 @@
 | | |
 | --- | --- |
 | **Last updated** | 2026-10-13 |
-| **Updated by** | AI builder (task 0.7) |
+| **Updated by** | AI builder (task 0.8) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -16,7 +16,7 @@
 | --- | --- |
 | **Overall status** | **In progress.** Phase 0 started. Tasks 0.1 through 0.7 complete. |
 | **Current phase** | Phase 0 - Foundations (**in progress**) |
-| **Next task** | **0.8** - GitHub Actions workflow: backend (install, lint, test), frontend (install, lint, type-check, build), and a Docker build step. Cache dependencies. **[Proposed]** Run Alembic migrations against a CI PostgreSQL service so migration breakage is caught early. |
+| **Next task** | **0.8** - GitHub Actions workflow: backend (install, lint, test), frontend (install, lint, type-check, build), and a Docker build step. Cache dependencies. **[Proposed]** Run Alembic migrations against a CI PostgreSQL service so migration breakage is caught early. Awaiting CI verification. |
 | **Blocked?** | No |
 | **Last human approval** | Planning documents reviewed on 2026-10-09 |
 
@@ -48,9 +48,9 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 | --- | --- |
 | **Task ID** | 0.8 |
 | **Title** | GitHub Actions workflow: backend (install, lint, test), frontend (install, lint, type-check, build), and a Docker build step. Cache dependencies. **[Proposed]** Run Alembic migrations against a CI PostgreSQL service so migration breakage is caught early. |
-| **Status** | Not started |
-| **Plan** | *(AI writes plan before starting)* |
-| **Notes / problems** | Task 0.7 complete. Correcting note: 0.6 committed as 27b107b. |
+| **Status** | Awaiting CI verification |
+| **Plan** | Workflow added at `.github/workflows/ci.yml`; verify on the first GitHub Actions run. |
+| **Notes / problems** | 0.7 committed as a6edb6f. Alembic migration job approved. |
 
 ---
 
@@ -67,6 +67,7 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 | 0.5 | 2026-10-13 | awaiting human commit | `npm run lint`, `npm run type-check`, and `npm run build` with and without `.env.local` all passed (exit 0). | Done; added `type-check`: `tsc --noEmit`. Correcting note: 0.4 committed as 6c8eba6. |
 | 0.6 | 2026-10-13 | awaiting human commit | `ruff check .` passed; `ruff format --check .` passed; `pytest -v` passed (2 passed); Alembic upgrade/current verified on PostgreSQL 17.11; engine import checked out 0 connections. | Done; added SQLAlchemy, Alembic, psycopg 3, required `DATABASE_URL`, and an empty baseline migration. PostgreSQL 17 (development); production host to match. Correcting note: 0.5 committed as e583809. |
 | 0.7 | 2026-10-13 | awaiting human commit | Compose build passed; all services healthy; frontend and `/health` returned 200; Alembic current is `0001_baseline (head)`; hostname `postgres`; backend UID 10001; Git 2.39.5; image app trees clean; containers removed and volume retained. | Done; corrected frontend builder permissions. Correcting note: 0.6 committed as 27b107b. |
+| 0.8 | 2026-10-13 | - | workflow added; first CI run pending | Correcting note: 0.7 committed as a6edb6f. Alembic job approved; not verified until the first CI run is green. |
 
 ---
 
@@ -147,6 +148,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-10-13 | Added the GitHub Actions workflow for backend, frontend, Docker builds, and approved Alembic migrations. Local checks only; first CI run pending. | 0.8 | First CI run must be green before verification. |
 | 2026-10-13 | Task 0.7 complete. Built both images; Compose health, HTTP, migration, hostname, backend UID, Git, and image-content checks passed. Containers removed; `repopulse_postgres_data` retained. Correcting note: 0.6 committed as 27b107b. | 0.7 | None |
 | 2026-10-13 | Task 0.6 complete. Added exact SQLAlchemy/Alembic/psycopg pins, required `DATABASE_URL`, lazy SQLAlchemy engine/session factory, declarative base, and empty Alembic baseline. PostgreSQL 17 tag resolved to 17.11; migration applied/current at head and only `alembic_version` exists. Container removed; lint, format check, and tests passed. Correcting note: 0.5 committed as e583809. | 0.6 | None |
 | 2026-10-13 | Task 0.5 complete. Added the frontend `type-check` script. Lint, type-check, and production builds with and without `.env.local` passed. The local env file was restored and verified; build made no tracked changes beyond `package.json`, and no frontend AGENTS.md appeared. Correcting note: 0.4 committed as 6c8eba6. | 0.5 | PostgreSQL driver decision required before task 0.6. |
