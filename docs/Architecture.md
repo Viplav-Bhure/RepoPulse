@@ -2005,7 +2005,8 @@ OPENAI_API_KEY=
 OPENAI_MODEL=
 
 FRONTEND_URL=
-API_BASE_URL=
+API_BASE_URL=                 # Backend callback base URL
+NEXT_PUBLIC_API_BASE_URL=     # Frontend API base URL; read by frontend/lib/api.ts
 
 MAX_REPO_SIZE_MB=50
 MAX_SOURCE_FILES=1000
@@ -2363,6 +2364,7 @@ Metrics      Static Rules      Dependencies    Security
 | Production topology | Frontend and backend deployed on different hosts |
 | Phase 7 portfolio output | Live deployment + 2–3 minute demo + self-analysis |
 | Python runtime | Python 3.12; Docker base image `python:3.12-slim-bookworm`; local development uses a `py -3.12`-created virtual environment |
+| PostgreSQL driver and URL scheme | psycopg 3 (`psycopg[binary]`), SQLAlchemy URL scheme `postgresql+psycopg://`. PostgreSQL major version 17 (development); production host to match. |
 | Verified wheel packages (Python 3.12) | fastapi 0.143.0, uvicorn 0.54.0, pydantic 2.14.0, SQLAlchemy 2.1.4, alembic 1.20.0, tree-sitter 0.26.0, tree-sitter-python 0.25.0, tree-sitter-javascript 0.25.0, tree-sitter-typescript 0.23.2, scikit-learn 1.9.1, psycopg 3.3.6 (binary) — all have prebuilt wheels for Python 3.12 on PyPI; confirmed via `pip install --dry-run --only-binary=:all:` on 2026-10-10 |
 
 # 47. Final Architecture Statement

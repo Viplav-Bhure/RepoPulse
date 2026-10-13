@@ -662,6 +662,7 @@ Decisions confirmed by the author while preparing this PRD:
 | 29 | JM1 preprocessing | Drop the five rows containing `?`; deduplicate on the metric columns (excluding `id`) and remove conflicting-label vectors before splitting; never coerce `?` to zero or impute |
 | 30 | JM1 repository copy | Commit the supplied `jm1.csv` under `ml/data/`; record provenance, checksum, and the Kaggle-reported unknown license status; make no unrestricted redistribution claim |
 | 31 | Essential stages | Source parsing, metrics, static analysis, security checks, and persistence are essential; Git history, dependencies, coverage, ML/risk, and AI explanation are non-essential enrichment stages |
+| 32 | PostgreSQL driver and URL scheme | psycopg 3 (`psycopg[binary]`), SQLAlchemy URL scheme `postgresql+psycopg://`. PostgreSQL major version 17 (development); production host to match. |
 
 ## 18. Delivery Phases (no dates)
 

@@ -159,7 +159,7 @@ A running three-service skeleton (Next.js, FastAPI, PostgreSQL) with CI, plus a 
 - [ ] **0.5** Frontend tooling: ESLint, TypeScript type-check script, a build script.
 
 ### B. Database
-- [ ] **0.6** `backend/app/database/session.py` (engine + session factory), `models.py` (declarative base), Alembic initialized under `backend/app/database/migrations/`. Create a baseline migration and verify `alembic upgrade head` works inside Docker.
+- [ ] **0.6** `backend/app/database/session.py` (engine + session factory), `models.py` (declarative base), Alembic initialized under `backend/app/database/migrations/`. Create a baseline migration and verify `alembic upgrade head` against a disposable PostgreSQL container now, then repeat it inside the Docker Compose stack in task 0.7.
 
 ### C. Containers and CI
 - [ ] **0.7** `backend/Dockerfile`, `frontend/Dockerfile`, `docker-compose.yml` with `frontend`, `backend`, `postgres`. Include a PostgreSQL healthcheck, a named volume, and environment variables from `.env`. The backend should wait for the database. Make sure the `git` binary is installed in the backend image — Phase 2 needs it.
