@@ -6,11 +6,13 @@ from collections.abc import Generator
 import pytest
 from fastapi.testclient import TestClient
 
-# Set dummy environment variable before any app modules are imported.
+# Set dummy environment variables before any app modules are imported.
 # Direct assignment guarantees tests do not rely on an external .env file
 # or use any real secret from the shell environment.
-# SESSION_SECRET is the only required field in Settings.
+# These values satisfy required Settings fields without opening a database
+# connection.
 os.environ["SESSION_SECRET"] = "test-session-secret-for-testing-only-32bytes"
+os.environ["DATABASE_URL"] = "postgresql+psycopg://test:test@localhost:5432/test"
 
 
 @pytest.fixture

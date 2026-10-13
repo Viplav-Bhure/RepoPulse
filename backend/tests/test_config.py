@@ -12,7 +12,7 @@ def test_missing_required_env_var_fails_fast(
     """Missing required env var test from Phase 0 Tests list.
 
     Verifies Settings raises pydantic.ValidationError naming SESSION_SECRET
-    when the required variable is missing and no .env file is loaded.
+    when it is missing, while other required settings are supplied.
     """
     monkeypatch.delenv("SESSION_SECRET", raising=False)
     with pytest.raises(ValidationError) as exc_info:

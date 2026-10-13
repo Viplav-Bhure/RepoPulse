@@ -23,10 +23,11 @@ class Settings(BaseSettings):
     # Used from Phase 1 onward for session signing; declared now so the app
     # fails fast rather than silently starting with an insecure state.
     SESSION_SECRET: str
+    DATABASE_URL: str
 
     # Optional with defaults -- values from Architecture section 41 / limits.
-    # Phase-specific variables (DATABASE_URL, GITHUB_*, OPENAI_*, etc.) are
-    # added in the tasks that introduce them.
+    # Phase-specific variables (GITHUB_*, OPENAI_*, etc.) are added in the
+    # tasks that introduce them.
     MAX_REPO_SIZE_MB: int = 50
     MAX_SOURCE_FILES: int = 1000
     ANALYSIS_TIMEOUT_SECONDS: int = 300
@@ -42,5 +43,5 @@ class Settings(BaseSettings):
 
 
 # Module-level singleton -- imported by the rest of the app.
-# Raises pydantic_settings.ValidationError on startup if SESSION_SECRET is missing.
+# Raises pydantic.ValidationError on startup if a required setting is missing.
 settings = Settings()

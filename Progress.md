@@ -5,7 +5,7 @@
 | | |
 | --- | --- |
 | **Last updated** | 2026-10-13 |
-| **Updated by** | AI builder (task 0.5) |
+| **Updated by** | AI builder (task 0.6) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -14,10 +14,10 @@
 
 | | |
 | --- | --- |
-| **Overall status** | **In progress.** Phase 0 started. Tasks 0.1, 0.2, 0.3, 0.4, and 0.5 complete. |
+| **Overall status** | **In progress.** Phase 0 started. Tasks 0.1 through 0.6 complete. |
 | **Current phase** | Phase 0 - Foundations (**in progress**) |
-| **Next task** | **0.6** - Database: SQLAlchemy session/models and Alembic baseline migration (see `Phases.md`, Phase 0) |
-| **Blocked?** | Yes. Decide the PostgreSQL driver before task 0.6; see section 5.2. |
+| **Next task** | **0.7** - Containers and CI (see `Phases.md`, Phase 0) |
+| **Blocked?** | No |
 | **Last human approval** | Planning documents reviewed on 2026-10-09 |
 
 ---
@@ -46,11 +46,11 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 
 | | |
 | --- | --- |
-| **Task ID** | 0.6 |
-| **Title** | Database: SQLAlchemy session/models and Alembic baseline migration |
+| **Task ID** | 0.7 |
+| **Title** | Containers and CI |
 | **Status** | Not started |
 | **Plan** | *(AI writes plan before starting)* |
-| **Notes / problems** | PostgreSQL driver decision required before starting; see section 5.2. |
+| **Notes / problems** | Task 0.6 complete. |
 
 ---
 
@@ -65,6 +65,7 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 | 0.3 | 2026-10-11 | awaiting human commit | ruff check (0 errors), ruff format (0 changes), pytest -v (2 passed, 0 warnings: test_health.py smoke test 200 OK + test_config.py missing required env var fail-fast ValidationError) | Done; created `backend/requirements-dev.txt` (pytest==9.1.1, ruff==0.17.0, httpx2==2.13.1), `backend/pyproject.toml`, `backend/tests/conftest.py`, `backend/tests/test_health.py`, `backend/tests/test_config.py`. Decision: replaced httpx with httpx2==2.13.1 to eliminate StarletteDeprecationWarning from starlette.testclient. Correcting note: tasks 0.1 and 0.2 are committed (0.1 = dab2b9b, 0.2 = de48014); .env lives at repo root, not backend/.env. |
 | 0.4 | 2026-10-12 | awaiting human commit | Frontend landing page returned HTTP 200; direct dependency pins match package-lock.json; Recharts 3.10.1 installed. No lint/build/tests run (task 0.5). | Done; created the frontend skeleton, shadcn configuration, `frontend/lib/api.ts`, and local frontend env file. Removed generated button component and frontend AGENTS.md. Correcting note: 0.3 committed as b0bf50d. |
 | 0.5 | 2026-10-13 | awaiting human commit | `npm run lint`, `npm run type-check`, and `npm run build` with and without `.env.local` all passed (exit 0). | Done; added `type-check`: `tsc --noEmit`. Correcting note: 0.4 committed as 6c8eba6. |
+| 0.6 | 2026-10-13 | awaiting human commit | `ruff check .` passed; `ruff format --check .` passed; `pytest -v` passed (2 passed); Alembic upgrade/current verified on PostgreSQL 17.11; engine import checked out 0 connections. | Done; added SQLAlchemy, Alembic, psycopg 3, required `DATABASE_URL`, and an empty baseline migration. PostgreSQL 17 (development); production host to match. Correcting note: 0.5 committed as e583809. |
 
 ---
 
@@ -75,7 +76,7 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 | Item | Needed by | Done? |
 | --- | --- | --- |
 | GitHub repository created for the monorepo | Phase 0 (task 0.1) | [x] https://github.com/Viplav-Bhure/RepoPulse |
-| Docker and Docker Compose installed and working | Phase 0 (task 0.7) | [x] Docker 29.8.1, Compose v5.5.1 |
+| Docker and Docker Compose installed and working | Phase 0 (task 0.7) | [x] Docker 29.8.2, Compose v5.5.1 |
 | Python and Node.js toolchains installed | Phase 0 (tasks 0.2-0.5) | [x] Python 3.12 (via py launcher) + 3.13.14, Node.js 24.21.0 |
 | `git` available locally | Phase 0 | [x] git 2.49.0.windows.1 |
 | JM1 dataset file `jm1.csv` available (from the supplied `NASA_dataset.zip`); SHA-256 `1ec66eb3568ae8bb4e2709cf0bd28b11db41c7c0ae771325c0952997e35e4dff` | Phase 0 (Gate G0, task 0.9) | [ ] |
@@ -83,7 +84,7 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 | OpenAI API key | Phase 5 | [ ] |
 | A domain you own, with DNS access, and hosts that allow custom domains | Start of Phase 6 (latest Phase 7) | [ ] |
 
-### 5.2 Decisions due (all currently **Open**)
+### 5.2 Decisions due (remaining items are **Open**)
 
 The full schedule is in `Phases.md` section 3. The AI must **ask** for each decision before work that depends on it.
 
@@ -94,7 +95,7 @@ The full schedule is in `Phases.md` section 3. The AI must **ask** for each deci
 | Rules for anomalous JM1 rows (`id=1`, `lOCode` > `loc`, `total_Op` = 0) | End of Phase 0 (G0) | Open | |
 | Prediction-unit rules (what counts as a function/method; qualifying top-level code) | End of Phase 0 (G0) | Open | |
 | **Python runtime and Docker base image** | Phase 0 (task 0.2) | **Decided** | Python 3.12; Docker base image `python:3.12-slim-bookworm`; local `.venv` created with `py -3.12`. Wheels verified 2026-10-10. Recorded in Architecture decision log. |
-| PostgreSQL driver (psycopg2-binary vs psycopg[binary]) | Task 0.6 | Open - ask before 0.6 | |
+| PostgreSQL driver and major version | Task 0.6 | Decided | psycopg[binary] (psycopg 3); SQLAlchemy URL scheme `postgresql+psycopg://`; PostgreSQL 17 (development), production host to match. |
 | GitHub API access after login (proposed: list at callback plus a server-side public-data credential) | Start of Phase 1 | Open (proposal awaiting confirmation) | |
 | Test-file handling in summaries and ML | Phase 2 / Phase 4 | Open (proposal awaiting confirmation) | |
 | Failed-run retention | Phase 2 | Open (proposal awaiting confirmation) | |
@@ -117,7 +118,7 @@ Later decisions (aggregation rule, risk thresholds, ML targets, graph layout, Op
 - Gate G0 may show that JM1 features cannot be computed consistently across Python, JavaScript, and TypeScript. If so, stop and report (see `AGENTS.md` section 3.3).
 - The cookie/domain strategy requires an owned domain, which is not in place yet.
 - **(Phase 2 - Tree-sitter smoke test)** Immediately after installing the Tree-sitter language packages in Phase 2, run a smoke test that loads each grammar and parses a small sample for Python, JavaScript, TypeScript, and TSX. Grammar versions and the core `tree-sitter` version must be compatible; a mismatch surfaces as a silent parse failure or a C-extension load error, not a pip error.
-- **(Task 0.6 - PostgreSQL driver)** The PostgreSQL driver is not yet decided. Ask before starting task 0.6. Options are `psycopg2-binary` (sync, mature) and `psycopg[binary]` (psycopg3, sync + async, newer). A prebuilt binary wheel for Python 3.12 exists for psycopg[binary] (confirmed 2026-10-10).
+- **(Task 0.6 - PostgreSQL driver)** Decided: `psycopg[binary]` (psycopg 3), SQLAlchemy URL scheme `postgresql+psycopg://`; development uses PostgreSQL 17 and production must match.
 
 ---
 
@@ -144,6 +145,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-10-13 | Task 0.6 complete. Added exact SQLAlchemy/Alembic/psycopg pins, required `DATABASE_URL`, lazy SQLAlchemy engine/session factory, declarative base, and empty Alembic baseline. PostgreSQL 17 tag resolved to 17.11; migration applied/current at head and only `alembic_version` exists. Container removed; lint, format check, and tests passed. Correcting note: 0.5 committed as e583809. | 0.6 | None |
 | 2026-10-13 | Task 0.5 complete. Added the frontend `type-check` script. Lint, type-check, and production builds with and without `.env.local` passed. The local env file was restored and verified; build made no tracked changes beyond `package.json`, and no frontend AGENTS.md appeared. Correcting note: 0.4 committed as 6c8eba6. | 0.5 | PostgreSQL driver decision required before task 0.6. |
 | 2026-10-11 | Task 0.3 complete (awaiting human commit). Created backend/requirements-dev.txt, pyproject.toml, tests/conftest.py, tests/test_health.py, tests/test_config.py. Installed pinned pytest==9.1.1, ruff==0.17.0, httpx2==2.13.1 in backend/.venv (httpx replaced with httpx2 to resolve StarletteDeprecationWarning). Verified ruff check, ruff format, and pytest -v (2 passed, 0 warnings). Noted commits for 0.1 (dab2b9b) and 0.2 (de48014), and root .env location. | 0.3 | None |
 | 2026-10-12 | Task 0.4 complete. Created the frontend skeleton with exact direct dependency pins, shadcn defaults, Recharts, API base helper, and placeholder page. HTTP 200 verified; dev server stopped and port 3000 confirmed free. No lint/build/tests run (task 0.5). Removed generated frontend AGENTS.md and shadcn button component. Correcting note: 0.3 committed as b0bf50d. | 0.4 | None |
