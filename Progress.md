@@ -4,8 +4,8 @@
 
 | | |
 | --- | --- |
-| **Last updated** | 2026-10-13 |
-| **Updated by** | AI builder (task 0.8) |
+| **Last updated** | 2026-10-14 |
+| **Updated by** | AI builder (task 0.8 CI fix) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -67,7 +67,7 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 | 0.5 | 2026-10-13 | awaiting human commit | `npm run lint`, `npm run type-check`, and `npm run build` with and without `.env.local` all passed (exit 0). | Done; added `type-check`: `tsc --noEmit`. Correcting note: 0.4 committed as 6c8eba6. |
 | 0.6 | 2026-10-13 | awaiting human commit | `ruff check .` passed; `ruff format --check .` passed; `pytest -v` passed (2 passed); Alembic upgrade/current verified on PostgreSQL 17.11; engine import checked out 0 connections. | Done; added SQLAlchemy, Alembic, psycopg 3, required `DATABASE_URL`, and an empty baseline migration. PostgreSQL 17 (development); production host to match. Correcting note: 0.5 committed as e583809. |
 | 0.7 | 2026-10-13 | awaiting human commit | Compose build passed; all services healthy; frontend and `/health` returned 200; Alembic current is `0001_baseline (head)`; hostname `postgres`; backend UID 10001; Git 2.39.5; image app trees clean; containers removed and volume retained. | Done; corrected frontend builder permissions. Correcting note: 0.6 committed as 27b107b. |
-| 0.8 | 2026-10-13 | - | workflow added; first CI run pending | Correcting note: 0.7 committed as a6edb6f. Alembic job approved; not verified until the first CI run is green. |
+| 0.8 | 2026-10-13 | - | workflow added; first CI run pending | Correcting note: 0.7 committed as a6edb6f. Alembic job approved; not verified until the first CI run is green. first CI run: frontend job failed at type-check (LayoutProps missing on fresh checkout); fixed by running next typegen in the type-check script |
 
 ---
 
@@ -112,9 +112,10 @@ Later decisions (aggregation rule, risk thresholds, ML targets, graph layout, Op
 |---|---|---|---|
 | - | No blockers yet | - | - |
 | Watch 1 | `npm audit`: 9 high (7 with `--omit=dev`), all via `shadcn@4.21.4` (`ts-morph` and `@shadcn/registry`) -> `fast-glob` -> `micromatch` -> `braces`. `shadcn` is a dependency but only needed at build time (`globals.css` imports `shadcn/tailwind.css`). | Decide in task 0.7 / Phase 7 whether it moves to `devDependencies`; never run `npm audit fix --force`. | Open |
-| Watch 2 | `unrs-resolver@1.12.2` postinstall was blocked via `eslint-config-next` -> `eslint-import-resolver-typescript`. | `npm run lint` passed (exit 0, no lint diagnostics) despite the blocked postinstall. | Verified |
+| Watch 2 | npm reports an `allowScripts` warning for `unrs-resolver@1.12.2` via `eslint-config-next` -> `eslint-import-resolver-typescript`. | Review in Phase 7; `npm run lint` passed (exit 0, no lint diagnostics). | Open |
 | Watch 3 | `next dev` regenerates `frontend/AGENTS.md` and `node_modules/next/AGENTS.md` on every run. Do not commit; delete before commits. Notice says read `node_modules/next/dist/docs/` before writing Next code. | Ask the human how to handle before Phase 6. | Open |
 | Watch 4 | PowerShell may wrap normal Docker Compose stderr progress as `NativeCommandError`, including when a command succeeds. | Check the saved command log and native exit code before treating the wrapper as a failure. | Observed |
+| Watch 5 | npm flags `eslint@9.39.5` as deprecated in CI ("no longer supported"). | Review in Phase 7. | Open |
 
 **Watch items from the start:**
 
@@ -148,6 +149,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-10-14 | Reproduced the fresh-checkout `LayoutProps` type-check failure, added `next typegen` before `tsc`, then passed type-check, lint, and build from cleaned frontend outputs. The build emitted Google font assets. | 0.8 | First CI run after the fix must be green before verification. |
 | 2026-10-13 | Added the GitHub Actions workflow for backend, frontend, Docker builds, and approved Alembic migrations. Local checks only; first CI run pending. | 0.8 | First CI run must be green before verification. |
 | 2026-10-13 | Task 0.7 complete. Built both images; Compose health, HTTP, migration, hostname, backend UID, Git, and image-content checks passed. Containers removed; `repopulse_postgres_data` retained. Correcting note: 0.6 committed as 27b107b. | 0.7 | None |
 | 2026-10-13 | Task 0.6 complete. Added exact SQLAlchemy/Alembic/psycopg pins, required `DATABASE_URL`, lazy SQLAlchemy engine/session factory, declarative base, and empty Alembic baseline. PostgreSQL 17 tag resolved to 17.11; migration applied/current at head and only `alembic_version` exists. Container removed; lint, format check, and tests passed. Correcting note: 0.5 committed as e583809. | 0.6 | None |
