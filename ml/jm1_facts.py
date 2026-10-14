@@ -164,6 +164,57 @@ def report_predicate(name: str, rows: list[dict[str, str]], predicate) -> None:
     )
 
 
+def report_zero_operand_formula(
+    rows_after_missing: list[dict[str, str]],
+    final_retained_groups: list[list[dict[str, str]]],
+) -> None:
+    final_rows = [group[0] for group in final_retained_groups]
+    zero_operand_rows = [row for row in final_rows if Decimal(row["uniq_Opnd"]) == 0]
+    decimal_places = {column: 0 for column in METRIC_COLUMNS}
+    for row in rows_after_missing:
+        for column in METRIC_COLUMNS:
+            places = max(0, -Decimal(row[column]).as_tuple().exponent)
+            decimal_places[column] = max(decimal_places[column], places)
+    quanta = {column: 10.0**-places for column, places in decimal_places.items()}
+
+    matches = 0
+    noncomputable = 0
+    results = []
+    for row in zero_operand_rows:
+        total = Decimal(row["total_Op"]) + Decimal(row["total_Opnd"])
+        vocabulary = Decimal(row["uniq_Op"]) + Decimal(row["uniq_Opnd"])
+        try:
+            expected_low, expected_high = formula_interval(
+                row,
+                ("total_Op", "total_Opnd", "uniq_Op", "uniq_Opnd"),
+                quanta,
+                lambda total_op, total_opnd, uniq_op, uniq_opnd: (
+                    (total_op + total_opnd) * math.log2(uniq_op + uniq_opnd)
+                ),
+            )
+            target_low, target_high = rounded_interval(row["v"], quanta["v"])
+            matched = (
+                expected_low <= target_high + 1e-12
+                and target_low <= expected_high + 1e-12
+            )
+        except (ValueError, ZeroDivisionError):
+            matched = False
+            noncomputable += 1
+        matches += matched
+        results.append((row["id"], total, vocabulary, matched))
+
+    print(
+        f"zero-operand v=N*log2(vocabulary): fits={matches}/{len(zero_operand_rows)}; "
+        f"mismatches={len(zero_operand_rows) - matches}; noncomputable={noncomputable}"
+    )
+    for row_id, total, vocabulary, matched in results:
+        print(
+            f"id={row_id}; N={format(total.normalize(), 'f')}; "
+            f"vocabulary={format(vocabulary.normalize(), 'f')}; "
+            f"fit={'yes' if matched else 'no'}"
+        )
+
+
 def report_definition_checks(
     rows_after_missing: list[dict[str, str]],
     final_retained_groups: list[list[dict[str, str]]],
@@ -330,6 +381,11 @@ def main() -> None:
         action="store_true",
         help="check JM1 metric-definition hypotheses against the dataset",
     )
+    parser.add_argument(
+        "--zero-operand",
+        action="store_true",
+        help="check the v formula for final rows with zero unique operands",
+    )
     args = parser.parse_args()
 
     rows, digest = load_rows(args.csv_path)
@@ -412,6 +468,9 @@ def main() -> None:
     )
     if args.definitions_check:
         report_definition_checks(clean_rows, final_retained_groups)
+        return
+    if args.zero_operand:
+        report_zero_operand_formula(clean_rows, final_retained_groups)
         return
     print(f"CSV: {csv_label}")
     print(f"SHA-256: {digest}")

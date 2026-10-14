@@ -50,7 +50,7 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 | **Title** | Build the compatibility matrix (JM1 definitions apply to a **function**): JM1 definition -> Python implementation -> JavaScript implementation -> TypeScript implementation -> implementation method -> `use`/`drop`. Any approximation must be explicitly justified. |
 | **Status** | In progress |
 | **Plan** | Build the compatibility matrix using the JM1 definitions and document the Python, JavaScript, and TypeScript implementations. |
-| **Notes / problems** | Tasks 0.9 through 0.9.3b are committed as 78aafc3; the decision docs are committed as 30251f9. Stage A is done; Stage B provisional matrix in `ml/README.md` is awaiting human approval. Gate G0 remains not passed. |
+| **Notes / problems** | Tasks 0.9 through 0.9.3b are committed as 78aafc3; the decision docs are committed as 30251f9. Stage A-B provisional matrix committed as b670a63. Gate G0 remains not passed. |
 
 ---
 
@@ -155,6 +155,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-10-14 | Verified Stage A-B commit b670a63; zero-operand v formula fits 19/19 rows; Tree-sitter wheel dry run passed with no installs. Gate G0 remains not passed. | 0.9.4 Stage A-B | 0.9.5-0.9.9 G0 choices: metric method, compatibility rule, unit boundaries, and prototype setup. |
 | 2026-10-14 | Revised the provisional JM1 compatibility matrix with the approved decision-point rules, measured line relations, and zero-operand evidence. | 0.9.4 | Confirm zero-operand `v` and zero-vocabulary conventions. |
 | 2026-10-14 | Completed the JM1 definitions check and drafted the provisional compatibility matrix; awaiting human approval. No Tree-sitter packages installed. | 0.9.4 Stage A-B | Approve or revise the provisional compatibility matrix. |
 | 2026-10-14 | Confirmed tasks 0.9 through 0.9.3b committed as 78aafc3 and decision docs committed as 30251f9; corrected the anomalous-row decision log and started the JM1 definitions check. | 0.9.4 | Compatibility decisions for operator/operand counts, line counting, and branches/decision points. |
