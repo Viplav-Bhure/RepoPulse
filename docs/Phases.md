@@ -848,5 +848,4 @@ These are the remaining questions that can change details inside the phases. Non
 6. **GitHub API access after login:** confirm the proposed approach (list at the OAuth callback, then a server-side public-data credential).
 7. **Failed-run retention:** confirm or change the proposal to keep only the most recent failed run per repository.
 8. **Test files:** confirm that default summaries cover source files with a toggle for test files, and decide whether ML scores are shown for test files.
-9. **Anomalous JM1 rows:** confirm the proposed rules for `id=1`, the `lOCode` > `loc` row, and the `total_Op` = 0 rows.
-10. **Git workflow:** short-lived branches and pull requests (section 2.1) remain **[Proposed]** unless you change them.
+9. **Git workflow:** short-lived branches and pull requests (section 2.1) remain **[Proposed]** unless you change them.
