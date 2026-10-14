@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import itertools
+import math
 from collections import defaultdict
 from decimal import Decimal
 from pathlib import Path
@@ -55,6 +57,256 @@ def row_sort_key(row_id: str) -> tuple[int, str]:
         return 0, row_id
 
 
+def rounded_interval(value: str, quantum: float) -> tuple[float, float]:
+    center = float(value)
+    return max(0.0, center - quantum / 2), center + quantum / 2
+
+
+def formula_interval(
+    row: dict[str, str],
+    columns: tuple[str, ...],
+    quanta: dict[str, float],
+    formula,
+) -> tuple[float, float]:
+    intervals = [rounded_interval(row[column], quanta[column]) for column in columns]
+    results = [
+        formula(*values)
+        for values in itertools.product(*[(low, high) for low, high in intervals])
+    ]
+    if not all(math.isfinite(value) for value in results):
+        raise ValueError("formula is undefined")
+    return min(results), max(results)
+
+
+def report_formula(
+    name: str,
+    target: str,
+    inputs: tuple[str, ...],
+    rows: list[dict[str, str]],
+    quanta: dict[str, float],
+    formula,
+) -> None:
+    matches = 0
+    mismatches = 0
+    noncomputable = 0
+    mismatch_ids = []
+    for row in rows:
+        try:
+            expected_low, expected_high = formula_interval(row, inputs, quanta, formula)
+            target_low, target_high = rounded_interval(row[target], quanta[target])
+            matched = (
+                expected_low <= target_high + 1e-12
+                and target_low <= expected_high + 1e-12
+            )
+        except (ValueError, ZeroDivisionError):
+            matched = False
+            noncomputable += 1
+        if matched:
+            matches += 1
+        else:
+            mismatches += 1
+            if len(mismatch_ids) < 3:
+                mismatch_ids.append(row["id"])
+    print(
+        f"{name}: matches={matches}; mismatches={mismatches}; "
+        f"noncomputable={noncomputable}; ids={','.join(mismatch_ids) or 'none'}"
+    )
+
+
+def report_formula_counts(
+    name: str,
+    target: str,
+    inputs: tuple[str, ...],
+    rows: list[dict[str, str]],
+    quanta: dict[str, float],
+    formula,
+) -> None:
+    matches = 0
+    noncomputable = 0
+    for row in rows:
+        try:
+            expected_low, expected_high = formula_interval(row, inputs, quanta, formula)
+            target_low, target_high = rounded_interval(row[target], quanta[target])
+            matched = (
+                expected_low <= target_high + 1e-12
+                and target_low <= expected_high + 1e-12
+            )
+        except (ValueError, ZeroDivisionError):
+            matched = False
+            noncomputable += 1
+        matches += matched
+    mismatches = len(rows) - matches
+    print(
+        f"{name}: matches={matches}; mismatches={mismatches}; "
+        f"noncomputable={noncomputable}"
+    )
+
+
+def report_zero_count_values(name: str, rows: list[dict[str, str]]) -> None:
+    print(f"{name}: rows={len(rows)}")
+    for column in ("v", "d", "l", "i"):
+        value_counts: dict[Decimal, int] = defaultdict(int)
+        for row in rows:
+            value_counts[Decimal(row[column])] += 1
+        values = ",".join(
+            f"{format(value.normalize(), 'f')}={count}"
+            for value, count in sorted(value_counts.items())
+        )
+        print(f"{column}: {values or 'none'}")
+
+
+def report_predicate(name: str, rows: list[dict[str, str]], predicate) -> None:
+    mismatch_ids = [row["id"] for row in rows if not predicate(row)][:3]
+    mismatches = sum(not predicate(row) for row in rows)
+    print(
+        f"{name}: matches={len(rows) - mismatches}; mismatches={mismatches}; "
+        f"noncomputable=0; ids={','.join(mismatch_ids) or 'none'}"
+    )
+
+
+def report_definition_checks(
+    rows_after_missing: list[dict[str, str]],
+    final_retained_groups: list[list[dict[str, str]]],
+) -> None:
+    final_rows = [group[0] for group in final_retained_groups]
+    decimal_places = {column: 0 for column in METRIC_COLUMNS}
+    for row in rows_after_missing:
+        for column in METRIC_COLUMNS:
+            places = max(0, -Decimal(row[column]).as_tuple().exponent)
+            decimal_places[column] = max(decimal_places[column], places)
+    quanta = {column: 10.0**-places for column, places in decimal_places.items()}
+
+    print(
+        "rounding: per-column quantum=10^-maximum visible decimal places; "
+        "inclusive value intervals extend half a quantum; formula matches when "
+        "the target interval overlaps the RHS interval"
+    )
+    print("noncomputable rows are included in mismatches")
+    print(
+        "quantum: "
+        + ", ".join(f"{column}={quanta[column]:g}" for column in METRIC_COLUMNS)
+    )
+    formulas = (
+        (
+            "n(column)=total_Op+total_Opnd",
+            "n",
+            ("total_Op", "total_Opnd"),
+            lambda total_op, total_opnd: total_op + total_opnd,
+        ),
+        (
+            "v=N*log2(n)",
+            "v",
+            ("total_Op", "total_Opnd", "uniq_Op", "uniq_Opnd"),
+            lambda total_op, total_opnd, uniq_op, uniq_opnd: (
+                (total_op + total_opnd) * math.log2(uniq_op + uniq_opnd)
+            ),
+        ),
+        (
+            "d=(uniq_Op/2)*(total_Opnd/uniq_Opnd)",
+            "d",
+            ("uniq_Op", "total_Opnd", "uniq_Opnd"),
+            lambda uniq_op, total_opnd, uniq_opnd: (
+                (uniq_op / 2) * (total_opnd / uniq_opnd)
+            ),
+        ),
+        ("l=1/d", "l", ("d",), lambda d: 1 / d),
+        ("i=v/d", "i", ("v", "d"), lambda v, d: v / d),
+        ("e=d*v", "e", ("d", "v"), lambda d, v: d * v),
+        ("b=v/3000", "b", ("v",), lambda v: v / 3000),
+        ("b=e^(2/3)/3000", "b", ("e",), lambda e: e ** (2 / 3) / 3000),
+        ("t=e/18", "t", ("e",), lambda e: e / 18),
+        (
+            "loc=lOCode+lOComment+lOBlank+locCodeAndComment",
+            "loc",
+            ("lOCode", "lOComment", "lOBlank", "locCodeAndComment"),
+            lambda code, comment, blank, code_comment: (
+                code + comment + blank + code_comment
+            ),
+        ),
+        ("branchCount=v(g)-1", "branchCount", ("v(g)",), lambda vg: vg - 1),
+    )
+    predicates = (
+        ("v(g)>=1", lambda row: Decimal(row["v(g)"]) >= 1),
+        ("ev(g)<=v(g)", lambda row: Decimal(row["ev(g)"]) <= Decimal(row["v(g)"])),
+        ("iv(g)<=v(g)", lambda row: Decimal(row["iv(g)"]) <= Decimal(row["v(g)"])),
+    )
+    for cohort_name, cohort in (
+        ("after_question_rows", rows_after_missing),
+        ("final_rows", final_rows),
+    ):
+        print(f"cohort={cohort_name}; rows={len(cohort)}")
+        line_formulas = (
+            (
+                "line-fit-A",
+                ("lOCode", "lOComment", "lOBlank", "locCodeAndComment"),
+                lambda code, comment, blank, code_comment: (
+                    code + comment + blank + code_comment
+                ),
+            ),
+            (
+                "line-fit-B",
+                ("lOCode", "lOComment", "lOBlank"),
+                lambda code, comment, blank: code + comment + blank,
+            ),
+            (
+                "line-fit-C",
+                ("lOCode", "lOComment", "lOBlank", "locCodeAndComment"),
+                lambda code, comment, blank, code_comment: (
+                    code + comment + blank - code_comment
+                ),
+            ),
+            (
+                "line-fit-D",
+                ("lOCode", "lOBlank", "locCodeAndComment"),
+                lambda code, blank, code_comment: code + blank + code_comment,
+            ),
+        )
+        for name, inputs, formula in line_formulas:
+            report_formula_counts(name, "loc", inputs, cohort, quanta, formula)
+        print(
+            "vocabulary=uniq_Op+uniq_Opnd (derived, no column): "
+            f"computed={len(cohort)}; noncomputable=0"
+        )
+        for name, target, inputs, formula in formulas:
+            report_formula(name, target, inputs, cohort, quanta, formula)
+        for name, predicate in predicates:
+            report_predicate(name, cohort, predicate)
+        ratios = [
+            float(row["branchCount"]) / (float(row["v(g)"]) - 1)
+            for row in cohort
+            if float(row["v(g)"]) != 1
+        ]
+        exact_branch_formula = sum(
+            Decimal(row["branchCount"]) == Decimal(row["v(g)"]) - 1 for row in cohort
+        )
+        loc_differences = [
+            sum(
+                Decimal(row[column])
+                for column in ("lOCode", "lOComment", "lOBlank", "locCodeAndComment")
+            )
+            - Decimal(row["loc"])
+            for row in cohort
+        ]
+        print(
+            "branchCount/(v(g)-1): "
+            f"min={min(ratios):.6g}; max={max(ratios):.6g}; "
+            f"defined={len(ratios)}; exact_branchCount=v(g)-1={exact_branch_formula}"
+        )
+        print(
+            "line_count_sum-loc: "
+            f"min={min(loc_differences)}; max={max(loc_differences)}"
+        )
+        if cohort_name == "final_rows":
+            zero_operands = [row for row in cohort if Decimal(row["uniq_Opnd"]) == 0]
+            zero_vocabulary = [
+                row
+                for row in cohort
+                if Decimal(row["uniq_Op"]) + Decimal(row["uniq_Opnd"]) == 0
+            ]
+            report_zero_count_values("uniq_Opnd=0", zero_operands)
+            report_zero_count_values("vocabulary=0", zero_vocabulary)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("csv_path", nargs="?", type=Path, default=DEFAULT_CSV)
@@ -72,6 +324,11 @@ def main() -> None:
         "--final-set",
         action="store_true",
         help="print the preprocessing row-count funnel and final labels",
+    )
+    parser.add_argument(
+        "--definitions-check",
+        action="store_true",
+        help="check JM1 metric-definition hypotheses against the dataset",
     )
     args = parser.parse_args()
 
@@ -153,6 +410,9 @@ def main() -> None:
         if args.csv_path.resolve() == DEFAULT_CSV.resolve()
         else str(args.csv_path)
     )
+    if args.definitions_check:
+        report_definition_checks(clean_rows, final_retained_groups)
+        return
     print(f"CSV: {csv_label}")
     print(f"SHA-256: {digest}")
     print(f"Rows: {len(rows)}")

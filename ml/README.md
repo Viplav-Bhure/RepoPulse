@@ -49,7 +49,7 @@ zero or imputed. The affected columns are `uniq_Op`, `uniq_Opnd`, `total_Op`,
 
 Decisions:
 
-- Drop `id=1`. Rationale: it is also the only row with `lOCode` > `loc`.
+- Drop `id=1`. Rationale: 17 of its 21 metric values are fractional (loc 1.1, v(g) 1.4), which is not a valid count; it is also the only row with lOCode > loc.
 - Drop all 1,332 rows with `total_Op` = 0 and `loc` >= 1. Rationale: every row
   also has `total_Opnd` = 0, `n` = 0, `v` = 0, and `e` = 0; median `loc` is 30;
   the group accounts for 893 of the 8,731 reference rows.
@@ -105,7 +105,85 @@ reference before applying anomaly rules.
 
 ## 0.9.4 Compatibility matrix
 
-Not yet done.
+Provisional compatibility matrix. All Python, JavaScript, and TypeScript cells
+give expected Tree-sitter node types and remain **unverified until Phase 2
+fixtures**. The unit-boundary and nested-function decisions belong to 0.9.8.
+
+The fit intervals use half of each column's visible rounding quantum. A
+noncomputable row is included in the mismatch count. "After ?" is the 10,880-row
+set; "final" is the 7,837-row set after the recorded anomaly and deduplication
+rules. Counts below are matches / mismatches; noncomputable counts are shown
+where nonzero.
+
+| JM1 column | Definition and data-check fit | Python (unverified until Phase 2 fixtures) | JavaScript (unverified until Phase 2 fixtures) | TypeScript (unverified until Phase 2 fixtures) | Implementation method | Provisional use/drop | Justification |
+|---|---|---|---|---|---|---|---|
+| `loc` | Total physical lines in the unit span, including signature. A is best-fitting: after ? A 7,825/10,880; B 417/10,880; C 418/10,880; D 275/10,880. Final: A 6,267/7,837; B 392/7,837; C 393/7,837; D 250/7,837. | `def f():\n    x = 1`; count both physical lines; expected `function_definition`, `assignment`. | `function f() {\n  x = 1;\n}`; count all 3 physical lines; expected `function_declaration`, `lexical_declaration`. | `function f(): number {\n  return 1;\n}`; count all 3 physical lines; expected `function_declaration`, `return_statement`. | Count source lines over the selected unit span; span selection follows 0.9.8. | USE (provisional) | Keep relation A; it fits best, though the approximation differs from `loc` in 1,570 final rows (20.03%). |
+| `v(g)` | Cyclomatic complexity: 1 + decision points. Dataset invariant: >=1 in 10,880/10,880 after ? and 7,837/7,837 final. | `if x and y:`; count `if` and short-circuit operator; expected `if_statement`, `boolean_operator`. | `if (x && y) {}`; expected `if_statement`, `binary_expression`; not applicable (no comprehension syntax). | `if (x && y) {}`; expected `if_statement`, `binary_expression`; not applicable (no comprehension syntax). | Tree-sitter decision-node/token walk per approved rules below. | USE (provisional) | Human-confirmed decision-point definition; expected node mappings require fixtures. |
+| `ev(g)` | Dataset check `ev(g) <= v(g)`: 10,880/10,880 after ?; 7,837/7,837 final. | `if (x) { a(); }`; expected `if_statement`, `call`; reduction not implemented. | `if (x) a()`; expected `if_statement`, `call_expression`; reduction not implemented. | `if (x) a()`; expected `if_statement`, `call_expression`; reduction not implemented. | No implementation; control-flow-graph reduction is excluded. | DROP | Requires control-flow-graph reduction and call-graph rules that are not language-neutral. |
+| `iv(g)` | Dataset check `iv(g) <= v(g)`: 10,880/10,880 after ?; 7,837/7,837 final. | `if (x) { a(); }`; expected `if_statement`, `call`; reduction not implemented. | `if (x) a()`; expected `if_statement`, `call_expression`; reduction not implemented. | `if (x) a()`; expected `if_statement`, `call_expression`; reduction not implemented. | No implementation; control-flow-graph reduction is excluded. | DROP | Requires control-flow-graph reduction and call-graph rules that are not language-neutral. |
+| `n` | Stored column equals `total_Op + total_Opnd`: after ? 10,739/141; final 7,697/140. Vocabulary is separately derived as `uniq_Op + uniq_Opnd` (no JM1 column). | derived from the base counts; no language-specific extraction | derived from the base counts; no language-specific extraction | derived from the base counts; no language-specific extraction | Derived from the two total-count base features. | USE (provisional; derived) | Stored `n` matches the total-count sum in the measured data; vocabulary is a separate intermediate for `v`. |
+| `v` | `N * log2(vocabulary)`, where `N = total_Op + total_Opnd` and `vocabulary = uniq_Op + uniq_Opnd`. Fit: after ? 9,408/1,472 (1,332 noncomputable); final 7,698/139. | derived from the base counts; no language-specific extraction | derived from the base counts; no language-specific extraction | derived from the base counts; no language-specific extraction | Derived formula; `v` column quantum is 0.01. | USE (provisional; derived) | The derived formula fits the final data within visible rounding intervals. |
+| `l` | `1 / d`. Fit: after ? 9,511/1,369 (1,368 noncomputable); final 7,818/19 (19 noncomputable). | derived from the base counts; no language-specific extraction | derived from the base counts; no language-specific extraction | derived from the base counts; no language-specific extraction | Derived formula. | USE (provisional; derived) | Deterministic function of the base counts; final data fit is 7,818 rows. |
+| `d` | `(uniq_Op / 2) * (total_Opnd / uniq_Opnd)`. Fit: after ? 9,451/1,429 (1,368 noncomputable); final 7,758/79 (19 noncomputable). | derived from the base counts; no language-specific extraction | derived from the base counts; no language-specific extraction | derived from the base counts; no language-specific extraction | Derived formula. | USE (provisional; derived) | Deterministic function of the base counts; final data fit is 7,758 rows. |
+| `i` | `v / d`. Fit: after ? 9,468/1,412 (1,368 noncomputable); final 7,775/62 (19 noncomputable). | derived from the base counts; no language-specific extraction | derived from the base counts; no language-specific extraction | derived from the base counts; no language-specific extraction | Derived formula. | USE (provisional; derived) | Deterministic function of the base counts; final data fit is 7,775 rows. |
+| `e` | `d * v`. Fit: after ? 10,842/38; final 7,801/36. | derived from the base counts; no language-specific extraction | derived from the base counts; no language-specific extraction | derived from the base counts; no language-specific extraction | Derived formula. | USE (provisional; derived) | Deterministic function of the base counts; final data fit is 7,801 rows. |
+| `b` | Use `v / 3000`: after ? 10,872/8; final 7,830/7. Alternative `e^(2/3)/3000`: after ? 3,030/7,850; final 972/6,865. | derived from the base counts; no language-specific extraction | derived from the base counts; no language-specific extraction | derived from the base counts; no language-specific extraction | Derived formula; select the better-fitting tested relation provisionally. | USE (provisional; derived) | `v / 3000` fits far more rows than the tested alternative. |
+| `t` | `e / 18`. Fit: after ? 10,789/91; final 7,756/81. | derived from the base counts; no language-specific extraction | derived from the base counts; no language-specific extraction | derived from the base counts; no language-specific extraction | Derived formula. | USE (provisional; derived) | Deterministic function of the base counts; final data fit is 7,756 rows. |
+| `lOCode` | Code-only physical lines. Part of relation A; final aggregate fit 6,267/7,837. Individual component fit not separately tested. | `x = 1`; expected `assignment`, `expression_statement`; exclude comment-only lines. | `x = 1;`; expected `lexical_declaration`, `variable_declarator`; exclude comment-only lines. | `const x: number = 1;`; expected `lexical_declaration`, `variable_declarator`; exclude comment-only lines. | Classify physical lines by code/comment node spans. | USE (provisional) | Human-confirmed line class; use best-fitting aggregate relation A. |
+| `lOComment` | Comment-only physical lines; Python docstring lines count here. Part of relation A; final aggregate fit 6,267/7,837. Individual component fit not separately tested. | `# note` or a docstring; expected `comment`, or `expression_statement` containing `string`. | `// note`; expected `comment`. | `// note`; expected `comment`. | Classify physical lines by comment node spans; include Python docstring spans. | USE (provisional) | Human-confirmed line class; use best-fitting aggregate relation A. |
+| `lOBlank` | Blank physical lines. Part of relation A; final aggregate fit 6,267/7,837. Individual component fit not separately tested. | A blank line; no syntax node, identified from source text between nodes. | A blank line; no syntax node, identified from source text between nodes. | A blank line; no syntax node, identified from source text between nodes. | Count empty physical lines within the unit span. | USE (provisional) | Human-confirmed line class; use best-fitting aggregate relation A. |
+| `locCodeAndComment` | Physical lines containing code and a comment. Part of relation A; final aggregate fit 6,267/7,837. Individual component fit not separately tested. | `x = 1  # note`; expected `assignment`/`expression_statement` and `comment`. | `const x = 1; // note`; expected `lexical_declaration` and `comment`. | `const x: number = 1; // note`; expected `lexical_declaration` and `comment`. | Count lines with overlapping code and comment spans. | USE (provisional) | Human-confirmed line class; use best-fitting aggregate relation A. |
+| `uniq_Op` | Number of distinct operator tokens under the approved token convention. No independent JM1 target check. | `a + a`; `+` once; expected `binary_operator` and operator token. | `a + a`; `+` once; expected `binary_expression` and operator token. | `a + a`; `+` once; expected `binary_expression` and operator token; exclude type-only syntax. | Tree-sitter token walk; distinct operator lexemes. | USE (provisional) | One of the four approved Halstead base counts. |
+| `uniq_Opnd` | Number of distinct non-keyword identifiers and literals. No independent JM1 target check; derived vocabulary is used in `v`. | `a + a`; operand `a` once; expected `identifier`. | `obj.value`; operands `obj`, `value`; expected `identifier`, `property_identifier`. | `obj.value`; operands `obj`, `value`; expected `identifier`, `property_identifier`; exclude type-only syntax. | Tree-sitter token walk; distinct operand lexemes. | USE (provisional) | One of the four approved Halstead base counts. |
+| `total_Op` | Operator-token occurrences. Joint `n(column)` fit: after ? 10,739/141; final 7,697/140. | `a + b`; count each operator occurrence; expected `binary_operator` and operator token. | `a + b`; count each operator occurrence; expected `binary_expression` and operator token. | `a + b`; count each operator occurrence; expected `binary_expression` and operator token; exclude type-only syntax. | Tree-sitter token walk; count occurrences, including keywords. | USE (provisional) | One of the four approved Halstead base counts. |
+| `total_Opnd` | Non-keyword identifier and literal occurrences. Joint `n(column)` fit: after ? 10,739/141; final 7,697/140. | `a + a`; count both identifier occurrences; expected `identifier`. | `obj.value`; count both identifier occurrences; expected `identifier`, `property_identifier`. | `obj.value`; count both identifier occurrences; expected `identifier`, `property_identifier`; exclude type-only syntax. | Tree-sitter token walk; count occurrences. | USE (provisional) | One of the four approved Halstead base counts. |
+| `branchCount` | Tested `branchCount = v(g)-1`: 0 matches in both cohorts. Final `branchCount/(v(g)-1)` min/max 1.00496/5; exact matches 0. | `if x:`; no branch-count implementation; expected `if_statement`. | `if (x) {}`; no branch-count implementation; expected `if_statement`. | `if (x) {}`; no branch-count implementation; expected `if_statement`. | No implementation. | DROP | Data does not define it: ratio ranges 1.005 to 5 and is never equal to 1. |
+
+USE (provisional): 18 columns; DROP: ev(g), iv(g), branchCount.
+
+Approved provisional definitions:
+
+- Line classes are counted over the unit span from first to last line, including
+  the signature. `loc` counts all physical lines. Python docstring lines count
+  as comment lines.
+- `v(g) = 1 + decision points`. Python: `if`/`elif`, `for`/`while`, each
+  non-default `case_clause` of `match`, `except`, `conditional_expression`,
+  `boolean_operator` (`and`/`or`), and comprehension `for_in_clause` and
+  `if_clause`. JavaScript and TypeScript: `if`, `for`/`for-in`/`for-of`,
+  `while`/`do-while`, each non-default case, `catch`, ternary, and short-circuit
+  operators `&&`, `||`, `??`, `&&=`, `||=`, `??=`. Optional chaining `?.` is
+  not a decision point. Callbacks passed to `.map`/`.filter` are separate
+  functions; their unit boundaries are decided in 0.9.8. Expected node names
+  are all unverified until Phase 2 fixtures: Python `if_statement`,
+  `elif_clause`, `for_statement`, `while_statement`, `case_clause`,
+  `except_clause`, `conditional_expression`, `boolean_operator`,
+  `for_in_clause`, `if_clause`; JavaScript/TypeScript `if_statement`,
+  `for_statement`, `for_in_statement`, `while_statement`, `do_statement`,
+  `switch_case`, `catch_clause`, `ternary_expression`, `binary_expression`,
+  `augmented_assignment_expression`.
+- Halstead counting is token-based on Tree-sitter with classic conventions
+  adapted per language. Operands are non-keyword identifiers and literals;
+  operators are keywords and operator tokens; comments are excluded. TypeScript
+  type-only syntax is excluded. Unique counts count distinct lexemes; total
+  counts count occurrences.
+- `n(column) = total_Op + total_Opnd`; vocabulary is the derived
+  `uniq_Op + uniq_Opnd` and has no JM1 column. `v = N * log2(vocabulary)`, where
+  `N = total_Op + total_Opnd`; `d = (uniq_Op / 2) * (total_Opnd / uniq_Opnd)`;
+  `l = 1/d`; `i = v/d`; `e = d*v`; `b = v/3000`; `t = e/18`.
+- Unit boundaries and nested functions are deferred to 0.9.8.
+
+Zero-operand convention: Among the 19 final rows with `uniq_Opnd = 0`, stored
+`d`, `l`, and `i` are constant at 0, so serving uses those stored JM1 values.
+Stored `v` is not constant (0: 11 rows; 2: 3; 4.75: 4; 30.19: 1), so its
+zero-operand behavior needs decision. There are no final rows with vocabulary
+`uniq_Op + uniq_Opnd = 0`; the serving convention for vocabulary = 0 needs
+decision.
+
+Reproduce the data check from the repository root in PowerShell:
+
+```powershell
+backend\.venv\Scripts\python.exe ml\jm1_facts.py --definitions-check
+```
 
 ## 0.9.5 Prediction unit
 

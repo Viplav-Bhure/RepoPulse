@@ -50,7 +50,7 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 | **Title** | Build the compatibility matrix (JM1 definitions apply to a **function**): JM1 definition -> Python implementation -> JavaScript implementation -> TypeScript implementation -> implementation method -> `use`/`drop`. Any approximation must be explicitly justified. |
 | **Status** | In progress |
 | **Plan** | Build the compatibility matrix using the JM1 definitions and document the Python, JavaScript, and TypeScript implementations. |
-| **Notes / problems** | Tasks 0.9.3a and 0.9.3b are recorded below and awaiting human commit. Gate G0 remains not passed. |
+| **Notes / problems** | Tasks 0.9 through 0.9.3b are committed as 78aafc3; the decision docs are committed as 30251f9. Stage A is done; Stage B provisional matrix in `ml/README.md` is awaiting human approval. Gate G0 remains not passed. |
 
 ---
 
@@ -155,6 +155,9 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-10-14 | Revised the provisional JM1 compatibility matrix with the approved decision-point rules, measured line relations, and zero-operand evidence. | 0.9.4 | Confirm zero-operand `v` and zero-vocabulary conventions. |
+| 2026-10-14 | Completed the JM1 definitions check and drafted the provisional compatibility matrix; awaiting human approval. No Tree-sitter packages installed. | 0.9.4 Stage A-B | Approve or revise the provisional compatibility matrix. |
+| 2026-10-14 | Confirmed tasks 0.9 through 0.9.3b committed as 78aafc3 and decision docs committed as 30251f9; corrected the anomalous-row decision log and started the JM1 definitions check. | 0.9.4 | Compatibility decisions for operator/operand counts, line counting, and branches/decision points. |
 | 2026-10-14 | Recorded the confirmed JM1 anomalous-row rules and preprocessing order; added the measured final-set funnel. Gate G0 remains not passed. | 0.9.3a, 0.9.3b | Final JM1 feature subset, metrics library, and prediction-unit rules. |
 | 2026-10-14 | Added the read-only JM1 facts reporter and G0 dataset record; confirmed the lOCode anomaly is id=1 and preserved pending anomaly decisions. Gate G0 remains not passed. | 0.9, 0.9.1, 0.9.2, 0.9.3 | Human keep/drop rules for anomalous JM1 rows. |
 | 2026-10-14 | Verified task 0.8 CI green on 6aca054; confirmed the JM1 SHA-256 and computed stage-1 dataset facts with Python csv; prepared a G0 plan without applying anomaly decisions. | 0.8, 0.9 planning | JM1 anomaly keep/drop decisions remain open. |
