@@ -2072,7 +2072,6 @@ These are the remaining implementation choices. Confirmed product decisions are 
 | 15 | GitHub API access after login | Proposed: list at the OAuth callback plus a server-side public-data credential |
 | 16 | Failed-run retention | Completes the retention policy |
 | 17 | Test-file treatment | Default summaries and ML scores for test files |
-| 18 | Anomalous JM1 rows | Keep or drop rules for `id=1`, `lOCode` > `loc`, and `total_Op` = 0 rows |
 
 Confirmed and therefore closed: JM1 dataset, per-function prediction aggregated to a file-level score, essential-stage policy, hybrid metric implementation, PostgreSQL-backed opaque sessions, no GitHub token persistence, same-parent-domain production hosts, unparseable-file policy, concurrency policy, coverage formats, deterministic alias resolution policy, four static thresholds plus lightweight duplicate detection, Vitest + Testing Library + Playwright, archived/empty repository display policy, source/test distinction, latest-10 retention, and Phase 7 portfolio deliverables.
 
@@ -2358,6 +2357,7 @@ Metrics      Static Rules      Dependencies    Security
 | Essential stages | Source parsing/metrics/static analysis/security and persistence are essential; Git history, dependencies, coverage, ML, risk, and AI are non-essential enrichment stages |
 | Analysis concurrency | One active analysis per repository plus a small global cap |
 | Static-analysis extras | Four threshold rules plus lightweight duplicate-code detection |
+| JM1 anomalous rows | Drop `id=1` (the only row with `lOCode` > `loc`) and all 1,332 rows with `total_Op` = 0 and `loc` >= 1; preprocessing order: drop the five `?` rows, drop `id=1`, drop the zero-operator group, remove conflicting-label metric vectors and deduplicate, then split. |
 | Frontend stack | Next.js + TypeScript + Tailwind CSS + shadcn/ui + Recharts |
 | Frontend/E2E tooling | Vitest + Testing Library + Playwright |
 | Dependency graph | Backend returns `{nodes, edges}`; frontend renders a static non-interactive SVG |
