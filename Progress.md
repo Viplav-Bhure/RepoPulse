@@ -5,7 +5,7 @@
 | | |
 | --- | --- |
 | **Last updated** | 2026-10-14 |
-| **Updated by** | AI builder (task 0.8 CI fix) |
+| **Updated by** | AI builder (task 0.8 CI verification) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -14,9 +14,9 @@
 
 | | |
 | --- | --- |
-| **Overall status** | **In progress.** Phase 0 started. Tasks 0.1 through 0.7 complete. |
+| **Overall status** | **In progress.** Phase 0 started. Tasks 0.1 through 0.8 complete. |
 | **Current phase** | Phase 0 - Foundations (**in progress**) |
-| **Next task** | **0.8** - GitHub Actions workflow: backend (install, lint, test), frontend (install, lint, type-check, build), and a Docker build step. Cache dependencies. **[Proposed]** Run Alembic migrations against a CI PostgreSQL service so migration breakage is caught early. Awaiting CI verification. |
+| **Next task** | **0.9** Use the supplied `jm1.csv` as the training source and record its provenance, checksum, and the Kaggle-reported **unknown license status** in `ml/README.md`. Do not claim unrestricted redistribution rights. |
 | **Blocked?** | No |
 | **Last human approval** | Planning documents reviewed on 2026-10-09 |
 
@@ -46,11 +46,11 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 
 | | |
 | --- | --- |
-| **Task ID** | 0.8 |
-| **Title** | GitHub Actions workflow: backend (install, lint, test), frontend (install, lint, type-check, build), and a Docker build step. Cache dependencies. **[Proposed]** Run Alembic migrations against a CI PostgreSQL service so migration breakage is caught early. |
-| **Status** | Awaiting CI verification |
-| **Plan** | Workflow added at `.github/workflows/ci.yml`; verify on the first GitHub Actions run. |
-| **Notes / problems** | 0.7 committed as a6edb6f. Alembic migration job approved. |
+| **Task ID** | 0.9 |
+| **Title** | Use the supplied `jm1.csv` as the training source and record its provenance, checksum, and the Kaggle-reported **unknown license status** in `ml/README.md`. Do not claim unrestricted redistribution rights. |
+| **Status** | Not started |
+| **Plan** | Record the JM1 source, SHA-256, license status, and stage-1 dataset facts in `ml/README.md`. |
+| **Notes / problems** | CI verified green on 6aca054. JM1 SHA-256 verified against the documented checksum. |
 
 ---
 
@@ -67,7 +67,7 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 | 0.5 | 2026-10-13 | awaiting human commit | `npm run lint`, `npm run type-check`, and `npm run build` with and without `.env.local` all passed (exit 0). | Done; added `type-check`: `tsc --noEmit`. Correcting note: 0.4 committed as 6c8eba6. |
 | 0.6 | 2026-10-13 | awaiting human commit | `ruff check .` passed; `ruff format --check .` passed; `pytest -v` passed (2 passed); Alembic upgrade/current verified on PostgreSQL 17.11; engine import checked out 0 connections. | Done; added SQLAlchemy, Alembic, psycopg 3, required `DATABASE_URL`, and an empty baseline migration. PostgreSQL 17 (development); production host to match. Correcting note: 0.5 committed as e583809. |
 | 0.7 | 2026-10-13 | awaiting human commit | Compose build passed; all services healthy; frontend and `/health` returned 200; Alembic current is `0001_baseline (head)`; hostname `postgres`; backend UID 10001; Git 2.39.5; image app trees clean; containers removed and volume retained. | Done; corrected frontend builder permissions. Correcting note: 0.6 committed as 27b107b. |
-| 0.8 | 2026-10-13 | - | workflow added; first CI run pending | Correcting note: 0.7 committed as a6edb6f. Alembic job approved; not verified until the first CI run is green. first CI run: frontend job failed at type-check (LayoutProps missing on fresh checkout); fixed by running next typegen in the type-check script |
+| 0.8 | 2026-10-13 | f1a366b, 6aca054 | GitHub Actions: backend, frontend, migrations, and Docker jobs all passed | Workflow added; first CI run failed at frontend type-check (LayoutProps missing on fresh checkout); fixed by running Next typegen in the type-check script. Correcting note: 0.7 committed as a6edb6f. Alembic job approved. CI verified green on 6aca054. |
 
 ---
 
@@ -81,7 +81,7 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 | Docker and Docker Compose installed and working | Phase 0 (task 0.7) | [x] Docker 29.8.2, Compose v5.5.1 |
 | Python and Node.js toolchains installed | Phase 0 (tasks 0.2-0.5) | [x] Python 3.12 (via py launcher) + 3.13.14, Node.js 24.21.0 |
 | `git` available locally | Phase 0 | [x] git 2.49.0.windows.1 |
-| JM1 dataset file `jm1.csv` available (from the supplied `NASA_dataset.zip`); SHA-256 `1ec66eb3568ae8bb4e2709cf0bd28b11db41c7c0ae771325c0952997e35e4dff` | Phase 0 (Gate G0, task 0.9) | [ ] |
+| JM1 dataset file `jm1.csv` available (from the supplied `NASA_dataset.zip`); SHA-256 `1ec66eb3568ae8bb4e2709cf0bd28b11db41c7c0ae771325c0952997e35e4dff` | Phase 0 (Gate G0, task 0.9) | [x] |
 | GitHub OAuth App registered for local development | Phase 1 (task 1.2) | [ ] |
 | OpenAI API key | Phase 5 | [ ] |
 | A domain you own, with DNS access, and hosts that allow custom domains | Start of Phase 6 (latest Phase 7) | [ ] |
@@ -149,6 +149,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-10-14 | Verified task 0.8 CI green on 6aca054; confirmed the JM1 SHA-256 and computed stage-1 dataset facts with Python csv; prepared a G0 plan without applying anomaly decisions. | 0.8, 0.9 planning | JM1 anomaly keep/drop decisions remain open. |
 | 2026-10-14 | Reproduced the fresh-checkout `LayoutProps` type-check failure, added `next typegen` before `tsc`, then passed type-check, lint, and build from cleaned frontend outputs. The build emitted Google font assets. | 0.8 | First CI run after the fix must be green before verification. |
 | 2026-10-13 | Added the GitHub Actions workflow for backend, frontend, Docker builds, and approved Alembic migrations. Local checks only; first CI run pending. | 0.8 | First CI run must be green before verification. |
 | 2026-10-13 | Task 0.7 complete. Built both images; Compose health, HTTP, migration, hostname, backend UID, Git, and image-content checks passed. Containers removed; `repopulse_postgres_data` retained. Correcting note: 0.6 committed as 27b107b. | 0.7 | None |
