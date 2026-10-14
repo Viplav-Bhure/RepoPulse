@@ -5,7 +5,7 @@
 | | |
 | --- | --- |
 | **Last updated** | 2026-10-14 |
-| **Updated by** | AI builder (task 0.8 CI verification) |
+| **Updated by** | AI builder (tasks 0.9.3a-0.9.3b) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -14,9 +14,9 @@
 
 | | |
 | --- | --- |
-| **Overall status** | **In progress.** Phase 0 started. Tasks 0.1 through 0.8 complete. |
+| **Overall status** | **In progress.** Phase 0 started. Tasks 0.1 through 0.9.3b complete. |
 | **Current phase** | Phase 0 - Foundations (**in progress**) |
-| **Next task** | **0.9** Use the supplied `jm1.csv` as the training source and record its provenance, checksum, and the Kaggle-reported **unknown license status** in `ml/README.md`. Do not claim unrestricted redistribution rights. |
+| **Next task** | **0.9.4** Build the compatibility matrix (JM1 definitions apply to a **function**): JM1 definition -> Python implementation -> JavaScript implementation -> TypeScript implementation -> implementation method -> `use`/`drop`. Any approximation must be explicitly justified. |
 | **Blocked?** | No |
 | **Last human approval** | Planning documents reviewed on 2026-10-09 |
 
@@ -46,11 +46,11 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 
 | | |
 | --- | --- |
-| **Task ID** | 0.9 |
-| **Title** | Use the supplied `jm1.csv` as the training source and record its provenance, checksum, and the Kaggle-reported **unknown license status** in `ml/README.md`. Do not claim unrestricted redistribution rights. |
-| **Status** | Not started |
-| **Plan** | Record the JM1 source, SHA-256, license status, and stage-1 dataset facts in `ml/README.md`. |
-| **Notes / problems** | CI verified green on 6aca054. JM1 SHA-256 verified against the documented checksum. |
+| **Task ID** | 0.9.4 |
+| **Title** | Build the compatibility matrix (JM1 definitions apply to a **function**): JM1 definition -> Python implementation -> JavaScript implementation -> TypeScript implementation -> implementation method -> `use`/`drop`. Any approximation must be explicitly justified. |
+| **Status** | In progress |
+| **Plan** | Build the compatibility matrix using the JM1 definitions and document the Python, JavaScript, and TypeScript implementations. |
+| **Notes / problems** | Tasks 0.9.3a and 0.9.3b are recorded below and awaiting human commit. Gate G0 remains not passed. |
 
 ---
 
@@ -68,6 +68,12 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 | 0.6 | 2026-10-13 | awaiting human commit | `ruff check .` passed; `ruff format --check .` passed; `pytest -v` passed (2 passed); Alembic upgrade/current verified on PostgreSQL 17.11; engine import checked out 0 connections. | Done; added SQLAlchemy, Alembic, psycopg 3, required `DATABASE_URL`, and an empty baseline migration. PostgreSQL 17 (development); production host to match. Correcting note: 0.5 committed as e583809. |
 | 0.7 | 2026-10-13 | awaiting human commit | Compose build passed; all services healthy; frontend and `/health` returned 200; Alembic current is `0001_baseline (head)`; hostname `postgres`; backend UID 10001; Git 2.39.5; image app trees clean; containers removed and volume retained. | Done; corrected frontend builder permissions. Correcting note: 0.6 committed as 27b107b. |
 | 0.8 | 2026-10-13 | f1a366b, 6aca054 | GitHub Actions: backend, frontend, migrations, and Docker jobs all passed | Workflow added; first CI run failed at frontend type-check (LayoutProps missing on fresh checkout); fixed by running Next typegen in the type-check script. Correcting note: 0.7 committed as a6edb6f. Alembic job approved. CI verified green on 6aca054. |
+| 0.9 | 2026-10-14 | awaiting human commit | `backend\.venv\Scripts\python.exe ml\jm1_facts.py`; Ruff check and format check passed | Done; provenance, checksum, and Kaggle-reported unknown license status recorded in `ml/README.md`. |
+| 0.9.1 | 2026-10-14 | awaiting human commit | Candidate predictor and target columns recorded; `id` excluded | Done; `ml/jm1_facts.py` and `ml/README.md` are evidence. |
+| 0.9.2 | 2026-10-14 | awaiting human commit | Facts report matched documented row, label, duplicate, conflict, and checksum values | Done; `ml/jm1_facts.py` and `ml/README.md` are evidence. |
+| 0.9.3 | 2026-10-14 | awaiting human commit | Facts report identified five `?` rows and all five affected metric columns | Done; record dropping these rows before training, without coercion or imputation. |
+| 0.9.3a | 2026-10-14 | awaiting human commit | `--anomaly-evidence` reported the id=1 and zero-operator evidence | Decisions A and B recorded in `ml/README.md`; evidence in `ml/jm1_facts.py`. |
+| 0.9.3b | 2026-10-14 | awaiting human commit | `--final-set` reported 7,837 rows, 6,184 non-defective, 1,653 defective (21.09%) | Preprocessing order and final-set funnel recorded in `ml/README.md`; evidence in `ml/jm1_facts.py`. |
 
 ---
 
@@ -94,7 +100,7 @@ The full schedule is in `Phases.md` section 3. The AI must **ask** for each deci
 | --- | --- | --- | --- |
 | Final JM1 feature subset | End of Phase 0 (G0) | Open | |
 | Exact metrics library, if any | End of Phase 0 (G0) | Open | |
-| Rules for anomalous JM1 rows (`id=1`, `lOCode` > `loc`, `total_Op` = 0) | End of Phase 0 (G0) | Open | |
+| Rules for anomalous JM1 rows (`id=1`, `lOCode` > `loc`, `total_Op` = 0) | End of Phase 0 (G0) | Decided | Drop `id=1` (the only row with `lOCode` > `loc`) and all 1,332 rows with `total_Op` = 0 and `loc` >= 1. Order: drop the five `?` rows, drop `id=1`, drop the group, remove conflicting-label metric vectors and deduplicate, then split. |
 | Prediction-unit rules (what counts as a function/method; qualifying top-level code) | End of Phase 0 (G0) | Open | |
 | **Python runtime and Docker base image** | Phase 0 (task 0.2) | **Decided** | Python 3.12; Docker base image `python:3.12-slim-bookworm`; local `.venv` created with `py -3.12`. Wheels verified 2026-10-10. Recorded in Architecture decision log. |
 | PostgreSQL driver and major version | Task 0.6 | Decided | psycopg[binary] (psycopg 3); SQLAlchemy URL scheme `postgresql+psycopg://`; PostgreSQL 17 (development), production host to match. |
@@ -149,6 +155,8 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-10-14 | Recorded the confirmed JM1 anomalous-row rules and preprocessing order; added the measured final-set funnel. Gate G0 remains not passed. | 0.9.3a, 0.9.3b | Final JM1 feature subset, metrics library, and prediction-unit rules. |
+| 2026-10-14 | Added the read-only JM1 facts reporter and G0 dataset record; confirmed the lOCode anomaly is id=1 and preserved pending anomaly decisions. Gate G0 remains not passed. | 0.9, 0.9.1, 0.9.2, 0.9.3 | Human keep/drop rules for anomalous JM1 rows. |
 | 2026-10-14 | Verified task 0.8 CI green on 6aca054; confirmed the JM1 SHA-256 and computed stage-1 dataset facts with Python csv; prepared a G0 plan without applying anomaly decisions. | 0.8, 0.9 planning | JM1 anomaly keep/drop decisions remain open. |
 | 2026-10-14 | Reproduced the fresh-checkout `LayoutProps` type-check failure, added `next typegen` before `tsc`, then passed type-check, lint, and build from cleaned frontend outputs. The build emitted Google font assets. | 0.8 | First CI run after the fix must be green before verification. |
 | 2026-10-13 | Added the GitHub Actions workflow for backend, frontend, Docker builds, and approved Alembic migrations. Local checks only; first CI run pending. | 0.8 | First CI run must be green before verification. |
