@@ -1,0 +1,5 @@
+{
+  "module_qualifies": false,
+  "unit_names": [],
+  "notes": "A constant assignment alone does not qualify as module-level code."
+}

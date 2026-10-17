@@ -1,0 +1,27 @@
+{
+  "module_qualifies": false,
+  "unit_names": ["outer"],
+  "features": {
+    "outer": {
+      "loc": 4,
+      "v(g)": 1,
+      "n": 11,
+      "v": 28.434587507932716,
+      "l": 0.5714285714285714,
+      "d": 1.75,
+      "i": 16.248335718818696,
+      "e": 49.76052813888225,
+      "b": 0.00947819583597757,
+      "t": 2.764473785493458,
+      "lOCode": 4,
+      "lOComment": 0,
+      "lOBlank": 0,
+      "locCodeAndComment": 0,
+      "uniq_Op": 2,
+      "uniq_Opnd": 4,
+      "total_Op": 4,
+      "total_Opnd": 7
+    }
+  },
+  "notes": "Hand count: outer and inner form one unit; def and return occur 4 times total; operands are outer, value, inner, nested, nested, inner, value (7 total; 4 unique). N=11, vocabulary=6, v=11*log2(6), d=(2/2)*(7/4)=1.75."
+}

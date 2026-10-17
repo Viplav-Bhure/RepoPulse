@@ -1,0 +1,27 @@
+{
+  "module_qualifies": true,
+  "unit_names": ["<module>"],
+  "features": {
+    "<module>": {
+      "loc": 2,
+      "v(g)": 2,
+      "n": 5,
+      "v": 11.609640474436812,
+      "l": 1.0,
+      "d": 1.0,
+      "i": 11.609640474436812,
+      "e": 11.609640474436812,
+      "b": 0.003869880158145604,
+      "t": 0.6449800263576007,
+      "lOCode": 2,
+      "lOComment": 0,
+      "lOBlank": 0,
+      "locCodeAndComment": 0,
+      "uniq_Op": 2,
+      "uniq_Opnd": 3,
+      "total_Op": 2,
+      "total_Opnd": 3
+    }
+  },
+  "notes": "Hand count: operators are if and == (2); operands are __name__, the string literal, and main (3). The literal counts once. N=5, vocabulary=5, v=5*log2(5), d=(2/2)*(3/3)=1, v(g)=1+if=2. The module-level if and main() call qualify one module-level unit."
+}

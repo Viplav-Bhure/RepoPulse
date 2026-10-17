@@ -239,19 +239,30 @@ another unit:
   assignments, type declarations, and docstrings alone do not qualify. Unit
   subtrees are excluded from module-level counts.
 
-Fixture case names (files come later): `python_main_guard`,
-`javascript_app_listen`, `api_key_assignment`, `import_only`,
-`declaration_only`, `type_only_typescript`, `docstring_only`,
-`python_nested_def`, `javascript_block_vs_expression_arrow`,
-`typescript_overload_impl`.
+Stage 1 Python fixtures created: `python_main_guard`, `api_key_assignment`,
+`import_only`, `declaration_only`, `docstring_only`, `python_nested_def`,
+`python_if_and`, and `python_line_classes`. Stage 2 fixtures remain:
+`javascript_app_listen`, `type_only_typescript`,
+`javascript_block_vs_expression_arrow`, and `typescript_overload_impl`.
+
+### Token counting conventions
+
+- Delimiters are excluded; member access and optional chaining count as operators.
+- Function/method names and parameter identifiers count as operands; decorators
+  are excluded.
+- Python docstring lines count as comment lines, and the docstring string is not
+  an operand.
+- Each literal counts as one operand; JSX literal handling is deferred to stage 2.
+- Zero vocabulary gives `v = 0`.
 
 ## 0.9.9 Feature-range sanity check
 
-Not yet done. Prototype plan: the extractor lives in `ml/`; its pins
+Not yet done. The stage-one extractor lives in `ml/`; its pins
 (`tree-sitter==0.26.0`, `tree-sitter-python==0.25.0`,
-`tree-sitter-javascript==0.25.0`, `tree-sitter-typescript==0.23.2`) go in a
-new `ml/requirements.txt`, not `backend/requirements.txt`. Development installs
-into `backend/.venv`; the backend gets Tree-sitter in Phase 2.
+`tree-sitter-javascript==0.25.0`, `tree-sitter-typescript==0.23.2`) are in
+`ml/requirements.txt` and installed into `backend/.venv` for this prototype.
+The backend requirements remain unchanged; the backend gets Tree-sitter in
+Phase 2.
 
 ## 0.9.10 Feature schema
 

@@ -1,0 +1,27 @@
+{
+  "module_qualifies": false,
+  "unit_names": ["decide"],
+  "features": {
+    "decide": {
+      "loc": 3,
+      "v(g)": 3,
+      "n": 10,
+      "v": 28.07354922057604,
+      "l": 0.25,
+      "d": 4.0,
+      "i": 7.01838730514401,
+      "e": 112.29419688230416,
+      "b": 0.009357849740192013,
+      "t": 6.238566493461342,
+      "lOCode": 3,
+      "lOComment": 0,
+      "lOBlank": 0,
+      "locCodeAndComment": 0,
+      "uniq_Op": 4,
+      "uniq_Opnd": 3,
+      "total_Op": 4,
+      "total_Opnd": 6
+    }
+  },
+  "notes": "Hand count: operators are def, if, and, return (4 total, 4 unique); operands are decide, left, right, left, right, left (6 total, 3 unique). N=10, vocabulary=7, v=10*log2(7), d=(4/2)*(6/3)=4, v(g)=1+if+and=3."
+}

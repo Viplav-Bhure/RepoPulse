@@ -1,0 +1,5 @@
+{
+  "module_qualifies": false,
+  "unit_names": ["declared"],
+  "notes": "The function is a unit; its declaration alone does not qualify module-level code."
+}

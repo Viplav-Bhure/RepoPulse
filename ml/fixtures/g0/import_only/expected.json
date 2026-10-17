@@ -1,0 +1,5 @@
+{
+  "module_qualifies": false,
+  "unit_names": [],
+  "notes": "Imports alone do not qualify as module-level code."
+}

@@ -1,0 +1,27 @@
+{
+  "module_qualifies": false,
+  "unit_names": ["sample"],
+  "features": {
+    "sample": {
+      "loc": 6,
+      "v(g)": 1,
+      "n": 8,
+      "v": 20.67970000576925,
+      "l": 0.4,
+      "d": 2.5,
+      "i": 8.2718800023077,
+      "e": 51.69925001442313,
+      "b": 0.006893233335256417,
+      "t": 2.87218055635684,
+      "lOCode": 2,
+      "lOComment": 2,
+      "lOBlank": 1,
+      "locCodeAndComment": 1,
+      "uniq_Op": 3,
+      "uniq_Opnd": 3,
+      "total_Op": 3,
+      "total_Opnd": 5
+    }
+  },
+  "notes": "Hand count: six physical lines; code-only=2 (def and return), comment-only=2 (docstring and comment), blank=1, code+comment=1. Docstring is not an operand. Operators are def, =, return (3); operands are sample, value, result, value, result (5; 3 unique). N=8, vocabulary=6, v=8*log2(6), d=(3/2)*(5/3)=2.5."
+}

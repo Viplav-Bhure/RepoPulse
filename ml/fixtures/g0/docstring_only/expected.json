@@ -1,0 +1,5 @@
+{
+  "module_qualifies": false,
+  "unit_names": [],
+  "notes": "A module docstring alone does not qualify as module-level code."
+}

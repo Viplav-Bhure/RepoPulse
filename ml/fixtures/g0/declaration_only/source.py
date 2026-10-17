@@ -1,0 +1,2 @@
+def declared():
+    pass
