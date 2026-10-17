@@ -107,7 +107,9 @@ reference before applying anomaly rules.
 
 Provisional compatibility matrix. All Python, JavaScript, and TypeScript cells
 give expected Tree-sitter node types and remain **unverified until Phase 2
-fixtures**. The unit-boundary and nested-function decisions belong to 0.9.8.
+fixtures**. Use/drop classifications remain provisional until 0.9.9 and 0.9.10.
+The prediction-unit rules are recorded in 0.9.8; expected node mappings still
+need fixture verification.
 
 The fit intervals use half of each column's visible rounding quantum. A
 noncomputable row is included in the mismatch count. "After ?" is the 10,880-row
@@ -170,14 +172,13 @@ Approved provisional definitions:
   `uniq_Op + uniq_Opnd` and has no JM1 column. `v = N * log2(vocabulary)`, where
   `N = total_Op + total_Opnd`; `d = (uniq_Op / 2) * (total_Opnd / uniq_Opnd)`;
   `l = 1/d`; `i = v/d`; `e = d*v`; `b = v/3000`; `t = e/18`.
-- Unit boundaries and nested functions are deferred to 0.9.8.
+- Unit boundaries and nested functions follow the rules recorded in 0.9.8.
 
-Zero-operand convention: Among the 19 final rows with `uniq_Opnd = 0`, stored
-`d`, `l`, and `i` are constant at 0, so serving uses those stored JM1 values.
-Stored `v` is not constant (0: 11 rows; 2: 3; 4.75: 4; 30.19: 1), so its
-zero-operand behavior needs decision. There are no final rows with vocabulary
-`uniq_Op + uniq_Opnd = 0`; the serving convention for vocabulary = 0 needs
-decision.
+Zero-operand convention: when `uniq_Opnd = 0`, set `d = l = i = 0`; this
+matches the stored values in all 19/19 final rows. Use `v = N * log2(vocabulary)`;
+the relation fits all 19/19 final rows. If `vocabulary = 0`, set `v = 0`; this
+case is untested by the data. These conventions were recorded before any model
+results.
 
 Reproduce the data check from the repository root in PowerShell:
 
@@ -187,23 +188,70 @@ backend\.venv\Scripts\python.exe ml\jm1_facts.py --definitions-check
 
 ## 0.9.5 Prediction unit
 
-Not yet done.
+JM1 module rows correspond to functions/methods, so features are computed per
+function/method, predicted in memory, and aggregated into one stored file-level
+score. Do not add a function-level table; per-function features live in memory
+for the duration of the run. A file is the aggregate container, not the JM1
+prediction unit.
 
 ## 0.9.6 Metric implementation
 
-Not yet done.
+No metrics library is used in production. RepoPulse owns one Tree-sitter
+extractor for Python, JavaScript, and TypeScript. Radon, Lizard, and
+typhonjs-escomplex may be used only as cross-checks in G0, never as production
+sources. Revisit this decision only if the 0.9.9 prototype extractor cannot
+meet D3.
 
 ## 0.9.7 Compatibility rule
 
-Not yet done.
+A JM1 feature enters the serving schema only if:
+
+1. Its definition is verified by the data check or fixed by an approved
+  convention.
+2. It can be implemented consistently across Python, JavaScript, and
+  TypeScript, with every approximation justified in the matrix. Consistently
+  does not mean identically.
+3. Its serving range stays within a stable range of the JM1 range, checked in
+  0.9.9.
+
+Derived fields use only admitted features. The zero-operand conventions are
+recorded in 0.9.4. This rule was recorded before any model results.
 
 ## 0.9.8 Prediction-unit rules
 
-Not yet done.
+The same rules apply to Python, JavaScript, and TypeScript. A unit is an
+OUTERMOST function-like node that has a block/statement body and is not inside
+another unit:
+
+- Python `def` and `async def`.
+- JavaScript/TypeScript function declarations, function expressions, arrow
+  functions with block bodies, methods, constructors, getters/setters, and
+  object-literal methods. Class methods are units.
+- Anything nested inside a unit (inner defs, closures, callbacks) belongs to
+  that unit and is not a separate unit.
+- Python lambdas and expression-bodied arrow functions never form units.
+- TypeScript overload signatures and abstract/declare functions without
+  bodies are not units.
+- Module-level code is everything outside units (class bodies included, minus
+  their methods). It forms one module-level unit only if it qualifies by the
+  0.9.8 rule: control flow (`if`, `for`, `while`, `try`, `switch`) or a call
+  expression outside imports, decorators, and exports. Imports, constant
+  assignments, type declarations, and docstrings alone do not qualify. Unit
+  subtrees are excluded from module-level counts.
+
+Fixture case names (files come later): `python_main_guard`,
+`javascript_app_listen`, `api_key_assignment`, `import_only`,
+`declaration_only`, `type_only_typescript`, `docstring_only`,
+`python_nested_def`, `javascript_block_vs_expression_arrow`,
+`typescript_overload_impl`.
 
 ## 0.9.9 Feature-range sanity check
 
-Not yet done.
+Not yet done. Prototype plan: the extractor lives in `ml/`; its pins
+(`tree-sitter==0.26.0`, `tree-sitter-python==0.25.0`,
+`tree-sitter-javascript==0.25.0`, `tree-sitter-typescript==0.23.2`) go in a
+new `ml/requirements.txt`, not `backend/requirements.txt`. Development installs
+into `backend/.venv`; the backend gets Tree-sitter in Phase 2.
 
 ## 0.9.10 Feature schema
 

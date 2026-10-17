@@ -4,8 +4,8 @@
 
 | | |
 | --- | --- |
-| **Last updated** | 2026-10-14 |
-| **Updated by** | AI builder (tasks 0.9.3a-0.9.3b) |
+| **Last updated** | 2026-10-17 |
+| **Updated by** | AI builder (G0 decisions 0.9.4-0.9.8) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -14,9 +14,9 @@
 
 | | |
 | --- | --- |
-| **Overall status** | **In progress.** Phase 0 started. Tasks 0.1 through 0.9.3b complete. |
+| **Overall status** | **In progress.** Phase 0 started. Tasks 0.1 through 0.9.7 complete; 0.9.8 is in progress. |
 | **Current phase** | Phase 0 - Foundations (**in progress**) |
-| **Next task** | **0.9.4** Build the compatibility matrix (JM1 definitions apply to a **function**): JM1 definition -> Python implementation -> JavaScript implementation -> TypeScript implementation -> implementation method -> `use`/`drop`. Any approximation must be explicitly justified. |
+| **Next task** | **0.9.8** Define prediction-unit rules identically for Python, JavaScript, and TypeScript: what counts as a function/method, how nested functions, arrow functions, class methods, and anonymous callbacks are treated, and how top-level code is handled. Top-level code qualifies only if it contains control flow (`if`, `for`, `while`, `try`, `switch`) or a call expression outside imports, decorators, and exports. Imports, constant assignments, type declarations, and docstrings alone do not qualify. Add fixtures: Python `if __name__ == "__main__": main()` qualifies; JavaScript `app.listen(...)` qualifies; `API_KEY = "..."` does not; include import-only, declaration-only, type-only TypeScript, and docstring-only cases. |
 | **Blocked?** | No |
 | **Last human approval** | Planning documents reviewed on 2026-10-09 |
 
@@ -46,11 +46,11 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 
 | | |
 | --- | --- |
-| **Task ID** | 0.9.4 |
-| **Title** | Build the compatibility matrix (JM1 definitions apply to a **function**): JM1 definition -> Python implementation -> JavaScript implementation -> TypeScript implementation -> implementation method -> `use`/`drop`. Any approximation must be explicitly justified. |
+| **Task ID** | 0.9.8 |
+| **Title** | Define prediction-unit rules identically for Python, JavaScript, and TypeScript: what counts as a function/method, how nested functions, arrow functions, class methods, and anonymous callbacks are treated, and how top-level code is handled. Top-level code qualifies only if it contains control flow (`if`, `for`, `while`, `try`, `switch`) or a call expression outside imports, decorators, and exports. Imports, constant assignments, type declarations, and docstrings alone do not qualify. Add fixtures: Python `if __name__ == "__main__": main()` qualifies; JavaScript `app.listen(...)` qualifies; `API_KEY = "..."` does not; include import-only, declaration-only, type-only TypeScript, and docstring-only cases. |
 | **Status** | In progress |
-| **Plan** | Build the compatibility matrix using the JM1 definitions and document the Python, JavaScript, and TypeScript implementations. |
-| **Notes / problems** | Tasks 0.9 through 0.9.3b are committed as 78aafc3; the decision docs are committed as 30251f9. Stage A-B provisional matrix committed as b670a63. Gate G0 remains not passed. |
+| **Plan** | Add the approved fixture cases and validate the recorded unit boundaries in the 0.9.9 prototype. |
+| **Notes / problems** | Rules recorded; fixtures and prototype next. Gate G0 remains not passed. |
 
 ---
 
@@ -74,6 +74,10 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 | 0.9.3 | 2026-10-14 | awaiting human commit | Facts report identified five `?` rows and all five affected metric columns | Done; record dropping these rows before training, without coercion or imputation. |
 | 0.9.3a | 2026-10-14 | awaiting human commit | `--anomaly-evidence` reported the id=1 and zero-operator evidence | Decisions A and B recorded in `ml/README.md`; evidence in `ml/jm1_facts.py`. |
 | 0.9.3b | 2026-10-14 | awaiting human commit | `--final-set` reported 7,837 rows, 6,184 non-defective, 1,653 defective (21.09%) | Preprocessing order and final-set funnel recorded in `ml/README.md`; evidence in `ml/jm1_facts.py`. |
+| 0.9.4 | 2026-10-17 | b670a63 | Compatibility matrix recorded; no automated tests (G0 decision record) | Matrix remains provisional until 0.9.9 and 0.9.10. Correcting note: matrix committed as b670a63. |
+| 0.9.5 | 2026-10-17 | awaiting human commit | Prediction-unit decision recorded; no automated tests (G0 decision record) | Decision recorded in `ml/README.md`. |
+| 0.9.6 | 2026-10-17 | awaiting human commit | Metric-method decision recorded; no automated tests (G0 decision record) | Decision recorded in `ml/README.md`; prototype dependency plan is under 0.9.9. |
+| 0.9.7 | 2026-10-17 | awaiting human commit | Compatibility rule recorded; no automated tests (G0 decision record) | Evidence in `ml/README.md` and `ml/jm1_facts.py`. |
 
 ---
 
@@ -99,9 +103,9 @@ The full schedule is in `Phases.md` section 3. The AI must **ask** for each deci
 | Decision | Due | Status | Human's answer |
 | --- | --- | --- | --- |
 | Final JM1 feature subset | End of Phase 0 (G0) | Open | |
-| Exact metrics library, if any | End of Phase 0 (G0) | Open | |
+| Exact metrics library, if any | End of Phase 0 (G0) | Decided | No metrics library in production. RepoPulse owns one Tree-sitter extractor for Python, JavaScript, and TypeScript. Radon, Lizard, and typhonjs-escomplex are G0 cross-checks only; revisit only if the 0.9.9 prototype cannot meet D3. |
 | Rules for anomalous JM1 rows (`id=1`, `lOCode` > `loc`, `total_Op` = 0) | End of Phase 0 (G0) | Decided | Drop `id=1` (the only row with `lOCode` > `loc`) and all 1,332 rows with `total_Op` = 0 and `loc` >= 1. Order: drop the five `?` rows, drop `id=1`, drop the group, remove conflicting-label metric vectors and deduplicate, then split. |
-| Prediction-unit rules (what counts as a function/method; qualifying top-level code) | End of Phase 0 (G0) | Open | |
+| Prediction-unit rules (what counts as a function/method; qualifying top-level code) | End of Phase 0 (G0) | Decided | Same rules for all three languages: outermost function-like nodes with block/statement bodies are units; nested functions, closures, and callbacks belong to the outer unit; qualifying module-level code follows the recorded 0.9.8 rule. Full rules and fixture cases are in `ml/README.md`. |
 | **Python runtime and Docker base image** | Phase 0 (task 0.2) | **Decided** | Python 3.12; Docker base image `python:3.12-slim-bookworm`; local `.venv` created with `py -3.12`. Wheels verified 2026-10-10. Recorded in Architecture decision log. |
 | PostgreSQL driver and major version | Task 0.6 | Decided | psycopg[binary] (psycopg 3); SQLAlchemy URL scheme `postgresql+psycopg://`; PostgreSQL 17 (development), production host to match. |
 | GitHub API access after login (proposed: list at callback plus a server-side public-data credential) | Start of Phase 1 | Open (proposal awaiting confirmation) | |
@@ -155,6 +159,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-10-17 | Recorded human-confirmed G0 decisions for the matrix, prediction unit, metric method, compatibility rule, and unit boundaries. Gate G0 remains not passed. | 0.9.4-0.9.8 | Final JM1 feature subset; complete 0.9.9 and 0.9.10 validation. |
 | 2026-10-14 | Verified Stage A-B commit b670a63; zero-operand v formula fits 19/19 rows; Tree-sitter wheel dry run passed with no installs. Gate G0 remains not passed. | 0.9.4 Stage A-B | 0.9.5-0.9.9 G0 choices: metric method, compatibility rule, unit boundaries, and prototype setup. |
 | 2026-10-14 | Revised the provisional JM1 compatibility matrix with the approved decision-point rules, measured line relations, and zero-operand evidence. | 0.9.4 | Confirm zero-operand `v` and zero-vocabulary conventions. |
 | 2026-10-14 | Completed the JM1 definitions check and drafted the provisional compatibility matrix; awaiting human approval. No Tree-sitter packages installed. | 0.9.4 Stage A-B | Approve or revise the provisional compatibility matrix. |
