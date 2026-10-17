@@ -2055,7 +2055,6 @@ These are the remaining implementation choices. Confirmed product decisions are 
 
 | # | Decision | Why it matters |
 |---|---|---|
-| 1 | Final JM1 feature subset | Determines which metrics are actually shared by Python/JavaScript/TypeScript inference |
 | 3 | Coverage report precedence | Multiple supported formats may exist in one repository |
 | 4 | Risk-label thresholds | Must be justified using validation results |
 | 5 | ML success targets | Pre-committed F1 and ROC-AUC targets |
@@ -2370,6 +2369,7 @@ Metrics      Static Rules      Dependencies    Security
 | Verified wheel packages (Python 3.12) | fastapi 0.143.0, uvicorn 0.54.0, pydantic 2.14.0, SQLAlchemy 2.1.4, alembic 1.20.0, tree-sitter 0.25.2, tree-sitter-python 0.25.0, tree-sitter-javascript 0.25.0, tree-sitter-typescript 0.23.2, scikit-learn 1.9.1, psycopg 3.3.6 (binary) - all have prebuilt wheels for Python 3.12 on PyPI; confirmed via `pip install --dry-run --only-binary=:all:` on 2026-10-10. 0.26.0 crashed with the pinned grammar wheels in the G0 prototype (native access violation during tree walks on Windows); 0.25.2 passed; cp312 wheel verified 2026-10-17 |
 | JM1 metric method | No metrics library in production. RepoPulse owns one Tree-sitter extractor for Python, JavaScript, and TypeScript. Radon, Lizard, and typhonjs-escomplex may be used only as G0 cross-checks, never as production sources. Revisit only if the 0.9.9 prototype cannot meet the compatibility rule. |
 | JM1 compatibility rule | Admit a feature to the serving schema only if its definition is verified by the data check or fixed by an approved convention, it is implemented consistently across all three languages with each approximation justified in the matrix (consistently, not identically), and its serving range stays within a stable range of JM1 (0.9.9). Derived fields use only admitted features. Record before model results. |
+| JM1 feature subset | Use `loc`, `v(g)`, `uniq_Op`, `uniq_Opnd`, `total_Op`, `total_Opnd`, `n`, `v`, `l`, `d`, `i`, `b`, in that order. Drop `ev(g)`, `iv(g)`, and `branchCount` as not verifiable or language-neutral (`branchCount = v(g)-1` had zero exact matches); drop `e` and `t` because JM1/serving median ratios exceed 10 in JavaScript (10.535) and TypeScript (11.899); drop the four line-class metrics for simplicity because their individual definitions are unverified, aggregate fit is about 80%, and they are style-dependent. See `ml/README.md` 0.9.10. |
 | Prediction-unit rules | Apply the same rules to Python, JavaScript, and TypeScript. Units are outermost function-like nodes with block/statement bodies; nested functions, closures, and callbacks belong to their containing unit. Python lambdas and expression-bodied arrows are not units; TypeScript overload signatures and bodyless abstract/declare functions are not units. Qualifying module-level code is defined by control flow or a call expression outside imports, decorators, and exports; unit subtrees are excluded. See `ml/README.md` 0.9.8 for the complete rules and fixture cases. |
 
 # 47. Final Architecture Statement

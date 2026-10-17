@@ -582,7 +582,6 @@ Only implementation details that were not resolved by the current decisions rema
 
 | Area | Remaining decision |
 |---|---|
-| Final JM1 feature subset | Which JM1 metrics survive the cross-language compatibility rule for Python, JavaScript, and TypeScript |
 | Coverage report precedence | Which report wins if multiple supported coverage formats are present |
 | Risk-label thresholds | Exact LOW/MEDIUM/HIGH thresholds after model evaluation |
 | ML success targets | Pre-committed F1 and ROC-AUC targets |
@@ -665,6 +664,7 @@ Decisions confirmed by the author while preparing this PRD:
 | 34 | JM1 metric method | No metrics library in production. RepoPulse owns one Tree-sitter extractor for Python, JavaScript, and TypeScript. Radon, Lizard, and typhonjs-escomplex may be used only as G0 cross-checks, never as production sources. Revisit only if the 0.9.9 prototype cannot meet the compatibility rule (0.9.7). |
 | 35 | JM1 compatibility rule | A feature enters the serving schema only if its definition is verified by the data check or fixed by an approved convention; it can be implemented consistently across Python, JavaScript, and TypeScript with every approximation justified in the matrix (consistently, not identically); and its serving range stays within a stable range of JM1 (0.9.9). Derived fields use only admitted features. Record before model results. |
 | 36 | Prediction-unit rules | The same rules apply to all three languages. Units are outermost function-like nodes with block/statement bodies; nested functions, closures, and callbacks belong to their containing unit. Python lambdas and expression-bodied arrows are not units; TypeScript overload signatures and bodyless abstract/declare functions are not units. Qualifying module-level code is defined by control flow or a call expression outside imports, decorators, and exports; unit subtrees are excluded. See `ml/README.md` 0.9.8 for the complete rules and fixture cases. |
+| 37 | JM1 feature subset | Use `loc`, `v(g)`, `uniq_Op`, `uniq_Opnd`, `total_Op`, `total_Opnd`, `n`, `v`, `l`, `d`, `i`, `b`, in that order. Drop `ev(g)`, `iv(g)`, and `branchCount` because they are not verifiable or language-neutral (`branchCount = v(g)-1` had zero exact matches); drop `e` and `t` because their JM1/serving median ratios exceed 10 in JavaScript (10.535) and TypeScript (11.899); drop the four line-class metrics for simplicity because individual definitions are unverified, aggregate fit is about 80%, and the classes are style-dependent. |
 
 ## 18. Delivery Phases (no dates)
 

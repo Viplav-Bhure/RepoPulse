@@ -112,7 +112,6 @@ Deadlines below are the latest phase boundary by which the decision must be made
 
 | Decision | Settle by | Why then |
 |---|---|---|
-| Final JM1 feature subset | End of Phase 0 (G0) | Phase 2 must compute exactly the features used by training |
 | GitHub API access after login (proposed: list at callback plus a server-side public-data credential) | Start of Phase 1 | Without a stored token, listing and the size pre-check need a defined path |
 | Test-file handling in default summaries and ML | Phase 2 (summaries), Phase 4 (ML) | Keeps test code from distorting dashboards |
 | Failed-run retention | Phase 2 | Completes the retention policy |
