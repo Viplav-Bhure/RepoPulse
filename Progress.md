@@ -5,7 +5,7 @@
 | | |
 | --- | --- |
 | **Last updated** | 2026-10-17 |
-| **Updated by** | AI builder (G0 stage 3a, task 0.9.9 results) |
+| **Updated by** | AI builder (G0 stage 3b, task 0.9.9 results) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -14,7 +14,7 @@
 
 | | |
 | --- | --- |
-| **Overall status** | **In progress.** Phase 0 started. Task 0.9.9 results are recorded; final JM1 feature use/drop decisions remain pending. |
+| **Overall status** | **In progress.** G0 stage 3b is done and awaiting review; final JM1 feature use/drop decisions remain pending. |
 | **Current phase** | Phase 0 - Foundations (**in progress**) |
 | **Next task** | **0.9.10** Produce the feature schema after the human decides the final JM1 feature subset; do not create it before then. |
 | **Blocked?** | Yes - final JM1 feature use/drop decision is pending. |
@@ -48,9 +48,9 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 | --- | --- |
 | **Task ID** | 0.9.9 |
 | **Title** | Run the feature-range sanity check on real repositories and compare serving-unit feature ranges with the final JM1 set. |
-| **Status** | Results recorded; use/drop decisions pending (0.9.10) |
-| **Plan** | Compare all 18 USE features against the 7,837-row JM1 final set for RepoPulse, `repo-1`, `repo-2`, and their combined units. |
-| **Notes / problems** | Core 0.26.0 crashed in 10/10 baseline runs; core 0.25.2 passed 10/10 and three aggregate runs matched. No feature schema or use/drop decisions recorded. Gate G0 remains not passed. |
+| **Status** | G0 stage 3b done, awaiting review |
+| **Plan** | Compare all 18 USE features against the 7,837-row JM1 final set for RepoPulse, `repo-1` through `repo-4`, and their combined units. |
+| **Notes / problems** | Three five-set runs had identical stdout; only `e` and `t` flagged for JavaScript and TypeScript. No feature schema or use/drop decisions recorded. Gate G0 remains not passed. |
 
 ---
 
@@ -160,6 +160,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-10-17 | G0 stage 3b aggregates added for five labeled sets, including per-language flags, counts, skipped files, parse errors, and elapsed time; three stdout runs matched. Feature subset remains a proposal; awaiting review. | 0.9.9 | Final JM1 feature use/drop decision before 0.9.10. |
 | 2026-10-17 | G0 stage 3a results recorded for three labeled repositories plus combined units. Core 0.26.0 crashed 10/10 baseline runs; 0.25.2 passed 10/10, pip check and 27 ML tests passed, and three full aggregate outputs matched. | 0.9.9 | Final JM1 feature use/drop decision before 0.9.10; update Architecture section 46 verified-wheel row. |
 | 2026-10-17 | Started G0 stage 3a; final-set output remained byte-identical, 27 ML tests and Ruff checks passed, but RepoPulse range extraction hit a native Tree-sitter failure. No aggregate results recorded. | 0.9.9 | Continue extractor investigation; use/drop decisions remain pending. |
 | 2026-10-17 | G0 stage 2 JavaScript, JSX, TypeScript, and TSX extraction implemented; pytest 27 passed and Ruff checks passed on maintained ML Python files. JM1 checksum unchanged; awaiting review. | 0.9.8 stage 2 | Stage 2 review. |

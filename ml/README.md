@@ -270,23 +270,25 @@ an operand; the same function written as a declaration counts the keyword
 
 Status: results recorded; use/drop decisions pending (0.9.10).
 
-Method: run the G0 extractor over RepoPulse, `repo-1`, and `repo-2`, excluding
-fixtures from RepoPulse. Collect all 18 USE features from every function/method
-and qualifying module-level unit. The JM1 reference uses the same final-set
-rules as `jm1_facts.py --final-set` and contains 7,837 rows. Median is the
-standard median; p95 is nearest-rank (`ceil(0.95 * n)`). For each feature,
-report serving count, median, p95, maximum, and the percentage strictly above
-the JM1 maximum, alongside the JM1 median, p95, and maximum.
+Method: run the G0 extractor over RepoPulse and four labeled local repositories,
+excluding fixtures from RepoPulse. Collect all 18 USE features from every
+function/method and qualifying module-level unit. The JM1 reference uses the
+same final-set rules as `jm1_facts.py --final-set` and contains 7,837 rows.
+Median is the standard median; p95 is nearest-rank (`ceil(0.95 * n)`). For each
+feature, report serving count, median, p95, maximum, and the percentage
+strictly above the JM1 maximum, alongside the JM1 median, p95, and maximum.
 
 Flag `range>5%` only when more than 5% of serving units exceed the JM1 maximum.
 Flag `median>10x` when the larger nonzero median is strictly more than ten times
 the smaller; if exactly one median is zero, flag it, and if both are zero, do
 not flag. The checker persists only aggregates, never per-unit rows.
 
-Unit totals by language (Python/JavaScript/TypeScript) and units with
-`uniq_Opnd = 0`: RepoPulse 74 (69/1/4), 0; `repo-1` 7 (7/0/0), 0; `repo-2` 22
-(22/0/0), 0; Combined 103 (98/1/4), 0. All percentages above JM1 maximum were
-0%. The three repeated full runs produced identical aggregate output.
+Stage 3a snapshot, before adding `repo-3` and `repo-4`: unit totals by language
+(Python/JavaScript/TypeScript) and units with `uniq_Opnd = 0`: RepoPulse 74
+(69/1/4), 0; `repo-1` 7 (7/0/0), 0; `repo-2` 22 (22/0/0), 0; Combined 103
+(98/1/4), 0. The three repeated full runs produced identical aggregate output.
+
+Stage 3a aggregate table:
 
 | Feature | JM1 median/p95/max | RepoPulse n; median/p95/max; flags | repo-1 n; median/p95/max; flags | repo-2 n; median/p95/max; flags | Combined n; median/p95/max; flags |
 |---|---|---|---|---|---|
@@ -308,6 +310,58 @@ Unit totals by language (Python/JavaScript/TypeScript) and units with
 | `uniq_Opnd` | 15/62/1026 | 74; 18/103/216; - | 7; 37/147/147; - | 22; 32/119/267; - | 103; 21/119/267; - |
 | `total_Op` | 45/308/5420 | 74; 16/120/285; - | 7; 20/109/109; - | 22; 27/131/388; - | 103; 19/121/388; - |
 | `total_Opnd` | 31/218/3021 | 74; 27.5/225/610; - | 7; 51/302/302; - | 22; 47.5/264/701; - | 103; 37/253/701; - |
+
+### Stage 3b: Five-Set and Per-Language Aggregates
+
+The labels below are the only repository identifiers recorded. Counts are
+function/method and qualifying module-level units. `Skipped` counts supported
+source candidates excluded by discovery; parse errors count files and error or
+missing Tree-sitter nodes.
+
+| Label | Python/JavaScript/TypeScript units | Total units | Files discovered | Skipped | Parse-error files/nodes |
+|---|---:|---:|---:|---:|---:|
+| RepoPulse | 73/1/4 | 78 | 21 | 1 | 0/0 |
+| repo-1 | 7/0/0 | 7 | 2 | 0 | 0/0 |
+| repo-2 | 22/0/0 | 22 | 5 | 0 | 0/0 |
+| repo-3 | 0/470/0 | 470 | 141 | 0 | 0/0 |
+| repo-4 | 0/87/389 | 476 | 262 | 4 | 3/35 |
+| Combined | 102/558/393 | 1,053 | 431 | 5 | 3/35 |
+
+Per-language aggregates pool units across all five labels. Cells show serving
+count; serving median/p95/maximum; percentage above the JM1 maximum; and flags.
+Flags use the same strict `range>5%` and `median>10x` rules above.
+
+| Feature | JM1 median/p95/max | Python n; med/p95/max; >max%; flags | JavaScript n; med/p95/max; >max%; flags | TypeScript n; med/p95/max; >max%; flags |
+|---|---|---|---|---|
+| `loc` | 26/150/3442 | 102; 13.5/110/305; 0%; - | 558; 10/168/1198; 0%; - | 393; 11/232/1945; 0%; - |
+| `v(g)` | 4/22/470 | 102; 2.5/19/74; 0%; - | 558; 1/6/23; 0%; - | 393; 1/9/173; 0%; - |
+| `n` | 76/526/8441 | 102; 62/376/1089; 0%; - | 558; 29/377/3496; 0%; - | 393; 27/649/4765; 0%; - |
+| `v` | 370.17/3327.01/80843.1 | 102; 301.671/2458.78/8924.09; 0%; - | 558; 120.928/2065.81/29502; 0%; - | 393; 112.37/4291.03/41424.5; 0%; - |
+| `l` | 0.08/0.33/1 | 102; 0.16456/0.555556/1; 0%; - | 558; 0.26748/0.888889/1.5; 0.179211%; - | 393; 0.253968/1/2; 1.78117%; - |
+| `d` | 13.02/49.62/418.2 | 102; 6.07698/24.8708/36.713; 0%; - | 558; 3.73864/17.9027/63.7038; 0%; - | 393; 3.9375/40.8944/131.48; 0%; - |
+| `i` | 28.15/93.93/569.78 | 102; 38.8756/178.092/397.533; 0%; - | 558; 35.4339/207.562/748.45; 0.179211%; - | 393; 27.3482/131.183/368.041; 0%; - |
+| `e` | 4864.96/144343/3.10798e+07 | 102; 1569.53/59069.4/304589; 0%; - | 558; 461.79/33511.8/1.60151e+06; 0%; median>10x | 393; 408.863/175332/5.4465e+06; 0%; median>10x |
+| `b` | 0.12/1.11/26.95 | 102; 0.100557/0.819593/2.9747; 0%; - | 558; 0.0403093/0.688604/9.83401; 0%; - | 393; 0.0374567/1.43034/13.8082; 0%; - |
+| `t` | 270.28/8019.06/1.72665e+06 | 102; 87.196/3281.63/16921.6; 0%; - | 558; 25.655/1861.77/88972.6; 0%; median>10x | 393; 22.7146/9740.68/302583; 0%; median>10x |
+| `lOCode` | 19/113/2824 | 102; 11.5/85/294; 0%; - | 558; 7/117/922; 0%; - | 393; 11/188/1559; 0%; - |
+| `lOComment` | 0/18/344 | 102; 0/13/30; 0%; - | 558; 0/9/365; 0.179211%; - | 393; 0/14/178; 0%; - |
+| `lOBlank` | 3/21/447 | 102; 1/21/51; 0%; - | 558; 2/33/273; 0%; - | 393; 1/38/289; 0%; - |
+| `locCodeAndComment` | 0/3/108 | 102; 0/1/10; 0%; - | 558; 0/0/3; 0%; - | 393; 0/0/20; 0%; - |
+| `uniq_Op` | 13/25/411 | 102; 8/18/26; 0%; - | 558; 4/13/21; 0%; - | 393; 5/19/33; 0%; - |
+| `uniq_Opnd` | 15/62/1026 | 102; 23/119/267; 0%; - | 558; 12/59/332; 0%; - | 393; 12/89/384; 0%; - |
+| `total_Op` | 45/308/5420 | 102; 20/121/388; 0%; - | 558; 11/123/1093; 0%; - | 393; 10/247/1729; 0%; - |
+| `total_Opnd` | 31/218/3021 | 102; 40/253/701; 0%; - | 558; 18/254/2403; 0%; - | 393; 18/410/3036; 0.254453%; - |
+
+Across three runs, stdout was identical; exit codes were 0/0/0. Elapsed times
+were 21.280, 2.754, and 2.807 seconds. `uniq_Opnd = 0` occurred in no serving
+unit. No repository paths, names beyond the labels, or source snippets are
+recorded.
+
+Limitations: pooled sample sizes are uneven: Python has 102 units versus 558
+JavaScript and 393 TypeScript units. `repo-1` and `repo-2` contribute only 7
+and 22 units, respectively, both Python-only. These convenience samples do not
+establish population-level feature stability; the flags are range diagnostics,
+not proof of cross-language equivalence.
 
 The aggregate ranges do not determine feature admission. No use/drop decisions
 are made here; those remain pending for 0.9.10. The prototype pins

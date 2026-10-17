@@ -12,6 +12,7 @@ from ml.g0_extractor import (
     find_units,
     module_level_qualifies,
 )
+from ml.g0_range_check import _serving_values
 
 FIXTURE_ROOT = Path(__file__).parent.parent / "fixtures" / "g0"
 
@@ -197,6 +198,43 @@ def test_discovery_uses_extensions_skip_list_and_binary_detection(
         "source.js",
         "source.py",
     ]
+
+
+def test_range_check_groups_typescript_and_counts_skips_and_parse_errors(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "source.py").write_text(
+        "def python_unit():\n    return 1\n", encoding="utf-8"
+    )
+    (tmp_path / "broken.py").write_text(
+        "def broken(:\n    return 1\n", encoding="utf-8"
+    )
+    (tmp_path / "source.js").write_text(
+        "function javascriptUnit() { return 1; }\n", encoding="utf-8"
+    )
+    (tmp_path / "view.tsx").write_text(
+        "function View() { return <div />; }\n", encoding="utf-8"
+    )
+    (tmp_path / "ignored.min.js").write_text("minified()\n", encoding="utf-8")
+    (tmp_path / "types.d.ts").write_text(
+        "declare interface Shape {}\n", encoding="utf-8"
+    )
+    (tmp_path / "binary.py").write_bytes(b"\0not source")
+    ignored = tmp_path / next(iter(SKIP_DIRECTORIES))
+    ignored.mkdir()
+    (ignored / "hidden.py").write_text("hidden = True\n", encoding="utf-8")
+
+    values, languages, _, files, language_values = _serving_values(tmp_path, ())
+
+    assert len(values["loc"]) >= 3
+    assert languages["python"] >= 1
+    assert languages["javascript"] == 1
+    assert languages["typescript"] == 1
+    assert len(language_values["typescript"]["loc"]) == 1
+    assert files["discovered"] == 4
+    assert files["skipped"] == 3
+    assert files["parse_error_files"] == 1
+    assert files["parse_error_nodes"] > 0
 
 
 def test_zero_vocabulary_uses_zero_volume_and_zero_derived_ratios() -> None:
