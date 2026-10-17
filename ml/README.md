@@ -200,7 +200,7 @@ No metrics library is used in production. RepoPulse owns one Tree-sitter
 extractor for Python, JavaScript, and TypeScript. Radon, Lizard, and
 typhonjs-escomplex may be used only as cross-checks in G0, never as production
 sources. Revisit this decision only if the 0.9.9 prototype extractor cannot
-meet D3.
+meet the compatibility rule (0.9.7).
 
 ## 0.9.7 Compatibility rule
 
