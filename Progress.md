@@ -5,7 +5,7 @@
 | | |
 | --- | --- |
 | **Last updated** | 2026-10-17 |
-| **Updated by** | AI builder (G0 stage 3b, task 0.9.9 results) |
+| **Updated by** | AI builder (final G0 report and Phase 0 exit review) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -14,10 +14,10 @@
 
 | | |
 | --- | --- |
-| **Overall status** | **In progress.** G0 stage 3b is done and awaiting review; final JM1 feature use/drop decisions remain pending. |
-| **Current phase** | Phase 0 - Foundations (**in progress**) |
-| **Next task** | **0.9.10** Produce the feature schema after the human decides the final JM1 feature subset; do not create it before then. |
-| **Blocked?** | Yes - final JM1 feature use/drop decision is pending. |
+| **Overall status** | **Awaiting approval.** G0 report and draft feature schema are ready for the Phase 0 exit review. |
+| **Current phase** | Phase 0 - Foundations (**awaiting approval**) |
+| **Next task** | Phase 0 exit review by the human |
+| **Blocked?** | No; waiting for the human exit review and commit. |
 | **Last human approval** | Planning documents reviewed on 2026-10-09 |
 
 ---
@@ -29,7 +29,7 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 
 | Phase | Name | Status | Started | Finished | Tag |
 | --- | --- | --- | --- | --- | --- |
-| 0 | Foundations (includes **Gate G0**: ML feasibility) | In progress | 2026-10-10 | - | - |
+| 0 | Foundations (includes **Gate G0**: ML feasibility) | Awaiting approval | 2026-10-10 | - | - |
 | 1 | Identity and Repositories | Not started | - | - | `v0.1` |
 | 2 | Analysis Core | Not started | - | - | `v0.2` |
 | 3 | Repository Context | Not started | - | - | `v0.3` |
@@ -38,7 +38,7 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 | 6 | Frontend | Not started | - | - | `v0.6` |
 | 7 | Hardening and Release | Not started | - | - | `v1.0` |
 
-**Gate G0** (end of Phase 0): `Not passed`. Phase 2 metric work and all of Phase 4 must not start until it is passed.
+**Gate G0** (end of Phase 0): `Awaiting approval`. Phase 2 metric work and all of Phase 4 must not start until the human approves the gate.
 
 ---
 
@@ -46,11 +46,11 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 
 | | |
 | --- | --- |
-| **Task ID** | 0.9.9 |
-| **Title** | Run the feature-range sanity check on real repositories and compare serving-unit feature ranges with the final JM1 set. |
-| **Status** | G0 stage 3b done, awaiting review |
-| **Plan** | Compare all 18 USE features against the 7,837-row JM1 final set for RepoPulse, `repo-1` through `repo-4`, and their combined units. |
-| **Notes / problems** | Three five-set runs had identical stdout; only `e` and `t` flagged for JavaScript and TypeScript. No feature schema or use/drop decisions recorded. Gate G0 remains not passed. |
+| **Task ID** | Phase 0 exit review |
+| **Title** | Phase 0 exit review by the human |
+| **Status** | Awaiting approval |
+| **Plan** | 1. Compose: task 0.7 recorded all three services healthy and `/health` plus the frontend responding; human re-runs `docker compose up` and verifies all three are healthy and both endpoints respond. 2. CI: task 0.8 was green on 6aca054; human verifies CI is green on latest `main` commit 0f765c0. 3. G0 report: `ml/README.md` 0.9.11 references provenance, drop-five preprocessing, final matrix, per-function features aggregated to a file score, unit rules, Tree-sitter method/no production library, and the pre-agreed rule; human reviews those contents. 4. Schema: `backend/app/ml/artifacts/feature_schema.json` exists as a draft; human reviews the draft. |
+| **Notes / problems** | Awaiting the human exit review and commit. Do not mark Phase 0 Done or Gate G0 passed until approved. Next step: Phase 0 exit review by the human. |
 
 ---
 
@@ -74,10 +74,14 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 | 0.9.3 | 2026-10-14 | awaiting human commit | Facts report identified five `?` rows and all five affected metric columns | Done; record dropping these rows before training, without coercion or imputation. |
 | 0.9.3a | 2026-10-14 | awaiting human commit | `--anomaly-evidence` reported the id=1 and zero-operator evidence | Decisions A and B recorded in `ml/README.md`; evidence in `ml/jm1_facts.py`. |
 | 0.9.3b | 2026-10-14 | awaiting human commit | `--final-set` reported 7,837 rows, 6,184 non-defective, 1,653 defective (21.09%) | Preprocessing order and final-set funnel recorded in `ml/README.md`; evidence in `ml/jm1_facts.py`. |
-| 0.9.4 | 2026-10-17 | b670a63 | Compatibility matrix recorded; no automated tests (G0 decision record) | Matrix remains provisional until 0.9.9 and 0.9.10. Correcting note: matrix committed as b670a63. |
+| 0.9.4 | 2026-10-17 | b670a63 | Compatibility matrix recorded; no automated tests (G0 decision record) | Final use/drop classifications recorded in 0.9.10. Correcting note: matrix committed as b670a63. |
 | 0.9.5 | 2026-10-17 | awaiting human commit | Prediction-unit decision recorded; no automated tests (G0 decision record) | Decision recorded in `ml/README.md`. |
 | 0.9.6 | 2026-10-17 | awaiting human commit | Metric-method decision recorded; no automated tests (G0 decision record) | Decision recorded in `ml/README.md`; prototype dependency plan is under 0.9.9. |
 | 0.9.7 | 2026-10-17 | awaiting human commit | Compatibility rule recorded; no automated tests (G0 decision record) | Evidence in `ml/README.md` and `ml/jm1_facts.py`. |
+| 0.9.8 | 2026-10-17 | awaiting human commit | `pytest ml\tests`: 29 passed, including 13 G0 fixtures and the schema contract test. | Evidence: `ml/README.md`, fixtures, and extractor scripts. Awaiting human commit. |
+| 0.9.9 | 2026-10-17 | awaiting human commit | Five-set per-language aggregates recorded; three full runs had identical stdout; median-ratio command output recorded. | Evidence: `ml/README.md` and range-check scripts. Correcting note: Stage 3b was committed as e401f11. Awaiting human commit for final G0 decision/report changes. |
+| 0.9.10 | 2026-10-17 | awaiting human commit | Schema contract covered by `pytest ml\tests`: 29 passed. | Evidence: `ml/README.md`, `backend/app/ml/artifacts/feature_schema.json`, fixtures, and extractor scripts. Awaiting human commit. |
+| 0.9.11 | 2026-10-17 | awaiting human commit | G0 report completed; median ratios computed from the aggregate table values. | Evidence: `ml/README.md`, fixtures, scripts, and draft schema. Awaiting human commit. |
 
 ---
 
@@ -102,7 +106,7 @@ The full schedule is in `Phases.md` section 3. The AI must **ask** for each deci
 
 | Decision | Due | Status | Human's answer |
 | --- | --- | --- | --- |
-| Final JM1 feature subset | End of Phase 0 (G0) | Open | |
+| Final JM1 feature subset | End of Phase 0 (G0) | Decided | Use `loc`, `v(g)`, `uniq_Op`, `uniq_Opnd`, `total_Op`, `total_Opnd`, `n`, `v`, `l`, `d`, `i`, `b`. Drop `ev(g)`, `iv(g)`, and `branchCount` as not verifiable/language-neutral; drop `e` and `t` by the median range rule; drop the four line-class fields for simplicity because individual definitions are unverified, aggregate fit is about 80%, and they are style-dependent. Recorded in `ml/README.md` 0.9.10. |
 | Exact metrics library, if any | End of Phase 0 (G0) | Decided | No metrics library in production. RepoPulse owns one Tree-sitter extractor for Python, JavaScript, and TypeScript. Radon, Lizard, and typhonjs-escomplex are G0 cross-checks only; revisit only if the 0.9.9 prototype cannot meet the compatibility rule (0.9.7). |
 | Rules for anomalous JM1 rows (`id=1`, `lOCode` > `loc`, `total_Op` = 0) | End of Phase 0 (G0) | Decided | Drop `id=1` (the only row with `lOCode` > `loc`) and all 1,332 rows with `total_Op` = 0 and `loc` >= 1. Order: drop the five `?` rows, drop `id=1`, drop the group, remove conflicting-label metric vectors and deduplicate, then split. |
 | Prediction-unit rules (what counts as a function/method; qualifying top-level code) | End of Phase 0 (G0) | Decided | Same rules for all three languages: outermost function-like nodes with block/statement bodies are units; nested functions, closures, and callbacks belong to the outer unit; qualifying module-level code follows the recorded 0.9.8 rule. Full rules and fixture cases are in `ml/README.md`. |
@@ -160,6 +164,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-10-17 | Final JM1 feature subset recorded; draft schema and G0 report added; Phase 0 set to Awaiting approval. Schema tests pass; awaiting human exit review and commit. | 0.9.8-0.9.11 | Human re-verification of the four Phase 0 exit criteria. |
 | 2026-10-17 | G0 stage 3b aggregates added for five labeled sets, including per-language flags, counts, skipped files, parse errors, and elapsed time; three stdout runs matched. Feature subset remains a proposal; awaiting review. | 0.9.9 | Final JM1 feature use/drop decision before 0.9.10. |
 | 2026-10-17 | G0 stage 3a results recorded for three labeled repositories plus combined units. Core 0.26.0 crashed 10/10 baseline runs; 0.25.2 passed 10/10, pip check and 27 ML tests passed, and three full aggregate outputs matched. | 0.9.9 | Final JM1 feature use/drop decision before 0.9.10; update Architecture section 46 verified-wheel row. |
 | 2026-10-17 | Started G0 stage 3a; final-set output remained byte-identical, 27 ML tests and Ruff checks passed, but RepoPulse range extraction hit a native Tree-sitter failure. No aggregate results recorded. | 0.9.9 | Continue extractor investigation; use/drop decisions remain pending. |

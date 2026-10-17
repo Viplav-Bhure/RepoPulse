@@ -1,0 +1,168 @@
+{
+  "schema_status": "draft",
+  "dataset": "JM1",
+  "dataset_sha256": "1ec66eb3568ae8bb4e2709cf0bd28b11db41c7c0ae771325c0952997e35e4dff",
+  "features": [
+    {
+      "name": "loc",
+      "order": 1,
+      "definition": "Total physical lines in the unit span, including the signature.",
+      "units": "physical lines",
+      "language_notes": {
+        "python": "Count both lines in def f(): followed by an assignment.",
+        "javascript": "Count all three lines in a function declaration with one statement.",
+        "typescript": "Count all three lines in a typed function declaration with one return statement."
+      },
+      "source_dataset_column": "loc",
+      "implementation_method": "Count source lines over the selected unit span; unit selection follows 0.9.8."
+    },
+    {
+      "name": "v(g)",
+      "order": 2,
+      "definition": "Cyclomatic complexity: 1 + decision points.",
+      "units": "complexity points",
+      "language_notes": {
+        "python": "Count if/elif, loops, non-default match cases, except, conditional expressions, and/or, and comprehension for/if decision nodes.",
+        "javascript": "Count if, loops, non-default switch cases, catch, ternary, and short-circuit &&, ||, ??, &&=, ||=, ??=; optional chaining is not a decision point.",
+        "typescript": "Count if, loops, non-default switch cases, catch, ternary, and short-circuit &&, ||, ??, &&=, ||=, ??=; optional chaining is not a decision point."
+      },
+      "source_dataset_column": "v(g)",
+      "implementation_method": "Tree-sitter decision-node and token walk under the 0.9.4 rules."
+    },
+    {
+      "name": "uniq_Op",
+      "order": 3,
+      "definition": "Number of distinct operator tokens under the approved token convention.",
+      "units": "distinct operators",
+      "language_notes": {
+        "python": "Count distinct operator lexemes, including keyword operators; comments are excluded.",
+        "javascript": "Count distinct operator lexemes, including keyword operators; comments are excluded.",
+        "typescript": "Count distinct operator lexemes, including keyword operators; comments and type-only syntax are excluded."
+      },
+      "source_dataset_column": "uniq_Op",
+      "implementation_method": "Tree-sitter token walk; count distinct operator lexemes."
+    },
+    {
+      "name": "uniq_Opnd",
+      "order": 4,
+      "definition": "Number of distinct non-keyword identifiers and literals.",
+      "units": "distinct operands",
+      "language_notes": {
+        "python": "Count distinct non-keyword identifier and literal lexemes; docstring strings are excluded.",
+        "javascript": "Count distinct non-keyword identifier and literal lexemes; JSX tag and attribute names are operands, JSX text is ignored.",
+        "typescript": "Count distinct non-keyword identifier and literal lexemes; JSX tag and attribute names are operands, JSX text and type-only syntax are excluded."
+      },
+      "source_dataset_column": "uniq_Opnd",
+      "implementation_method": "Tree-sitter token walk; count distinct operand lexemes."
+    },
+    {
+      "name": "total_Op",
+      "order": 5,
+      "definition": "Operator-token occurrences, including keywords.",
+      "units": "operator occurrences",
+      "language_notes": {
+        "python": "Count operator-token occurrences; comments are excluded.",
+        "javascript": "Count operator-token occurrences; comments are excluded.",
+        "typescript": "Count operator-token occurrences; comments and type-only syntax are excluded."
+      },
+      "source_dataset_column": "total_Op",
+      "implementation_method": "Tree-sitter token walk; count operator occurrences."
+    },
+    {
+      "name": "total_Opnd",
+      "order": 6,
+      "definition": "Non-keyword identifier and literal occurrences.",
+      "units": "operand occurrences",
+      "language_notes": {
+        "python": "Count non-keyword identifier and literal occurrences; docstring strings are excluded.",
+        "javascript": "Count non-keyword identifier and literal occurrences; JSX tag and attribute names count, JSX text is ignored.",
+        "typescript": "Count non-keyword identifier and literal occurrences; JSX tag and attribute names count, JSX text and type-only syntax are excluded."
+      },
+      "source_dataset_column": "total_Opnd",
+      "implementation_method": "Tree-sitter token walk; count operand occurrences."
+    },
+    {
+      "name": "n",
+      "order": 7,
+      "definition": "Halstead length: n = total_Op + total_Opnd.",
+      "units": "operator and operand occurrences",
+      "language_notes": {
+        "python": "Derived from total_Op and total_Opnd; no language-specific extraction.",
+        "javascript": "Derived from total_Op and total_Opnd; no language-specific extraction.",
+        "typescript": "Derived from total_Op and total_Opnd; no language-specific extraction."
+      },
+      "source_dataset_column": "derived from total_Op + total_Opnd (n = total_Op + total_Opnd)",
+      "implementation_method": "Derived from the two total-count base features."
+    },
+    {
+      "name": "v",
+      "order": 8,
+      "definition": "Halstead volume: v = N * log2(vocabulary), where N = total_Op + total_Opnd and vocabulary = uniq_Op + uniq_Opnd.",
+      "units": "Halstead volume",
+      "language_notes": {
+        "python": "Derived from the four operator and operand counts; no language-specific extraction.",
+        "javascript": "Derived from the four operator and operand counts; no language-specific extraction.",
+        "typescript": "Derived from the four operator and operand counts; no language-specific extraction."
+      },
+      "source_dataset_column": "derived from total_Op, total_Opnd, uniq_Op, uniq_Opnd (v = N * log2(vocabulary))",
+      "implementation_method": "Derived using the recorded Halstead volume formula."
+    },
+    {
+      "name": "l",
+      "order": 9,
+      "definition": "Halstead program level: l = 1 / d.",
+      "units": "Halstead level",
+      "language_notes": {
+        "python": "Derived from d; no language-specific extraction.",
+        "javascript": "Derived from d; no language-specific extraction.",
+        "typescript": "Derived from d; no language-specific extraction."
+      },
+      "source_dataset_column": "derived from d (l = 1 / d)",
+      "implementation_method": "Derived from difficulty using the recorded formula."
+    },
+    {
+      "name": "d",
+      "order": 10,
+      "definition": "Halstead difficulty: d = (uniq_Op / 2) * (total_Opnd / uniq_Opnd).",
+      "units": "Halstead difficulty",
+      "language_notes": {
+        "python": "Derived from uniq_Op and total_Opnd / uniq_Opnd; no language-specific extraction.",
+        "javascript": "Derived from uniq_Op and total_Opnd / uniq_Opnd; no language-specific extraction.",
+        "typescript": "Derived from uniq_Op and total_Opnd / uniq_Opnd; no language-specific extraction."
+      },
+      "source_dataset_column": "derived from uniq_Op, total_Opnd, uniq_Opnd (d = (uniq_Op / 2) * (total_Opnd / uniq_Opnd))",
+      "implementation_method": "Derived using the recorded Halstead difficulty formula."
+    },
+    {
+      "name": "i",
+      "order": 11,
+      "definition": "Halstead intelligence: i = v / d.",
+      "units": "Halstead intelligence",
+      "language_notes": {
+        "python": "Derived from v and d; no language-specific extraction.",
+        "javascript": "Derived from v and d; no language-specific extraction.",
+        "typescript": "Derived from v and d; no language-specific extraction."
+      },
+      "source_dataset_column": "derived from v and d (i = v / d)",
+      "implementation_method": "Derived using the recorded Halstead intelligence formula."
+    },
+    {
+      "name": "b",
+      "order": 12,
+      "definition": "Estimated bugs: b = v / 3000.",
+      "units": "estimated delivered bugs (dimensionless)",
+      "language_notes": {
+        "python": "Derived from v; no language-specific extraction.",
+        "javascript": "Derived from v; no language-specific extraction.",
+        "typescript": "Derived from v; no language-specific extraction."
+      },
+      "source_dataset_column": "derived from v (b = v / 3000)",
+      "implementation_method": "Derived using the better-fitting tested relation, v / 3000."
+    }
+  ],
+  "conventions": {
+    "zero_operand": "When uniq_Opnd = 0, set d = l = i = 0.",
+    "volume": "Compute v from v = N * log2(vocabulary), where N = total_Op + total_Opnd and vocabulary = uniq_Op + uniq_Opnd.",
+    "zero_vocabulary": "Set v = 0 when vocabulary = 0; this case is untested by JM1."
+  }
+}
