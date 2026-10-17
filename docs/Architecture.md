@@ -2056,7 +2056,6 @@ These are the remaining implementation choices. Confirmed product decisions are 
 | # | Decision | Why it matters |
 |---|---|---|
 | 1 | Final JM1 feature subset | Determines which metrics are actually shared by Python/JavaScript/TypeScript inference |
-| 2 | Exact metrics library | A library can supplement Tree-sitter only where its definitions match JM1 |
 | 3 | Coverage report precedence | Multiple supported formats may exist in one repository |
 | 4 | Risk-label thresholds | Must be justified using validation results |
 | 5 | ML success targets | Pre-committed F1 and ROC-AUC targets |
@@ -2073,7 +2072,7 @@ These are the remaining implementation choices. Confirmed product decisions are 
 | 16 | Failed-run retention | Completes the retention policy |
 | 17 | Test-file treatment | Default summaries and ML scores for test files |
 
-Confirmed and therefore closed: JM1 dataset, per-function prediction aggregated to a file-level score, essential-stage policy, hybrid metric implementation, PostgreSQL-backed opaque sessions, no GitHub token persistence, same-parent-domain production hosts, unparseable-file policy, concurrency policy, coverage formats, deterministic alias resolution policy, four static thresholds plus lightweight duplicate detection, Vitest + Testing Library + Playwright, archived/empty repository display policy, source/test distinction, latest-10 retention, and Phase 7 portfolio deliverables.
+Confirmed and therefore closed: JM1 dataset, per-function prediction aggregated to a file-level score, essential-stage policy, RepoPulse-owned Tree-sitter metric extraction without a production metrics library, PostgreSQL-backed opaque sessions, no GitHub token persistence, same-parent-domain production hosts, unparseable-file policy, concurrency policy, coverage formats, deterministic alias resolution policy, four static thresholds plus lightweight duplicate detection, Vitest + Testing Library + Playwright, archived/empty repository display policy, source/test distinction, latest-10 retention, and Phase 7 portfolio deliverables.
 
 # 44. Implementation Order
 
@@ -2348,7 +2347,7 @@ Metrics      Static Rules      Dependencies    Security
 | ML granularity | Per-function/method predictions in memory; qualifying top-level executable units may contribute; aggregate to one file-level score; no function-level table |
 | Riskiest-function metadata | Nullable function name/start/end lines; highest-probability function/method among functions/methods only; deterministic tie-break; null only when no function/method is predicted |
 | Prediction status | `scored`, `no_ml_unit`, or `ml_failed`; unscored rows have null model_version/probability/class, show **Not scored** with reason, and have no risk label |
-| Metric implementation | Hybrid Tree-sitter implementation + verified compatible library support |
+| Metric implementation | RepoPulse-owned Tree-sitter extraction; no production metrics library |
 | Session mechanism | PostgreSQL-backed opaque server-side sessions with secure HTTP-only cookie |
 | OAuth token storage | Do not persist GitHub access tokens |
 | Production cookie/domain strategy | Frontend and backend hosts use the same parent/registrable domain; exact providers remain open |
@@ -2369,6 +2368,9 @@ Metrics      Static Rules      Dependencies    Security
 | Python runtime | Python 3.12; Docker base image `python:3.12-slim-bookworm`; local development uses a `py -3.12`-created virtual environment |
 | PostgreSQL driver and URL scheme | psycopg 3 (`psycopg[binary]`), SQLAlchemy URL scheme `postgresql+psycopg://`. PostgreSQL major version 17 (development); production host to match. |
 | Verified wheel packages (Python 3.12) | fastapi 0.143.0, uvicorn 0.54.0, pydantic 2.14.0, SQLAlchemy 2.1.4, alembic 1.20.0, tree-sitter 0.26.0, tree-sitter-python 0.25.0, tree-sitter-javascript 0.25.0, tree-sitter-typescript 0.23.2, scikit-learn 1.9.1, psycopg 3.3.6 (binary) — all have prebuilt wheels for Python 3.12 on PyPI; confirmed via `pip install --dry-run --only-binary=:all:` on 2026-10-10 |
+| JM1 metric method | No metrics library in production. RepoPulse owns one Tree-sitter extractor for Python, JavaScript, and TypeScript. Radon, Lizard, and typhonjs-escomplex may be used only as G0 cross-checks, never as production sources. Revisit only if the 0.9.9 prototype cannot meet the compatibility rule. |
+| JM1 compatibility rule | Admit a feature to the serving schema only if its definition is verified by the data check or fixed by an approved convention, it is implemented consistently across all three languages with each approximation justified in the matrix (consistently, not identically), and its serving range stays within a stable range of JM1 (0.9.9). Derived fields use only admitted features. Record before model results. |
+| Prediction-unit rules | Apply the same rules to Python, JavaScript, and TypeScript. Units are outermost function-like nodes with block/statement bodies; nested functions, closures, and callbacks belong to their containing unit. Python lambdas and expression-bodied arrows are not units; TypeScript overload signatures and bodyless abstract/declare functions are not units. Qualifying module-level code is defined by control flow or a call expression outside imports, decorators, and exports; unit subtrees are excluded. See `ml/README.md` 0.9.8 for the complete rules and fixture cases. |
 
 # 47. Final Architecture Statement
 

@@ -583,7 +583,6 @@ Only implementation details that were not resolved by the current decisions rema
 | Area | Remaining decision |
 |---|---|
 | Final JM1 feature subset | Which JM1 metrics survive the cross-language compatibility rule for Python, JavaScript, and TypeScript |
-| Exact metrics library | Which library, if any, is used alongside the Tree-sitter implementation after definition-level verification |
 | Coverage report precedence | Which report wins if multiple supported coverage formats are present |
 | Risk-label thresholds | Exact LOW/MEDIUM/HIGH thresholds after model evaluation |
 | ML success targets | Pre-committed F1 and ROC-AUC targets |
@@ -600,7 +599,7 @@ Only implementation details that were not resolved by the current decisions rema
 | Failed-run retention | Whether and how failed runs are pruned (proposal: keep only the most recent failed run per repository) |
 | Test-file treatment | Whether default summaries exclude test files (proposed) and whether ML scores are shown for them |
 
-Decisions already confirmed—JM1, per-function prediction aggregated to a file-level score, essential-stage policy, hybrid metrics implementation, PostgreSQL-backed sessions, no OAuth-token persistence, same-parent-domain production hosts, unparseable-file policy, concurrency policy, coverage formats, alias policy, static-analysis scope, frontend/E2E tooling, repository display policy, test-file handling, retention, and Phase 7 portfolio output—are not open decisions.
+Decisions already confirmed—JM1, per-function prediction aggregated to a file-level score, essential-stage policy, RepoPulse-owned Tree-sitter metric extraction without a production metrics library, PostgreSQL-backed sessions, no OAuth-token persistence, same-parent-domain production hosts, unparseable-file policy, concurrency policy, coverage formats, alias policy, static-analysis scope, frontend/E2E tooling, repository display policy, test-file handling, retention, and Phase 7 portfolio output—are not open decisions.
 
 ## 17. Decision Log
 
@@ -644,7 +643,7 @@ Decisions confirmed by the author while preparing this PRD:
 | 12 | ML granularity | Function/method predictions computed in memory and aggregated into one stored file-level score; qualifying top-level executable code can contribute a module-level unit; no function-level table |
 | 13 | Riskiest-function metadata | Store nullable function name and start/end lines on the file prediction; select the highest-probability function/method among functions/methods only, ties use earliest start line then lexicographically smallest qualified name; top-level code does not suppress function metadata |
 | 14 | Unscored prediction status | Store status `scored`, `no_ml_unit`, or `ml_failed`; unscored rows have null model_version/probability/class and no risk label |
-| 15 | Metric implementation | Hybrid: Tree-sitter-based RepoPulse implementation plus a library only where its definitions are verified compatible |
+| 15 | Metric implementation | RepoPulse owns one Tree-sitter extractor for Python, JavaScript, and TypeScript; no production metrics library |
 | 16 | Session mechanism | PostgreSQL-backed opaque server-side sessions with a secure HTTP-only cookie |
 | 17 | OAuth token storage | Do not persist GitHub access tokens |
 | 18 | Production cookie/domain strategy | Same parent/registrable domain for frontend and backend hosts; exact providers remain open |
@@ -663,6 +662,9 @@ Decisions confirmed by the author while preparing this PRD:
 | 31 | Essential stages | Source parsing, metrics, static analysis, security checks, and persistence are essential; Git history, dependencies, coverage, ML/risk, and AI explanation are non-essential enrichment stages |
 | 32 | PostgreSQL driver and URL scheme | psycopg 3 (`psycopg[binary]`), SQLAlchemy URL scheme `postgresql+psycopg://`. PostgreSQL major version 17 (development); production host to match. |
 | 33 | JM1 anomalous rows | Drop `id=1` (the only row with `lOCode` > `loc`) and all 1,332 rows with `total_Op` = 0 and `loc` >= 1; preprocessing order: drop the five `?` rows, drop `id=1`, drop the zero-operator group, remove conflicting-label metric vectors and deduplicate, then split. |
+| 34 | JM1 metric method | No metrics library in production. RepoPulse owns one Tree-sitter extractor for Python, JavaScript, and TypeScript. Radon, Lizard, and typhonjs-escomplex may be used only as G0 cross-checks, never as production sources. Revisit only if the 0.9.9 prototype cannot meet D3. |
+| 35 | JM1 compatibility rule | A feature enters the serving schema only if its definition is verified by the data check or fixed by an approved convention; it can be implemented consistently across Python, JavaScript, and TypeScript with every approximation justified in the matrix (consistently, not identically); and its serving range stays within a stable range of JM1 (0.9.9). Derived fields use only admitted features. Record before model results. |
+| 36 | Prediction-unit rules | The same rules apply to all three languages. Units are outermost function-like nodes with block/statement bodies; nested functions, closures, and callbacks belong to their containing unit. Python lambdas and expression-bodied arrows are not units; TypeScript overload signatures and bodyless abstract/declare functions are not units. Qualifying module-level code is defined by control flow or a call expression outside imports, decorators, and exports; unit subtrees are excluded. See `ml/README.md` 0.9.8 for the complete rules and fixture cases. |
 
 ## 18. Delivery Phases (no dates)
 

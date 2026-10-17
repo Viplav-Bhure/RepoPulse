@@ -113,8 +113,6 @@ Deadlines below are the latest phase boundary by which the decision must be made
 | Decision | Settle by | Why then |
 |---|---|---|
 | Final JM1 feature subset | End of Phase 0 (G0) | Phase 2 must compute exactly the features used by training |
-| Exact metrics library, if any | End of Phase 0 (G0) | Metric definitions must match JM1 before Phase 2 implementation |
-| Unit-of-analysis rules (what counts as a function/method; qualifying top-level executable code) | End of Phase 0 (G0) | Phase 2 metric extraction depends on them |
 | GitHub API access after login (proposed: list at callback plus a server-side public-data credential) | Start of Phase 1 | Without a stored token, listing and the size pre-check need a defined path |
 | Test-file handling in default summaries and ML | Phase 2 (summaries), Phase 4 (ML) | Keeps test code from distorting dashboards |
 | Failed-run retention | Phase 2 | Completes the retention policy |
@@ -130,7 +128,7 @@ Deadlines below are the latest phase boundary by which the decision must be made
 | Deployment migration strategy | Phase 7 | Determines release procedure |
 | Own-code test coverage target | Phase 7 | Final quality bar |
 
-Already decided: per-function prediction aggregated to a file-level score, essential-stage policy, hybrid metric implementation, PostgreSQL-backed opaque sessions, same-parent-domain production hosts, no OAuth-token persistence, unparseable-file policy, concurrency policy, coverage formats, deterministic alias policy, static-analysis scope, frontend/E2E tooling, repository display policy, test-file handling, latest-10 retention, and Phase 7 portfolio output.
+Already decided: per-function prediction aggregated to a file-level score, essential-stage policy, RepoPulse-owned Tree-sitter metric extraction without a production metrics library, PostgreSQL-backed opaque sessions, same-parent-domain production hosts, no OAuth-token persistence, unparseable-file policy, concurrency policy, coverage formats, deterministic alias policy, static-analysis scope, frontend/E2E tooling, repository display policy, test-file handling, latest-10 retention, and Phase 7 portfolio output.
 
 # Phase 0 — Foundations
 
@@ -199,7 +197,7 @@ A running three-service skeleton (Next.js, FastAPI, PostgreSQL) with CI, plus a 
 ## Exit criteria
 - [ ] `docker compose up` shows all three services healthy; `/health` and the frontend placeholder respond.
 - [ ] CI is green on `main`.
-- [ ] `ml/README.md` records JM1 provenance, the **drop-five-rows** preprocessing decision, compatibility matrix, function-level features aggregated to a file-level score, unit-of-analysis rules, hybrid metric method, and pre-agreed compatibility rule.
+- [ ] `ml/README.md` records JM1 provenance, the **drop-five-rows** preprocessing decision, compatibility matrix, function-level features aggregated to a file-level score, unit-of-analysis rules, RepoPulse-owned Tree-sitter metric method with no production metrics library, and pre-agreed compatibility rule.
 - [ ] `feature_schema.json` draft exists.
 
 ---
@@ -841,7 +839,7 @@ Listed only so they are not smuggled into v1: private-repository support (would 
 These are the remaining questions that can change details inside the phases. None is silently decided.
 
 1. **Test repositories:** which real public repositories should be used for manual visual and behavioral checks in Phases 2–6? This can be chosen when those phases begin.
-2. **Exact metrics library:** remains open until Phase 0 compatibility testing. A library must reproduce a required JM1 metric definition correctly; it is not chosen by popularity.
+2. **Metrics implementation:** no production metrics library; Radon, Lizard, and typhonjs-escomplex may be used only as G0 cross-checks. Revisit only if the 0.9.9 prototype cannot meet the compatibility rule.
 3. **Hosting providers and domain:** the topology and cookie/domain strategy are decided; the providers (which must allow custom domains) and the domain itself remain open until Phase 6.
 4. **ML success targets:** F1, ROC-AUC, and PR-AUC targets remain open and are set before the final evaluation in Phase 4. Preliminary experiments suggest modest values.
 5. **Aggregation rule:** mean, top-3 mean, or maximum for turning function probabilities into the file score (Phase 4).
