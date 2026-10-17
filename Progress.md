@@ -5,7 +5,7 @@
 | | |
 | --- | --- |
 | **Last updated** | 2026-10-17 |
-| **Updated by** | AI builder (G0 stage 2, task 0.9.8) |
+| **Updated by** | AI builder (G0 stage 3a, task 0.9.9 results) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -14,10 +14,10 @@
 
 | | |
 | --- | --- |
-| **Overall status** | **In progress.** Phase 0 started. Tasks 0.1 through 0.9.7 complete; 0.9.8 is in progress. |
+| **Overall status** | **In progress.** Phase 0 started. Task 0.9.9 results are recorded; final JM1 feature use/drop decisions remain pending. |
 | **Current phase** | Phase 0 - Foundations (**in progress**) |
-| **Next task** | **0.9.8** Define prediction-unit rules identically for Python, JavaScript, and TypeScript: what counts as a function/method, how nested functions, arrow functions, class methods, and anonymous callbacks are treated, and how top-level code is handled. Top-level code qualifies only if it contains control flow (`if`, `for`, `while`, `try`, `switch`) or a call expression outside imports, decorators, and exports. Imports, constant assignments, type declarations, and docstrings alone do not qualify. Add fixtures: Python `if __name__ == "__main__": main()` qualifies; JavaScript `app.listen(...)` qualifies; `API_KEY = "..."` does not; include import-only, declaration-only, type-only TypeScript, and docstring-only cases. |
-| **Blocked?** | No |
+| **Next task** | **0.9.10** Produce the feature schema after the human decides the final JM1 feature subset; do not create it before then. |
+| **Blocked?** | Yes - final JM1 feature use/drop decision is pending. |
 | **Last human approval** | Planning documents reviewed on 2026-10-09 |
 
 ---
@@ -46,11 +46,11 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 
 | | |
 | --- | --- |
-| **Task ID** | 0.9.8 |
-| **Title** | Define prediction-unit rules identically for Python, JavaScript, and TypeScript: what counts as a function/method, how nested functions, arrow functions, class methods, and anonymous callbacks are treated, and how top-level code is handled. Top-level code qualifies only if it contains control flow (`if`, `for`, `while`, `try`, `switch`) or a call expression outside imports, decorators, and exports. Imports, constant assignments, type declarations, and docstrings alone do not qualify. Add fixtures: Python `if __name__ == "__main__": main()` qualifies; JavaScript `app.listen(...)` qualifies; `API_KEY = "..."` does not; include import-only, declaration-only, type-only TypeScript, and docstring-only cases. |
-| **Status** | In progress |
-| **Plan** | Add the approved fixture cases and validate the recorded unit boundaries in the 0.9.9 prototype. |
-| **Notes / problems** | G0 stage 1 done; G0 stage 2 done, awaiting review. Gate G0 remains not passed; 0.9.9 range check and 0.9.10 schema are not started. |
+| **Task ID** | 0.9.9 |
+| **Title** | Run the feature-range sanity check on real repositories and compare serving-unit feature ranges with the final JM1 set. |
+| **Status** | Results recorded; use/drop decisions pending (0.9.10) |
+| **Plan** | Compare all 18 USE features against the 7,837-row JM1 final set for RepoPulse, `repo-1`, `repo-2`, and their combined units. |
+| **Notes / problems** | Core 0.26.0 crashed in 10/10 baseline runs; core 0.25.2 passed 10/10 and three aggregate runs matched. No feature schema or use/drop decisions recorded. Gate G0 remains not passed. |
 
 ---
 
@@ -126,6 +126,7 @@ Later decisions (aggregation rule, risk thresholds, ML targets, graph layout, Op
 | Watch 3 | `next dev` regenerates `frontend/AGENTS.md` and `node_modules/next/AGENTS.md` on every run. Do not commit; delete before commits. Notice says read `node_modules/next/dist/docs/` before writing Next code. | Ask the human how to handle before Phase 6. | Open |
 | Watch 4 | PowerShell may wrap normal Docker Compose stderr progress as `NativeCommandError`, including when a command succeeds. | Check the saved command log and native exit code before treating the wrapper as a failure. | Observed |
 | Watch 5 | npm flags `eslint@9.39.5` as deprecated in CI ("no longer supported"). | Review in Phase 7. | Open |
+| Watch 6 | Tree-sitter core/grammar compatibility: the Phase 2 smoke test must parse a LARGE file and walk every node, not a tiny sample. | Verify core and grammar wheel compatibility on a large fixture before Phase 2 metric work. | Open |
 
 **Watch items from the start:**
 
@@ -159,6 +160,8 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-10-17 | G0 stage 3a results recorded for three labeled repositories plus combined units. Core 0.26.0 crashed 10/10 baseline runs; 0.25.2 passed 10/10, pip check and 27 ML tests passed, and three full aggregate outputs matched. | 0.9.9 | Final JM1 feature use/drop decision before 0.9.10; update Architecture section 46 verified-wheel row. |
+| 2026-10-17 | Started G0 stage 3a; final-set output remained byte-identical, 27 ML tests and Ruff checks passed, but RepoPulse range extraction hit a native Tree-sitter failure. No aggregate results recorded. | 0.9.9 | Continue extractor investigation; use/drop decisions remain pending. |
 | 2026-10-17 | G0 stage 2 JavaScript, JSX, TypeScript, and TSX extraction implemented; pytest 27 passed and Ruff checks passed on maintained ML Python files. JM1 checksum unchanged; awaiting review. | 0.9.8 stage 2 | Stage 2 review. |
 | 2026-10-17 | G0 stage 1 extractor and fixtures implemented; pytest 17 passed, Ruff checks passed; awaiting review. Tree-sitter pins installed in backend/.venv; JM1 checksum unchanged. | 0.9.8 stage 1 | Approve stage 1 before continuing. |
 | 2026-10-17 | Corrected G0 compatibility-rule references and 0.9.6 decision wording; drafted a plan for remaining G0 work without implementation or installs. | 0.9.6; 0.9.8-0.9.11 planning | Final JM1 feature subset; token-count conventions; additional repositories for the range check. |

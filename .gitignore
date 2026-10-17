@@ -46,3 +46,6 @@ Thumbs.db
 # ── Temporary analysis clones ────────────────────────────────────────────────
 tmp/
 temp/
+
+# ── G0 range-check aggregate output ───────────────────────────────────────────
+ml/.g0-range/

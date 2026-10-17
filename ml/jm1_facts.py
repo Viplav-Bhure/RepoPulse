@@ -57,6 +57,30 @@ def row_sort_key(row_id: str) -> tuple[int, str]:
         return 0, row_id
 
 
+def final_set_rows(rows: list[dict[str, str]]) -> list[dict[str, str]]:
+    clean_rows = [
+        row for row in rows if all(row[column] != "?" for column in METRIC_COLUMNS)
+    ]
+    row_one_removed = [row for row in clean_rows if row["id"] != "1"]
+    zero_operator_ids = {
+        row["id"]
+        for row in row_one_removed
+        if Decimal(row["total_Op"]) == 0 and Decimal(row["loc"]) >= 1
+    }
+    eligible_rows = [
+        row for row in row_one_removed if row["id"] not in zero_operator_ids
+    ]
+    metric_groups: dict[tuple[str, ...], list[dict[str, str]]] = defaultdict(list)
+    for row in eligible_rows:
+        metric_key = tuple(row[column] for column in METRIC_COLUMNS)
+        metric_groups[metric_key].append(row)
+    return [
+        group[0]
+        for group in metric_groups.values()
+        if len({row[LABEL_COLUMN].lower() for row in group}) == 1
+    ]
+
+
 def rounded_interval(value: str, quantum: float) -> tuple[float, float]:
     center = float(value)
     return max(0.0, center - quantum / 2), center + quantum / 2
@@ -444,15 +468,7 @@ def main() -> None:
     rows_after_zero_operator = [
         row for row in rows_after_id_one if row["id"] not in zero_operator_ids
     ]
-    final_metric_groups: dict[tuple[str, ...], list[dict[str, str]]] = defaultdict(list)
-    for row in rows_after_zero_operator:
-        metric_key = tuple(row[column] for column in METRIC_COLUMNS)
-        final_metric_groups[metric_key].append(row)
-    final_retained_groups = [
-        group
-        for group in final_metric_groups.values()
-        if len({row[LABEL_COLUMN].lower() for row in group}) == 1
-    ]
+    final_retained_groups = [[row] for row in final_set_rows(rows)]
     final_label_counts = defaultdict(int)
     for group in final_retained_groups:
         final_label_counts[group[0][LABEL_COLUMN].lower()] += 1

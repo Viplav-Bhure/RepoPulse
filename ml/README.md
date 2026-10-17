@@ -261,15 +261,60 @@ and TSX fixtures created: `javascript_app_listen`,
 
 Delimiters are excluded, so call parentheses do not count as operators in any
 language. The 0.9.9 range check shows whether this matters.
+For functions bound as `const/let/var name = <function>`, the binding keyword
+and `=` lie outside the unit node and are not counted while the name counts as
+an operand; the same function written as a declaration counts the keyword
+`function` instead.
 
 ## 0.9.9 Feature-range sanity check
 
-Not yet done. The stage-one extractor lives in `ml/`; its pins
-(`tree-sitter==0.26.0`, `tree-sitter-python==0.25.0`,
-`tree-sitter-javascript==0.25.0`, `tree-sitter-typescript==0.23.2`) are in
-`ml/requirements.txt` and installed into `backend/.venv` for this prototype.
-The backend requirements remain unchanged; the backend gets Tree-sitter in
-Phase 2.
+Status: results recorded; use/drop decisions pending (0.9.10).
+
+Method: run the G0 extractor over RepoPulse, `repo-1`, and `repo-2`, excluding
+fixtures from RepoPulse. Collect all 18 USE features from every function/method
+and qualifying module-level unit. The JM1 reference uses the same final-set
+rules as `jm1_facts.py --final-set` and contains 7,837 rows. Median is the
+standard median; p95 is nearest-rank (`ceil(0.95 * n)`). For each feature,
+report serving count, median, p95, maximum, and the percentage strictly above
+the JM1 maximum, alongside the JM1 median, p95, and maximum.
+
+Flag `range>5%` only when more than 5% of serving units exceed the JM1 maximum.
+Flag `median>10x` when the larger nonzero median is strictly more than ten times
+the smaller; if exactly one median is zero, flag it, and if both are zero, do
+not flag. The checker persists only aggregates, never per-unit rows.
+
+Unit totals by language (Python/JavaScript/TypeScript) and units with
+`uniq_Opnd = 0`: RepoPulse 74 (69/1/4), 0; `repo-1` 7 (7/0/0), 0; `repo-2` 22
+(22/0/0), 0; Combined 103 (98/1/4), 0. All percentages above JM1 maximum were
+0%. The three repeated full runs produced identical aggregate output.
+
+| Feature | JM1 median/p95/max | RepoPulse n; median/p95/max; flags | repo-1 n; median/p95/max; flags | repo-2 n; median/p95/max; flags | Combined n; median/p95/max; flags |
+|---|---|---|---|---|---|
+| `loc` | 26/150/3442 | 74; 11/91/305; - | 7; 28/180/180; - | 22; 19/110/254; - | 103; 13/110/305; - |
+| `v(g)` | 4/22/470 | 74; 2/19/74; - | 7; 3/5/5; - | 22; 2/32/37; - | 103; 2/19/74; - |
+| `n` | 76/526/8441 | 74; 41/337/895; - | 7; 71/411/411; - | 22; 76.5/392/1089; - | 103; 56/376/1089; - |
+| `v` | 370.17/3327.01/80843.1 | 74; 186.71/2422.55/7087.38; - | 7; 375.264/2998.09/2998.09; - | 22; 403.884/2765.67/8924.09; - | 103; 282.486/2458.78/8924.09; - |
+| `l` | 0.08/0.33/1 | 74; 0.167677/0.423077/0.666667; - | 7; 0.172535/0.493333/0.493333; - | 22; 0.202837/1/1; - | 103; 0.177083/0.555556/1; - |
+| `d` | 13.02/49.62/418.2 | 74; 5.96732/27/36.713; - | 7; 5.79592/10.2721/10.2721; - | 22; 4.93103/24.8708/34.1311; - | 103; 5.64706/24.8708/36.713; - |
+| `i` | 28.15/93.93/569.78 | 74; 34.5249/137.615/397.533; - | 7; 128.767/291.867/291.867; - | 22; 73.6649/178.092/261.465; - | 103; 38.5205/178.092/397.533; - |
+| `e` | 4864.96/144343/3.10798e+07 | 74; 1191.93/59069.4/260199; - | 7; 1399.61/30796.7/30796.7; - | 22; 1676.71/61151.8/304589; - | 103; 1399.61/59069.4/304589; - |
+| `b` | 0.12/1.11/26.95 | 74; 0.0622365/0.807516/2.36246; - | 7; 0.125088/0.999363/0.999363; - | 22; 0.134628/0.92189/2.9747; - | 103; 0.094162/0.819593/2.9747; - |
+| `t` | 270.28/8019.06/1.72665e+06 | 74; 66.2186/3281.63/14455.5; - | 7; 77.7559/1710.93/1710.93; - | 22; 93.1505/3397.32/16921.6; - | 103; 77.7559/3281.63/16921.6; - |
+| `lOCode` | 19/113/2824 | 74; 10/82/294; - | 7; 19/148/148; - | 22; 12.5/85/172; - | 103; 11/85/294; - |
+| `lOComment` | 0/18/344 | 74; 0/2/23; - | 7; 2/14/14; median>10x | 22; 1/16/30; median>10x | 103; 0/13/30; - |
+| `lOBlank` | 3/21/447 | 74; 0/25/48; median>10x | 7; 5/18/18; - | 22; 2.5/21/51; - | 103; 1/21/51; - |
+| `locCodeAndComment` | 0/3/108 | 74; 0/0/1; - | 7; 0/0/0; - | 22; 0/5/10; - | 103; 0/1/10; - |
+| `uniq_Op` | 13/25/411 | 74; 8.5/18/26; - | 7; 7/10/10; - | 22; 6/19/26; - | 103; 8/18/26; - |
+| `uniq_Opnd` | 15/62/1026 | 74; 18/103/216; - | 7; 37/147/147; - | 22; 32/119/267; - | 103; 21/119/267; - |
+| `total_Op` | 45/308/5420 | 74; 16/120/285; - | 7; 20/109/109; - | 22; 27/131/388; - | 103; 19/121/388; - |
+| `total_Opnd` | 31/218/3021 | 74; 27.5/225/610; - | 7; 51/302/302; - | 22; 47.5/264/701; - | 103; 37/253/701; - |
+
+The aggregate ranges do not determine feature admission. No use/drop decisions
+are made here; those remain pending for 0.9.10. The prototype pins
+`tree-sitter==0.25.2`, `tree-sitter-python==0.25.0`,
+`tree-sitter-javascript==0.25.0`, and `tree-sitter-typescript==0.23.2` in
+`ml/requirements.txt`. The native crash reproduced on core 0.26.0 and did not
+reproduce in five runs per input on core 0.25.2.
 
 ## 0.9.10 Feature schema
 
