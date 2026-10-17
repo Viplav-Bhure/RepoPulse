@@ -1,0 +1,14 @@
+{
+  "module_qualifies": false,
+  "unit_names": ["render"],
+  "hand_computed_counts": {
+    "render": {
+      "v(g)": 1,
+      "uniq_Op": 2,
+      "uniq_Opnd": 3,
+      "total_Op": 2,
+      "total_Opnd": 4
+    }
+  },
+  "notes": "Manual count for render: function and return are operators (2 total, 2 unique); render, value, options, and value are operands (4 total, 3 unique); the annotation colons, Widget/Options/string types, interface, and optional-parameter marker are type-only and excluded; there are no decisions, so v(g)=1."
+}

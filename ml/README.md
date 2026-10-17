@@ -241,9 +241,10 @@ another unit:
 
 Stage 1 Python fixtures created: `python_main_guard`, `api_key_assignment`,
 `import_only`, `declaration_only`, `docstring_only`, `python_nested_def`,
-`python_if_and`, and `python_line_classes`. Stage 2 fixtures remain:
-`javascript_app_listen`, `type_only_typescript`,
-`javascript_block_vs_expression_arrow`, and `typescript_overload_impl`.
+`python_if_and`, and `python_line_classes`. Stage 2 JavaScript, JSX, TypeScript,
+and TSX fixtures created: `javascript_app_listen`,
+`javascript_block_vs_expression_arrow`, `type_only_typescript`,
+`typescript_overload_impl`, and `jsx_component`.
 
 ### Token counting conventions
 
@@ -252,8 +253,14 @@ Stage 1 Python fixtures created: `python_main_guard`, `api_key_assignment`,
   are excluded.
 - Python docstring lines count as comment lines, and the docstring string is not
   an operand.
-- Each literal counts as one operand; JSX literal handling is deferred to stage 2.
+- Each literal counts as one operand; JSX tag and attribute names are operands,
+  while JSX text is ignored.
 - Zero vocabulary gives `v = 0`.
+
+### Known approximations
+
+Delimiters are excluded, so call parentheses do not count as operators in any
+language. The 0.9.9 range check shows whether this matters.
 
 ## 0.9.9 Feature-range sanity check
 

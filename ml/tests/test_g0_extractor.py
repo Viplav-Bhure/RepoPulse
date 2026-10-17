@@ -7,6 +7,7 @@ from ml.g0_extractor import (
     SKIP_DIRECTORIES,
     derive_halstead_features,
     discover_files,
+    extract_file,
     features_for_unit,
     find_units,
     module_level_qualifies,
@@ -19,11 +20,12 @@ FIXTURE_ROOT = Path(__file__).parent.parent / "fixtures" / "g0"
     "case_dir", sorted(FIXTURE_ROOT.iterdir()), ids=lambda path: path.name
 )
 def test_fixture_unit_names_and_module_qualification(case_dir: Path) -> None:
-    source = (case_dir / "source.py").read_text(encoding="utf-8")
+    source_path = next(case_dir.glob("source.*"))
+    source = source_path.read_text(encoding="utf-8")
     expected = json.loads((case_dir / "expected.json").read_text(encoding="utf-8"))
-    units = find_units(source)
+    units = find_units(source, source_path)
 
-    assert module_level_qualifies(source) is expected["module_qualifies"]
+    assert module_level_qualifies(source, source_path) is expected["module_qualifies"]
     assert [unit.name for unit in units] == expected["unit_names"]
 
 
@@ -80,11 +82,101 @@ def test_member_access_counts_as_an_operator() -> None:
 
 
 @pytest.mark.parametrize(
-    "filename", ["source.js", "source.jsx", "source.ts", "source.tsx"]
+    "case_name,unit_name",
+    [
+        ("javascript_block_vs_expression_arrow", "choose"),
+        ("type_only_typescript", "render"),
+    ],
 )
-def test_javascript_and_typescript_are_not_implemented_yet(filename: str) -> None:
-    with pytest.raises(NotImplementedError, match="not implemented in G0 stage 1"):
-        find_units("", filename)
+def test_hand_computed_javascript_and_typescript_counts(
+    case_name: str, unit_name: str
+) -> None:
+    case_dir = FIXTURE_ROOT / case_name
+    source_path = next(case_dir.glob("source.*"))
+    source = source_path.read_text(encoding="utf-8")
+    expected = json.loads((case_dir / "expected.json").read_text(encoding="utf-8"))
+    unit = next(
+        unit for unit in find_units(source, source_path) if unit.name == unit_name
+    )
+    features = features_for_unit(source, unit)
+
+    for feature_name, expected_value in expected["hand_computed_counts"][
+        unit_name
+    ].items():
+        assert features[feature_name] == pytest.approx(expected_value)
+
+
+def test_javascript_function_like_unit_names_and_nested_boundaries() -> None:
+    source = """function declared() {}
+    function* declaredGenerator() {}
+const namedExpression = function named() {};
+const generated = function* generator() {};
+    async function* declaredAsyncGenerator() {}
+const asynchronous = async function asyncNamed() {};
+const arrow = () => {};
+const expressionArrow = () => 1;
+class Box {
+    constructor() {}
+    get value() {}
+    set value(next) {}
+    method() {}
+}
+const object = {
+    run() {},
+    get value() {},
+    set value(next) {},
+};
+const outer = () => {
+    const callback = () => {};
+    function nested() {}
+    return callback;
+};
+"""
+
+    units = find_units(source, "source.js")
+
+    assert [unit.name for unit in units] == [
+        "declared",
+        "declaredGenerator",
+        "named",
+        "generator",
+        "declaredAsyncGenerator",
+        "asyncNamed",
+        "arrow",
+        "constructor",
+        "value",
+        "value",
+        "method",
+        "run",
+        "value",
+        "value",
+        "outer",
+    ]
+
+
+def test_tsx_file_extraction_uses_tsx_grammar(tmp_path: Path) -> None:
+    source_path = tmp_path / "component.tsx"
+    source_path.write_text(
+        "function View(props: { label: string }) { "
+        "return <button>{props.label}</button>; }",
+        encoding="utf-8",
+    )
+
+    result = extract_file(source_path)
+
+    assert [unit["name"] for unit in result["units"]] == ["View"]
+
+
+def test_typescript_module_counts_runtime_class_name() -> None:
+    source = "class Model {}\nactivate(new Model());\n"
+    unit = next(
+        unit for unit in find_units(source, "source.ts") if unit.name == "<module>"
+    )
+
+    features = features_for_unit(source, unit)
+
+    assert features["uniq_Opnd"] == 2
+    assert features["total_Opnd"] == 3
 
 
 def test_discovery_uses_extensions_skip_list_and_binary_detection(
@@ -92,6 +184,9 @@ def test_discovery_uses_extensions_skip_list_and_binary_detection(
 ) -> None:
     (tmp_path / "source.py").write_text("value = 1\n", encoding="utf-8")
     (tmp_path / "source.js").write_text("app.listen(1)\n", encoding="utf-8")
+    (tmp_path / "types.d.ts").write_text(
+        "declare interface Shape {}\n", encoding="utf-8"
+    )
     (tmp_path / "ignored.min.js").write_text("minified()\n", encoding="utf-8")
     (tmp_path / "binary.py").write_bytes(b"\0not source")
     ignored = tmp_path / next(iter(SKIP_DIRECTORIES))

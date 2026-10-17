@@ -1,0 +1,14 @@
+{
+  "module_qualifies": false,
+  "unit_names": ["choose"],
+  "hand_computed_counts": {
+    "choose": {
+      "v(g)": 3,
+      "uniq_Op": 5,
+      "uniq_Opnd": 6,
+      "total_Op": 6,
+      "total_Opnd": 10
+    }
+  },
+  "notes": "Manual count for choose: operators are => twice, ., ||, return, and ?? (6 total, 5 unique); operands are choose, items, map, item, item, fallback, items, 0, and fallback plus the parameter items (10 total, 6 unique); || and ?? give v(g)=1+2=3."
+}
