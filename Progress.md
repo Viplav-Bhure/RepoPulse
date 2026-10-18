@@ -4,8 +4,8 @@
 
 | | |
 | --- | --- |
-| **Last updated** | 2026-10-17 |
-| **Updated by** | AI builder (final G0 report and Phase 0 exit review) |
+| **Last updated** | 2026-10-18 |
+| **Updated by** | AI builder (human-approved Phase 0 exit review) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -14,11 +14,11 @@
 
 | | |
 | --- | --- |
-| **Overall status** | **Awaiting approval.** G0 report and draft feature schema are ready for the Phase 0 exit review. |
-| **Current phase** | Phase 0 - Foundations (**awaiting approval**) |
-| **Next task** | Phase 0 exit review by the human |
-| **Blocked?** | No; waiting for the human exit review and commit. |
-| **Last human approval** | Planning documents reviewed on 2026-10-09 |
+| **Overall status** | **Phase 0 done.** Exit criteria approved by the human. |
+| **Current phase** | Phase 1 - Identity and Repositories (not started) |
+| **Next task** | Phase 1 planning: decisions and stage plan to be agreed with the human |
+| **Blocked?** | No |
+| **Last human approval** | 2026-10-18, Phase 0 exit review |
 
 ---
 
@@ -29,7 +29,7 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 
 | Phase | Name | Status | Started | Finished | Tag |
 | --- | --- | --- | --- | --- | --- |
-| 0 | Foundations (includes **Gate G0**: ML feasibility) | Awaiting approval | 2026-10-10 | - | - |
+| 0 | Foundations (includes **Gate G0**: ML feasibility) | Done | 2026-10-10 | 2026-10-18 | - |
 | 1 | Identity and Repositories | Not started | - | - | `v0.1` |
 | 2 | Analysis Core | Not started | - | - | `v0.2` |
 | 3 | Repository Context | Not started | - | - | `v0.3` |
@@ -38,7 +38,7 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 | 6 | Frontend | Not started | - | - | `v0.6` |
 | 7 | Hardening and Release | Not started | - | - | `v1.0` |
 
-**Gate G0** (end of Phase 0): `Awaiting approval`. Phase 2 metric work and all of Phase 4 must not start until the human approves the gate.
+**Gate G0** (end of Phase 0): `Passed`. Phase 2 metric work and all of Phase 4 must not start until the human approves the gate.
 
 ---
 
@@ -46,11 +46,11 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 
 | | |
 | --- | --- |
-| **Task ID** | Phase 0 exit review |
-| **Title** | Phase 0 exit review by the human |
-| **Status** | Awaiting approval |
-| **Plan** | 1. Compose: task 0.7 recorded all three services healthy and `/health` plus the frontend responding; human re-runs `docker compose up` and verifies all three are healthy and both endpoints respond. 2. CI: task 0.8 was green on 6aca054; human verifies CI is green on latest `main` commit 0f765c0. 3. G0 report: `ml/README.md` 0.9.11 references provenance, drop-five preprocessing, final matrix, per-function features aggregated to a file score, unit rules, Tree-sitter method/no production library, and the pre-agreed rule; human reviews those contents. 4. Schema: `backend/app/ml/artifacts/feature_schema.json` exists as a draft; human reviews the draft. |
-| **Notes / problems** | Awaiting the human exit review and commit. Do not mark Phase 0 Done or Gate G0 passed until approved. Next step: Phase 0 exit review by the human. |
+| **Task ID** | Phase 1 planning |
+| **Title** | Phase 1 planning |
+| **Status** | Not started |
+| **Plan** | Agree the Phase 1 stage plan with the human before any code |
+| **Notes / problems** | Phase 0 Done, Gate G0 passed. |
 
 ---
 
@@ -164,6 +164,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-10-18 | Phase 0 is Done and Gate G0 passed on the human's approval. All section 4 rows for 0.1-0.9.11 marked "awaiting human commit" are now committed; the last two commits are c4645a3 and 9c125fa. | Phase 0 exit review; Phase 1 planning | None |
 | 2026-10-17 | Final JM1 feature subset recorded; draft schema and G0 report added; Phase 0 set to Awaiting approval. Schema tests pass; awaiting human exit review and commit. | 0.9.8-0.9.11 | Human re-verification of the four Phase 0 exit criteria. |
 | 2026-10-17 | G0 stage 3b aggregates added for five labeled sets, including per-language flags, counts, skipped files, parse errors, and elapsed time; three stdout runs matched. Feature subset remains a proposal; awaiting review. | 0.9.9 | Final JM1 feature use/drop decision before 0.9.10. |
 | 2026-10-17 | G0 stage 3a results recorded for three labeled repositories plus combined units. Core 0.26.0 crashed 10/10 baseline runs; 0.25.2 passed 10/10, pip check and 27 ML tests passed, and three full aggregate outputs matched. | 0.9.9 | Final JM1 feature use/drop decision before 0.9.10; update Architecture section 46 verified-wheel row. |
