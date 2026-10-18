@@ -148,37 +148,37 @@ A running three-service skeleton (Next.js, FastAPI, PostgreSQL) with CI, plus a 
 ## Tasks
 
 ### A. Repository and tooling
-- [ ] **0.1** Create the monorepo structure and a root `README.md` stub, `.gitignore`, `.env.example`. Put `PRD.md` and `Architecture.md` (and this file) in `docs/`.
-- [ ] **0.2** Backend skeleton: `backend/app/main.py` creating the FastAPI app, `config.py` reading settings from environment variables, a `GET /health` endpoint. **[Proposed]** use a settings class (e.g., pydantic-settings) so missing variables fail at startup.
-- [ ] **0.3** Backend tooling: a linter/formatter (e.g., Ruff), pytest, a `tests/` folder with one passing smoke test for `/health`.
-- [ ] **0.4** Frontend skeleton: Next.js with TypeScript, Tailwind CSS, shadcn/ui initialized, Recharts installed. A placeholder landing page. `frontend/lib/api.ts` with a base URL read from an environment variable. App Router vs. Pages Router is your call; Architecture §40 shows `app/`.
-- [ ] **0.5** Frontend tooling: ESLint, TypeScript type-check script, a build script.
+- [x] **0.1** Create the monorepo structure and a root `README.md` stub, `.gitignore`, `.env.example`. Put `PRD.md` and `Architecture.md` (and this file) in `docs/`.
+- [x] **0.2** Backend skeleton: `backend/app/main.py` creating the FastAPI app, `config.py` reading settings from environment variables, a `GET /health` endpoint. **[Proposed]** use a settings class (e.g., pydantic-settings) so missing variables fail at startup.
+- [x] **0.3** Backend tooling: a linter/formatter (e.g., Ruff), pytest, a `tests/` folder with one passing smoke test for `/health`.
+- [x] **0.4** Frontend skeleton: Next.js with TypeScript, Tailwind CSS, shadcn/ui initialized, Recharts installed. A placeholder landing page. `frontend/lib/api.ts` with a base URL read from an environment variable. App Router vs. Pages Router is your call; Architecture §40 shows `app/`.
+- [x] **0.5** Frontend tooling: ESLint, TypeScript type-check script, a build script.
 
 ### B. Database
-- [ ] **0.6** `backend/app/database/session.py` (engine + session factory), `models.py` (declarative base), Alembic initialized under `backend/app/database/migrations/`. Create a baseline migration and verify `alembic upgrade head` against a disposable PostgreSQL container now, then repeat it inside the Docker Compose stack in task 0.7.
+- [x] **0.6** `backend/app/database/session.py` (engine + session factory), `models.py` (declarative base), Alembic initialized under `backend/app/database/migrations/`. Create a baseline migration and verify `alembic upgrade head` against a disposable PostgreSQL container now, then repeat it inside the Docker Compose stack in task 0.7.
 
 ### C. Containers and CI
-- [ ] **0.7** `backend/Dockerfile`, `frontend/Dockerfile`, `docker-compose.yml` with `frontend`, `backend`, `postgres`. Include a PostgreSQL healthcheck, a named volume, and environment variables from `.env`. The backend should wait for the database. Make sure the `git` binary is installed in the backend image — Phase 2 needs it.
-- [ ] **0.8** GitHub Actions workflow: backend (install, lint, test), frontend (install, lint, type-check, build), and a Docker build step. Cache dependencies. **[Proposed]** Run Alembic migrations against a CI PostgreSQL service so migration breakage is caught early.
+- [x] **0.7** `backend/Dockerfile`, `frontend/Dockerfile`, `docker-compose.yml` with `frontend`, `backend`, `postgres`. Include a PostgreSQL healthcheck, a named volume, and environment variables from `.env`. The backend should wait for the database. Make sure the `git` binary is installed in the backend image — Phase 2 needs it.
+- [x] **0.8** GitHub Actions workflow: backend (install, lint, test), frontend (install, lint, type-check, build), and a Docker build step. Cache dependencies. **[Proposed]** Run Alembic migrations against a CI PostgreSQL service so migration breakage is caught early.
 
 ### D. Gate G0 — JM1 feature feasibility (do not skip)
 
 **Dataset is already selected: JM1.** The supplied `jm1.csv` contains 10,885 rows, 21 metric inputs, an `id` field, and the binary `defects` label. It is a C software-module dataset; RepoPulse serves Python, JavaScript, and TypeScript. G0 therefore verifies cross-language feature compatibility rather than choosing the dataset. The file is committed under `ml/data/jm1.csv`. Its Kaggle listing reports the license as **unknown**, so provenance/licensing uncertainty must be documented and no unrestricted redistribution claim may be made.
 
-- [ ] **0.9** Use the supplied `jm1.csv` as the training source and record its provenance, checksum, and the Kaggle-reported **unknown license status** in `ml/README.md`. Do not claim unrestricted redistribution rights.
-- [ ] **0.9.1** Record the candidate predictors: `loc`, `v(g)`, `ev(g)`, `iv(g)`, `n`, `v`, `l`, `d`, `i`, `e`, `b`, `t`, `lOCode`, `lOComment`, `lOBlank`, `locCodeAndComment`, `uniq_Op`, `uniq_Opnd`, `total_Op`, `total_Opnd`, `branchCount`; target `defects`. Keep `id` out of the model feature vector.
-- [ ] **0.9.2** Record dataset facts from the supplied file: 10,885 rows; 8,779 non-defective and 2,106 defective labels; SHA-256 `1ec66eb3568ae8bb4e2709cf0bd28b11db41c7c0ae771325c0952997e35e4dff`. IDs are unique, but excluding `id` the file has 1,973 rows duplicating another row on metrics and label (counted after the five `?` rows are removed), 2,061 duplicating on metrics alone, and 88 metric vectors carrying both labels.
-- [ ] **0.9.3** Identify and record the five rows containing `?` in `uniq_Op`, `uniq_Opnd`, `total_Op`, `total_Opnd`, and `branchCount`; **drop those five rows before training**. Do not coerce `?` to zero or impute them.
-- [ ] **0.9.3a** Record the anomalous rows: `id=1` (fractional counts such as `loc` 1.1), one row with `lOCode` greater than `loc`, and 1,332 rows with `total_Op` = 0 although `loc` ≥ 1. Decide and record an explicit keep/drop rule for each before training. **[Proposed]** drop `id=1` and the `lOCode` > `loc` row; inspect the `total_Op` = 0 rows before deciding.
-- [ ] **0.9.3b** Deduplicate on the 21 metric columns (excluding `id`), remove metric vectors whose duplicates carry conflicting labels, and only then split. Reference result before applying the anomaly rules: 8,731 rows, 21.9% defective.
-- [ ] **0.9.4** Build the compatibility matrix (JM1 definitions apply to a **function**): JM1 definition → Python implementation → JavaScript implementation → TypeScript implementation → implementation method → `use`/`drop`. Any approximation must be explicitly justified.
-- [ ] **0.9.5** Lock the prediction unit: JM1 module rows correspond to functions/methods, so features are computed **per function/method**, predicted in memory, and aggregated into **one stored file-level score**. Do not add a function-level table; per-function features live in memory for the duration of the run. A file is the aggregate container, not the JM1 prediction unit.
-- [ ] **0.9.6** Use the **hybrid metric method**: implement RepoPulse-owned definitions with Tree-sitter where needed; use a metrics library only where its output is verified against the JM1 definition and all supported languages. **Decided:** no production metrics library; see PRD decision 34.
-- [ ] **0.9.7** Define the compatibility rule before training and record it before looking at model results.
-- [ ] **0.9.8** Define prediction-unit rules identically for Python, JavaScript, and TypeScript: what counts as a function/method, how nested functions, arrow functions, class methods, and anonymous callbacks are treated, and how top-level code is handled. Top-level code qualifies only if it contains control flow (`if`, `for`, `while`, `try`, `switch`) or a call expression outside imports, decorators, and exports. Imports, constant assignments, type declarations, and docstrings alone do not qualify. Add fixtures: Python `if __name__ == "__main__": main()` qualifies; JavaScript `app.listen(...)` qualifies; `API_KEY = "..."` does not; include import-only, declaration-only, type-only TypeScript, and docstring-only cases.
-- [ ] **0.9.9** Run a feature-range sanity check on a few real repositories of your own: compare the per-function serving feature ranges against JM1's ranges and record any features whose serving values fall far outside the training range.
-- [ ] **0.9.10** Produce `backend/app/ml/artifacts/feature_schema.json` with feature name, order, definition, units, language notes, source dataset column, and implementation method.
-- [ ] **0.9.11** Store the G0 report in `ml/README.md`, including the explicit limitation that JM1 is C/module data and serving is Python/JavaScript/TypeScript.
+- [x] **0.9** Use the supplied `jm1.csv` as the training source and record its provenance, checksum, and the Kaggle-reported **unknown license status** in `ml/README.md`. Do not claim unrestricted redistribution rights.
+- [x] **0.9.1** Record the candidate predictors: `loc`, `v(g)`, `ev(g)`, `iv(g)`, `n`, `v`, `l`, `d`, `i`, `e`, `b`, `t`, `lOCode`, `lOComment`, `lOBlank`, `locCodeAndComment`, `uniq_Op`, `uniq_Opnd`, `total_Op`, `total_Opnd`, `branchCount`; target `defects`. Keep `id` out of the model feature vector.
+- [x] **0.9.2** Record dataset facts from the supplied file: 10,885 rows; 8,779 non-defective and 2,106 defective labels; SHA-256 `1ec66eb3568ae8bb4e2709cf0bd28b11db41c7c0ae771325c0952997e35e4dff`. IDs are unique, but excluding `id` the file has 1,973 rows duplicating another row on metrics and label (counted after the five `?` rows are removed), 2,061 duplicating on metrics alone, and 88 metric vectors carrying both labels.
+- [x] **0.9.3** Identify and record the five rows containing `?` in `uniq_Op`, `uniq_Opnd`, `total_Op`, `total_Opnd`, and `branchCount`; **drop those five rows before training**. Do not coerce `?` to zero or impute them.
+- [x] **0.9.3a** Record the anomalous rows: `id=1` (fractional counts such as `loc` 1.1), one row with `lOCode` greater than `loc`, and 1,332 rows with `total_Op` = 0 although `loc` ≥ 1. Decide and record an explicit keep/drop rule for each before training. **[Proposed]** drop `id=1` and the `lOCode` > `loc` row; inspect the `total_Op` = 0 rows before deciding.
+- [x] **0.9.3b** Deduplicate on the 21 metric columns (excluding `id`), remove metric vectors whose duplicates carry conflicting labels, and only then split. Reference result before applying the anomaly rules: 8,731 rows, 21.9% defective.
+- [x] **0.9.4** Build the compatibility matrix (JM1 definitions apply to a **function**): JM1 definition → Python implementation → JavaScript implementation → TypeScript implementation → implementation method → `use`/`drop`. Any approximation must be explicitly justified.
+- [x] **0.9.5** Lock the prediction unit: JM1 module rows correspond to functions/methods, so features are computed **per function/method**, predicted in memory, and aggregated into **one stored file-level score**. Do not add a function-level table; per-function features live in memory for the duration of the run. A file is the aggregate container, not the JM1 prediction unit.
+- [x] **0.9.6** Use the **hybrid metric method**: implement RepoPulse-owned definitions with Tree-sitter where needed; use a metrics library only where its output is verified against the JM1 definition and all supported languages. **Decided:** no production metrics library; see PRD decision 34.
+- [x] **0.9.7** Define the compatibility rule before training and record it before looking at model results.
+- [x] **0.9.8** Define prediction-unit rules identically for Python, JavaScript, and TypeScript: what counts as a function/method, how nested functions, arrow functions, class methods, and anonymous callbacks are treated, and how top-level code is handled. Top-level code qualifies only if it contains control flow (`if`, `for`, `while`, `try`, `switch`) or a call expression outside imports, decorators, and exports. Imports, constant assignments, type declarations, and docstrings alone do not qualify. Add fixtures: Python `if __name__ == "__main__": main()` qualifies; JavaScript `app.listen(...)` qualifies; `API_KEY = "..."` does not; include import-only, declaration-only, type-only TypeScript, and docstring-only cases.
+- [x] **0.9.9** Run a feature-range sanity check on a few real repositories of your own: compare the per-function serving feature ranges against JM1's ranges and record any features whose serving values fall far outside the training range.
+- [x] **0.9.10** Produce `backend/app/ml/artifacts/feature_schema.json` with feature name, order, definition, units, language notes, source dataset column, and implementation method.
+- [x] **0.9.11** Store the G0 report in `ml/README.md`, including the explicit limitation that JM1 is C/module data and serving is Python/JavaScript/TypeScript.
 
 ## Tests
 - `/health` smoke test; app fails fast with a clear message when a required environment variable is missing.
@@ -194,10 +194,10 @@ A running three-service skeleton (Next.js, FastAPI, PostgreSQL) with CI, plus a 
 | Over-engineering the skeleton | Stop when the Definition of Done is met; defer polish |
 
 ## Exit criteria
-- [ ] `docker compose up` shows all three services healthy; `/health` and the frontend placeholder respond.
-- [ ] CI is green on `main`.
-- [ ] `ml/README.md` records JM1 provenance, the **drop-five-rows** preprocessing decision, compatibility matrix, function-level features aggregated to a file-level score, unit-of-analysis rules, RepoPulse-owned Tree-sitter metric method with no production metrics library, and pre-agreed compatibility rule.
-- [ ] `feature_schema.json` draft exists.
+- [x] `docker compose up` shows all three services healthy; `/health` and the frontend placeholder respond.
+- [x] CI is green on `main`.
+- [x] `ml/README.md` records JM1 provenance, the **drop-five-rows** preprocessing decision, compatibility matrix, function-level features aggregated to a file-level score, unit-of-analysis rules, RepoPulse-owned Tree-sitter metric method with no production metrics library, and pre-agreed compatibility rule.
+- [x] `feature_schema.json` draft exists.
 
 ---
 

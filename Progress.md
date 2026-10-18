@@ -134,10 +134,7 @@ Later decisions (aggregation rule, risk thresholds, ML targets, graph layout, Op
 
 **Watch items from the start:**
 
-- Gate G0 may show that JM1 features cannot be computed consistently across Python, JavaScript, and TypeScript. If so, stop and report (see `AGENTS.md` section 3.3).
 - The cookie/domain strategy requires an owned domain, which is not in place yet.
-- **(Phase 2 - Tree-sitter smoke test)** Immediately after installing the Tree-sitter language packages in Phase 2, run a smoke test that loads each grammar and parses a small sample for Python, JavaScript, TypeScript, and TSX. Grammar versions and the core `tree-sitter` version must be compatible; a mismatch surfaces as a silent parse failure or a C-extension load error, not a pip error.
-- **(Task 0.6 - PostgreSQL driver)** Decided: `psycopg[binary]` (psycopg 3), SQLAlchemy URL scheme `postgresql+psycopg://`; development uses PostgreSQL 17 and production must match.
 
 ---
 
@@ -145,9 +142,9 @@ Later decisions (aggregation rule, risk thresholds, ML targets, graph layout, Op
 
 | Document | Status |
 | --- | --- |
-| `PRD.md` | Complete, reviewed 2026-10-09 |
-| `Architecture.md` | Complete, reviewed 2026-10-09 |
-| `Phases.md` | Complete, reviewed 2026-10-09 |
+| `PRD.md` | Complete, revised during Phase 0 |
+| `Architecture.md` | Complete, revised during Phase 0 |
+| `Phases.md` | Complete, revised during Phase 0 |
 | `AGENTS.md` | Complete |
 | `Progress.md` | This file |
 
