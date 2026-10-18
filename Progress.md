@@ -4,8 +4,8 @@
 
 | | |
 | --- | --- |
-| **Last updated** | 2026-10-18 |
-| **Updated by** | AI builder (human-approved Phase 0 exit review) |
+| **Last updated** | 2026-10-19 |
+| **Updated by** | AI builder (task 1.1 verification recorded; awaiting commit and CI) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -14,9 +14,9 @@
 
 | | |
 | --- | --- |
-| **Overall status** | **Phase 0 done.** Exit criteria approved by the human. |
-| **Current phase** | Phase 1 - Identity and Repositories (not started) |
-| **Next task** | Phase 1 planning: decisions and stage plan to be agreed with the human |
+| **Overall status** | **Phase 0 done; Phase 1 in progress.** Task 1.1 awaits human commit and CI. |
+| **Current phase** | Phase 1 - Identity and Repositories (in progress) |
+| **Next task** | Phase 1 task 1.2 planning (not started) |
 | **Blocked?** | No |
 | **Last human approval** | 2026-10-18, Phase 0 exit review |
 
@@ -30,7 +30,7 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 | Phase | Name | Status | Started | Finished | Tag |
 | --- | --- | --- | --- | --- | --- |
 | 0 | Foundations (includes **Gate G0**: ML feasibility) | Done | 2026-10-10 | 2026-10-18 | - |
-| 1 | Identity and Repositories | Not started | - | - | `v0.1` |
+| 1 | Identity and Repositories | In progress | 2026-10-19 | - | `v0.1` |
 | 2 | Analysis Core | Not started | - | - | `v0.2` |
 | 3 | Repository Context | Not started | - | - | `v0.3` |
 | 4 | ML | Not started | - | - | `v0.4` |
@@ -46,11 +46,11 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 
 | | |
 | --- | --- |
-| **Task ID** | Phase 1 planning |
-| **Title** | Phase 1 planning |
+| **Task ID** | Phase 1 task 1.2 planning |
+| **Title** | Plan task 1.2 OAuth setup |
 | **Status** | Not started |
-| **Plan** | Agree the Phase 1 stage plan with the human before any code |
-| **Notes / problems** | Phase 0 Done, Gate G0 passed. |
+| **Plan** | Begin planning after task 1.1 is committed and CI is green; do not register the OAuth App or implement task 1.2 yet. |
+| **Notes / problems** | Phase 0 Done, Gate G0 passed. Task 1.1 awaits human commit and CI. |
 
 ---
 
@@ -60,6 +60,7 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 
 | Task ID | Date | PR / commit | Tests run and result | Notes |
 |---|---|---|---|---|
+| 1.1 | 2026-10-19 | awaiting human commit and CI | Ruff check and format check passed; backend pytest: 16 passed; human verified Compose migration upgrade and `alembic current` reports `0002_identity (head)` | Implementation and migration verified; not fully Done until human commit and CI. |
 | 0.1 | 2026-10-10 | awaiting human commit | None required (infrastructure only) | Done; `.gitignore`, `.env.example`, `README.md`, `frontend/`, `backend/`, `ml/` `.gitkeep` files created. Ignore rules verified with `git check-ignore`. |
 | 0.2 | 2026-10-10 | awaiting human commit | `GET /health` -> `{"status":"ok"}` verified via `Invoke-WebRequest` (200 OK) | `backend/requirements.txt`, `backend/app/__init__.py`, `backend/app/main.py`, `backend/app/config.py`, `backend/.env` created. `.env.example` SESSION_SECRET_KEY -> SESSION_SECRET corrected. `.venv` created with `py -3.12`. |
 | 0.3 | 2026-10-11 | awaiting human commit | ruff check (0 errors), ruff format (0 changes), pytest -v (2 passed, 0 warnings: test_health.py smoke test 200 OK + test_config.py missing required env var fail-fast ValidationError) | Done; created `backend/requirements-dev.txt` (pytest==9.1.1, ruff==0.17.0, httpx2==2.13.1), `backend/pyproject.toml`, `backend/tests/conftest.py`, `backend/tests/test_health.py`, `backend/tests/test_config.py`. Decision: replaced httpx with httpx2==2.13.1 to eliminate StarletteDeprecationWarning from starlette.testclient. Correcting note: tasks 0.1 and 0.2 are committed (0.1 = dab2b9b, 0.2 = de48014); .env lives at repo root, not backend/.env. |
@@ -161,6 +162,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-10-19 | Recorded task 1.1 implementation and human-verified migration head; awaiting human commit and CI. Task 1.2 planning is next and has not started. | 1.1; 1.2 planning pointer | Human commit and CI for task 1.1. |
 | 2026-10-18 | Phase 0 is Done and Gate G0 passed on the human's approval. All section 4 rows for 0.1-0.9.11 marked "awaiting human commit" are now committed; the last two commits are c4645a3 and 9c125fa. | Phase 0 exit review; Phase 1 planning | None |
 | 2026-10-17 | Final JM1 feature subset recorded; draft schema and G0 report added; Phase 0 set to Awaiting approval. Schema tests pass; awaiting human exit review and commit. | 0.9.8-0.9.11 | Human re-verification of the four Phase 0 exit criteria. |
 | 2026-10-17 | G0 stage 3b aggregates added for five labeled sets, including per-language flags, counts, skipped files, parse errors, and elapsed time; three stdout runs matched. Feature subset remains a proposal; awaiting review. | 0.9.9 | Final JM1 feature use/drop decision before 0.9.10. |

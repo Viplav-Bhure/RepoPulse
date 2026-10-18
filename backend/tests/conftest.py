@@ -13,6 +13,11 @@ from fastapi.testclient import TestClient
 # connection.
 os.environ["SESSION_SECRET"] = "test-session-secret-for-testing-only-32bytes"
 os.environ["DATABASE_URL"] = "postgresql+psycopg://test:test@localhost:5432/test"
+os.environ["GITHUB_CLIENT_ID"] = "test-github-client-id"
+os.environ["GITHUB_CLIENT_SECRET"] = "test-github-client-secret"
+os.environ["GITHUB_PUBLIC_API_TOKEN"] = "test-public-api-token"
+os.environ["FRONTEND_URL"] = "http://localhost:3000"
+os.environ["API_BASE_URL"] = "http://localhost:8000"
 
 
 @pytest.fixture

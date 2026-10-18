@@ -92,6 +92,11 @@ jobs:
     env:
       DATABASE_URL: postgresql+psycopg://repopulse_ci:ci-only-password@localhost:5432/repopulse_ci
       SESSION_SECRET: ci-only-session-secret-for-tests-not-production
+      GITHUB_CLIENT_ID: ci-only-github-client-id
+      GITHUB_CLIENT_SECRET: ci-only-github-client-secret
+      GITHUB_PUBLIC_API_TOKEN: ci-only-public-api-token
+      FRONTEND_URL: http://localhost:3000
+      API_BASE_URL: http://localhost:8000
     defaults:
       run:
         working-directory: backend
