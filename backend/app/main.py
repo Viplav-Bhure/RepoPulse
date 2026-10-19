@@ -7,6 +7,7 @@ Run locally: uvicorn app.main:app --reload  (from backend/ with .venv active)
 
 from fastapi import FastAPI
 
+from app.auth.routes import router as auth_router
 from app.config import settings  # noqa: F401 -- imported to trigger fail-fast validation
 
 app = FastAPI(
@@ -14,6 +15,7 @@ app = FastAPI(
     description="Software-engineering intelligence for public GitHub repositories.",
     version="0.1.0",
 )
+app.include_router(auth_router)
 
 
 @app.get("/health", tags=["ops"])

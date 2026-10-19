@@ -5,7 +5,7 @@
 | | |
 | --- | --- |
 | **Last updated** | 2026-10-19 |
-| **Updated by** | AI builder (task 1.3 implemented and verified; awaiting commit and CI) |
+| **Updated by** | AI builder (task 1.4 implemented and verified; awaiting human commit and CI) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -14,9 +14,9 @@
 
 | | |
 | --- | --- |
-| **Overall status** | **Phase 0 done; Phase 1 in progress.** Task 1.1 is committed as `f4b78dc` with all four CI jobs passed; task 1.3 awaits human commit and CI. |
+| **Overall status** | **Phase 0 done; Phase 1 in progress.** Tasks 1.1 (`f4b78dc`) and 1.3 are committed and CI-green; task 1.4 is implemented and verified, awaiting human commit and CI. |
 | **Current phase** | Phase 1 - Identity and Repositories (in progress) |
-| **Next task** | Phase 1 task 1.4 (not started) |
+| **Next task** | Phase 1 task 1.5 |
 | **Blocked?** | No |
 | **Last human approval** | 2026-10-18, Phase 0 exit review |
 
@@ -46,11 +46,11 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 
 | | |
 | --- | --- |
-| **Task ID** | Phase 1 task 1.4 |
-| **Title** | Auth routes and callback orchestration |
+| **Task ID** | Phase 1 task 1.5 |
+| **Title** | Session management and authentication dependency |
 | **Status** | Not started |
-| **Plan** | Implement the auth routes and callback orchestration. Keep task 1.2 real OAuth App registration deferred to Stage 4. |
-| **Notes / problems** | Phase 0 Done, Gate G0 passed. Task 1.1 is committed and CI-green. Task 1.3 is implemented and verified, awaiting human commit and CI. |
+| **Plan** | Implement session creation, validation, destruction, and the current-user dependency. |
+| **Notes / problems** | Phase 0 Done, Gate G0 passed. Tasks 1.1 and 1.3 are committed and CI-green. Task 1.4 is implemented and verified, awaiting human commit and CI. Task 1.2 real OAuth App registration remains deferred to Stage 4. |
 
 ---
 
@@ -60,8 +60,9 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 
 | Task ID | Date | PR / commit | Tests run and result | Notes |
 |---|---|---|---|---|
-| 1.3 | 2026-10-19 | awaiting human commit and CI | Ruff check and format check passed; focused OAuth pytest: 32 passed; backend pytest: 48 passed | Implemented and verified; no real credentials or network used. |
-| 1.1 | 2026-10-19 | `f4b78dc` | Ruff check and format check passed; backend pytest: 16 passed; human verified Compose migration upgrade and `alembic current` reports `0002_identity (head)`; all four CI jobs passed | Committed and CI-green. |
+| 1.4 | 2026-10-19 | awaiting human commit and CI | Focused auth-route pytest: 12 passed; Ruff check and format check passed; backend pytest: 60 passed; `git diff --check` passed | Implemented and verified; `.env` excluded/restored for tests. OAuth App registration remains deferred to Stage 4. |
+| 1.3 | 2026-10-19 | committed; CI-green | Ruff check and format check passed; focused OAuth pytest: 32 passed; backend pytest: 48 passed | Implemented and verified; no real credentials or network used. |
+| 1.1 | 2026-10-19 | `f4b78dc`; CI-green | Ruff check and format check passed; backend pytest: 16 passed; human verified Compose migration upgrade and `alembic current` reports `0002_identity (head)`; all four CI jobs passed | Committed and CI-green. |
 | 0.1 | 2026-10-10 | awaiting human commit | None required (infrastructure only) | Done; `.gitignore`, `.env.example`, `README.md`, `frontend/`, `backend/`, `ml/` `.gitkeep` files created. Ignore rules verified with `git check-ignore`. |
 | 0.2 | 2026-10-10 | awaiting human commit | `GET /health` -> `{"status":"ok"}` verified via `Invoke-WebRequest` (200 OK) | `backend/requirements.txt`, `backend/app/__init__.py`, `backend/app/main.py`, `backend/app/config.py`, `backend/.env` created. `.env.example` SESSION_SECRET_KEY -> SESSION_SECRET corrected. `.venv` created with `py -3.12`. |
 | 0.3 | 2026-10-11 | awaiting human commit | ruff check (0 errors), ruff format (0 changes), pytest -v (2 passed, 0 warnings: test_health.py smoke test 200 OK + test_config.py missing required env var fail-fast ValidationError) | Done; created `backend/requirements-dev.txt` (pytest==9.1.1, ruff==0.17.0, httpx2==2.13.1), `backend/pyproject.toml`, `backend/tests/conftest.py`, `backend/tests/test_health.py`, `backend/tests/test_config.py`. Decision: replaced httpx with httpx2==2.13.1 to eliminate StarletteDeprecationWarning from starlette.testclient. Correcting note: tasks 0.1 and 0.2 are committed (0.1 = dab2b9b, 0.2 = de48014); .env lives at repo root, not backend/.env. |
@@ -163,6 +164,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-10-19 | Task 1.4 auth routes implemented and verified; awaiting human commit and CI. Task 1.2 real OAuth App registration remains deferred to Stage 4. | 1.4; next 1.5 | None |
 | 2026-10-19 | Task 1.3 OAuth helpers implemented and verified; awaiting human commit and CI. Real OAuth App registration remains deferred to Stage 4. | 1.3; 1.2 deferred; next 1.4 | None |
 | 2026-10-19 | Recorded task 1.1 implementation and human-verified migration head; awaiting human commit and CI. Task 1.2 planning is next and has not started. | 1.1; 1.2 planning pointer | Human commit and CI for task 1.1. |
 | 2026-10-18 | Phase 0 is Done and Gate G0 passed on the human's approval. All section 4 rows for 0.1-0.9.11 marked "awaiting human commit" are now committed; the last two commits are c4645a3 and 9c125fa. | Phase 0 exit review; Phase 1 planning | None |
