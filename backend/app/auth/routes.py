@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse, RedirectResponse, Response
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session as DatabaseSession
 
+from app.auth.csrf import require_trusted_origin
 from app.auth.oauth import (
     STATE_LIFETIME_SECONDS,
     GitHubProfile,
@@ -197,6 +198,7 @@ def auth_me(
 @router.post("/logout", status_code=204)
 def logout(
     request: Request,
+    _origin_check: Annotated[None, Depends(require_trusted_origin)],
     database_session: Annotated[DatabaseSession, Depends(get_db)],
 ) -> Response:
     revoke_session(database_session, request.cookies.get(SESSION_COOKIE_NAME))

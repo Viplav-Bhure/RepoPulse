@@ -11,7 +11,7 @@ from sqlalchemy import func, select
 from sqlalchemy.engine import Connection
 from sqlalchemy.orm import Session as DatabaseSession
 
-from app.auth import routes
+from app.auth import csrf, routes
 from app.auth.oauth import (
     STATE_LIFETIME_SECONDS,
     GitHubProfile,
@@ -66,6 +66,21 @@ def _assert_callback_cookie_cleared(response: object) -> None:
     assert "Max-Age=0" in set_cookie
     assert "HttpOnly" in set_cookie
     assert "SameSite=lax" in set_cookie
+
+
+def _create_test_session(postgres_session: Connection, user_id: int) -> str:
+    with DatabaseSession(
+        bind=postgres_session,
+        join_transaction_mode="create_savepoint",
+    ) as database_session:
+        user = User(github_user_id=user_id, username=f"user-{user_id}", email=None)
+        database_session.add(user)
+        database_session.flush()
+        from app.auth.session import create_session
+
+        token = create_session(database_session, user.id)
+        database_session.commit()
+        return token.value
 
 
 def test_login_redirect_sets_signed_state_cookie_flags(
@@ -323,18 +338,91 @@ def test_logout_revokes_session_and_repeated_logout_is_safe(
     client = _client()
     client.cookies.set(SESSION_COOKIE_NAME, raw_token)
 
-    response = client.post("/auth/logout")
+    response = client.post(
+        "/auth/logout",
+        headers={"Origin": "http://localhost:3000"},
+    )
     assert response.status_code == 204
     set_cookie = "\n".join(response.headers.get_list("set-cookie"))
     assert f'{SESSION_COOKIE_NAME}="";' in set_cookie
     assert "Max-Age=0" in set_cookie
     assert "HttpOnly" in set_cookie
     assert "SameSite=lax" in set_cookie
+    assert "Path=/" in set_cookie
+    assert "Secure" not in set_cookie
     assert "Domain=" not in set_cookie
     assert client.get("/auth/me").status_code == 401
 
     repeated = client.post("/auth/logout")
     assert repeated.status_code == 204
+
+
+def test_logout_accepts_configured_production_origin(
+    monkeypatch: pytest.MonkeyPatch,
+    postgres_session: Connection,
+) -> None:
+    production_settings = settings.model_copy(
+        update={
+            "FRONTEND_URL": "https://app.example.test",
+            "API_BASE_URL": "https://api.example.test",
+        }
+    )
+    monkeypatch.setattr(
+        csrf,
+        "settings",
+        production_settings,
+    )
+    monkeypatch.setattr(routes, "settings", production_settings)
+    token = _create_test_session(postgres_session, 89)
+    client = _client()
+    client.cookies.set(SESSION_COOKIE_NAME, token)
+
+    response = client.post(
+        "/auth/logout",
+        headers={"Origin": "https://app.example.test"},
+    )
+
+    assert response.status_code == 204
+    set_cookie = "\n".join(response.headers.get_list("set-cookie"))
+    assert "HttpOnly" in set_cookie
+    assert "SameSite=lax" in set_cookie
+    assert "Path=/" in set_cookie
+    assert "Secure" in set_cookie
+    assert "Domain=" not in set_cookie
+    assert client.get("/auth/me").status_code == 401
+
+
+@pytest.mark.parametrize("origin", [None, "https://untrusted.example.test"])
+def test_logout_rejects_invalid_origin_without_revoking_session(
+    origin: str | None,
+    postgres_session: Connection,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    token = _create_test_session(postgres_session, 90 if origin is None else 91)
+    token_hash = hashlib.sha256(token.encode("ascii")).hexdigest()
+    client = _client()
+    client.cookies.set(SESSION_COOKIE_NAME, token)
+    headers = {} if origin is None else {"Origin": origin}
+
+    with caplog.at_level(logging.DEBUG):
+        response = client.post("/auth/logout", headers=headers)
+
+    assert response.status_code == 403
+    assert token not in response.text
+    with DatabaseSession(
+        bind=postgres_session,
+        join_transaction_mode="create_savepoint",
+    ) as database_session:
+        stored_session = database_session.scalar(
+            select(StoredSession).where(StoredSession.token_hash == token_hash)
+        )
+        assert stored_session is not None
+    application_logs = "\n".join(
+        record.getMessage()
+        for record in caplog.records
+        if record.name == "app" or record.name.startswith("app.")
+    )
+    assert token not in application_logs
 
 
 def test_callback_redacts_session_token_from_repr_body_and_logs(
