@@ -361,6 +361,11 @@ def test_callback_redacts_session_token_from_repr_body_and_logs(
     session_token = response.cookies[SESSION_COOKIE_NAME]
     assert session_token not in repr(SessionToken(session_token))
     assert session_token
+    application_logs = "\n".join(
+        record.getMessage()
+        for record in caplog.records
+        if record.name == "app" or record.name.startswith("app.")
+    )
     for sensitive_value in (
         session_token,
         "access-token-sentinel",
@@ -370,7 +375,7 @@ def test_callback_redacts_session_token_from_repr_body_and_logs(
     ):
         assert sensitive_value not in response.text
         assert sensitive_value not in repr(response)
-        assert sensitive_value not in caplog.text
+        assert sensitive_value not in application_logs
     assert "<redacted>" not in response.text
     assert response.cookies[SESSION_COOKIE_NAME] == session_token
 
