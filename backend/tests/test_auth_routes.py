@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 from sqlalchemy.engine import Connection
 from sqlalchemy.orm import Session as DatabaseSession
+from starlette.requests import Request
 
 from app.auth import csrf, routes
 from app.auth.oauth import (
@@ -66,6 +67,43 @@ def _assert_callback_cookie_cleared(response: object) -> None:
     assert "Max-Age=0" in set_cookie
     assert "HttpOnly" in set_cookie
     assert "SameSite=lax" in set_cookie
+
+
+def test_empty_session_cookie_does_not_require_origin() -> None:
+    request = Request(
+        {
+            "type": "http",
+            "headers": [(b"cookie", f"{SESSION_COOKIE_NAME}=".encode("ascii"))],
+        }
+    )
+
+    csrf.require_trusted_origin(request)
+
+
+def test_logout_with_empty_session_cookie_is_idempotent_without_database(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.database.session import get_db
+    from app.main import app
+
+    revoked_tokens: list[object] = []
+
+    def unused_database_session() -> object:
+        yield object()
+
+    monkeypatch.setitem(app.dependency_overrides, get_db, unused_database_session)
+    monkeypatch.setattr(
+        routes,
+        "revoke_session",
+        lambda database_session, token: revoked_tokens.append(token),
+    )
+    client = _client()
+    client.cookies.set(SESSION_COOKIE_NAME, "")
+
+    response = client.post("/auth/logout")
+
+    assert response.status_code == 204
+    assert revoked_tokens == [""]
 
 
 def _create_test_session(postgres_session: Connection, user_id: int) -> str:
@@ -353,6 +391,7 @@ def test_logout_revokes_session_and_repeated_logout_is_safe(
     assert "Domain=" not in set_cookie
     assert client.get("/auth/me").status_code == 401
 
+    client.cookies.set(SESSION_COOKIE_NAME, "")
     repeated = client.post("/auth/logout")
     assert repeated.status_code == 204
 

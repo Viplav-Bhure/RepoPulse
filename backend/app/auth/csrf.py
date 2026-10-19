@@ -24,7 +24,8 @@ def frontend_origin(frontend_url: str) -> str:
 
 
 def require_trusted_origin(request: Request) -> None:
-    if not request.cookies.get(SESSION_COOKIE_NAME):
+    session_cookie = request.cookies.get(SESSION_COOKIE_NAME)
+    if session_cookie is None or session_cookie == "":
         return
 
     origins = request.headers.getlist("origin")
