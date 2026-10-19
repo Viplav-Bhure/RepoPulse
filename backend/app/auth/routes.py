@@ -1,9 +1,12 @@
 """Temporary GitHub OAuth route orchestration."""
 
+from typing import Annotated
 from urllib.parse import urlsplit
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, RedirectResponse, Response
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.orm import Session as DatabaseSession
 
 from app.auth.oauth import (
     STATE_LIFETIME_SECONDS,
@@ -15,12 +18,21 @@ from app.auth.oauth import (
     fetch_github_profile,
     validate_state_cookie,
 )
+from app.auth.session import (
+    SESSION_COOKIE_NAME,
+    SESSION_LIFETIME_SECONDS,
+    SessionToken,
+    create_session,
+    get_current_user,
+    revoke_session,
+)
 from app.config import settings
+from app.database.models import User
+from app.database.session import get_db
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 STATE_COOKIE_NAME = "repopulse_oauth_state"
 AUTHENTICATION_ERROR = "GitHub authentication could not be completed."
-HANDOFF_PENDING = "OAuth verified; session creation is deferred to task 1.5."
 
 
 def _secure_cookie() -> bool:
@@ -40,6 +52,38 @@ def _valid_profile(profile: object) -> bool:
         and (profile.email is None or len(profile.email) <= 320)
         and (profile.email is None or "\r" not in profile.email)
         and (profile.email is None or "\n" not in profile.email)
+    )
+
+
+def _upsert_user(database_session: DatabaseSession, profile: GitHubProfile) -> User:
+    statement = (
+        insert(User)
+        .values(
+            github_user_id=profile.github_user_id,
+            username=profile.username,
+            email=profile.email,
+        )
+        .on_conflict_do_update(
+            index_elements=[User.github_user_id],
+            set_={"username": profile.username, "email": profile.email},
+        )
+        .returning(User)
+    )
+    user = database_session.scalar(statement)
+    if user is None:
+        raise RuntimeError("User persistence failed.")
+    return user
+
+
+def _set_session_cookie(response: Response, token: SessionToken) -> None:
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=token.value,
+        max_age=SESSION_LIFETIME_SECONDS,
+        path="/",
+        secure=_secure_cookie(),
+        httponly=True,
+        samesite="lax",
     )
 
 
@@ -73,10 +117,11 @@ def github_login() -> Response:
 @router.get("/github/callback")
 def github_callback(
     request: Request,
+    database_session: Annotated[DatabaseSession, Depends(get_db)],
     code: str | None = None,
     state: str | None = None,
     error: str | None = None,
-) -> JSONResponse:
+) -> Response:
     response: JSONResponse
     try:
         validated_state = validate_state_cookie(
@@ -100,21 +145,28 @@ def github_callback(
             profile = fetch_github_profile(token)
             if not _valid_profile(profile):
                 raise OAuthError()
-            response = JSONResponse(
-                status_code=501,
-                content={"detail": HANDOFF_PENDING},
+            user = _upsert_user(database_session, profile)
+            session_token = create_session(database_session, user.id)
+            database_session.commit()
+            response = RedirectResponse(
+                url=f"{settings.FRONTEND_URL.rstrip('/')}/",
+                status_code=302,
             )
+            _set_session_cookie(response, session_token)
     except OAuthStateError:
+        database_session.rollback()
         response = JSONResponse(
             status_code=400,
             content={"detail": AUTHENTICATION_ERROR},
         )
     except OAuthError:
+        database_session.rollback()
         response = JSONResponse(
             status_code=502,
             content={"detail": AUTHENTICATION_ERROR},
         )
     except Exception:
+        database_session.rollback()
         response = JSONResponse(
             status_code=500,
             content={"detail": AUTHENTICATION_ERROR},
@@ -122,6 +174,35 @@ def github_callback(
 
     response.delete_cookie(
         key=STATE_COOKIE_NAME,
+        path="/",
+        secure=_secure_cookie(),
+        httponly=True,
+        samesite="lax",
+    )
+    return response
+
+
+@router.get("/me")
+def auth_me(
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> dict[str, object]:
+    return {
+        "id": current_user.id,
+        "github_user_id": current_user.github_user_id,
+        "username": current_user.username,
+        "email": current_user.email,
+    }
+
+
+@router.post("/logout", status_code=204)
+def logout(
+    request: Request,
+    database_session: Annotated[DatabaseSession, Depends(get_db)],
+) -> Response:
+    revoke_session(database_session, request.cookies.get(SESSION_COOKIE_NAME))
+    response = Response(status_code=204)
+    response.delete_cookie(
+        key=SESSION_COOKIE_NAME,
         path="/",
         secure=_secure_cookie(),
         httponly=True,
