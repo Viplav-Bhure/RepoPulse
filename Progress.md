@@ -14,9 +14,9 @@
 
 | | |
 | --- | --- |
-| **Overall status** | **Phase 0 done; Phase 1 in progress.** Tasks 1.1 (`f4b78dc`), 1.3, 1.4 (`f1f0321`), 1.5, 1.6 (`daea51f`, follow-up fix `3cb8ee4`), and 1.7 are committed and CI-green. Task 1.8 is implemented and locally verified, awaiting human commit and CI. CI passed all backend tests, including PostgreSQL-backed CSRF/logout tests for task 1.6. |
+| **Overall status** | **Phase 0 done; Phase 1 in progress.** Tasks 1.1 (`f4b78dc`), 1.3, 1.4 (`f1f0321`), 1.5, 1.6 (`daea51f`, follow-up fix `3cb8ee4`), and 1.7 are committed and CI-green. Tasks 1.8 and 1.9 are implemented and locally verified, awaiting human commit and CI. CI passed all backend tests, including PostgreSQL-backed CSRF/logout tests for task 1.6. |
 | **Current phase** | Phase 1 - Identity and Repositories (in progress) |
-| **Next task** | Phase 1 task 1.9 |
+| **Next task** | Phase 1 task 1.10 |
 | **Blocked?** | No |
 | **Last human approval** | 2026-10-18, Phase 0 exit review |
 
@@ -46,11 +46,11 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 
 | | |
 | --- | --- |
-| **Task ID** | Phase 1 task 1.8 |
-| **Title** | GitHub client with timeouts and error mapping |
+| **Task ID** | Phase 1 task 1.9 |
+| **Title** | Ownership filter |
 | **Status** | Implemented and locally verified; awaiting human commit and CI |
-| **Plan** | Provide a reusable GitHub client with typed repository parsing, bounded requests, safe error mapping, trusted pagination, and transient bearer-token use only. |
-| **Notes / problems** | GitHub-client tests: 54 passed; OAuth tests: 32 passed; full backend pytest: 130 passed and 12 PostgreSQL tests skipped because `TEST_DATABASE_URL` was unavailable locally. Ruff check and format check passed; `git diff --check` passed. No real network used. Tasks 1.1 through 1.7 are committed and CI-green. Task 1.7 was verified with 14 focused logging tests and full backend pytest at 76 passed with 12 PostgreSQL tests skipped locally. Task 1.2 real OAuth App registration remains deferred to Stage 4. |
+| **Plan** | Pure `filter_owned_repositories()` function in `backend/app/repositories/filter.py`; no DB, no HTTP, no mutation. 10 focused tests pass; full backend pytest 140 passed and 12 PostgreSQL tests skipped. |
+| **Notes / problems** | Ownership filter tests: 10 passed; full backend pytest: 140 passed and 12 PostgreSQL tests skipped because `TEST_DATABASE_URL` was unavailable locally. Ruff check and format check passed; `git diff --check` passed. No real network used. Creates `backend/app/repositories/` package per Architecture section 40. |
 
 ---
 
@@ -60,6 +60,7 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 
 | Task ID | Date | PR / commit | Tests run and result | Notes |
 |---|---|---|---|---|
+| 1.9 | 2026-10-22 | awaiting human commit and CI | Ownership filter tests: 10 passed; backend pytest: 140 passed, 12 PostgreSQL tests skipped because `TEST_DATABASE_URL` was unavailable locally; Ruff check and format check passed; `git diff --check` passed | Implemented and locally verified; awaiting human commit and CI. |
 | 1.8 | 2026-10-22 | awaiting human commit and CI | GitHub-client tests: 54 passed; OAuth tests: 32 passed; backend pytest: 130 passed, 12 PostgreSQL tests skipped because `TEST_DATABASE_URL` was unavailable locally; Ruff check and format check passed; `git diff --check` passed | Implemented and locally verified; awaiting human commit and CI. |
 | 1.7 | 2026-10-22 | committed; CI-green | Focused logging tests: 14 passed; backend pytest: 76 passed, 12 PostgreSQL tests skipped because `TEST_DATABASE_URL` was unavailable locally; Ruff check and format check passed; `git diff --check` passed | Implemented, committed, and CI-green. |
 | 1.6 | 2026-10-19 | `daea51f`, follow-up fix `3cb8ee4`; committed and CI-green | Local backend pytest: 60 passed, 12 PostgreSQL tests skipped; CI passed all backend tests, including PostgreSQL-backed CSRF/logout tests | Implemented, fixed repeated logout with an empty session cookie, and CI-verified. Local PostgreSQL tests were skipped because Docker and `TEST_DATABASE_URL` were unavailable. |
@@ -168,6 +169,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-10-22 | Task 1.9 implemented and locally verified: ownership filter 10 passed; backend pytest 140 passed and 12 PostgreSQL tests skipped because `TEST_DATABASE_URL` was unavailable locally. Awaiting human commit and CI. | 1.9; next 1.10 | None |
 | 2026-10-22 | Task 1.8 implemented and locally verified: GitHub-client tests 54 passed; OAuth tests 32 passed; backend pytest 130 passed and 12 PostgreSQL tests skipped because `TEST_DATABASE_URL` was unavailable locally. Awaiting human commit and CI. | 1.8; next 1.9 | None |
 | 2026-10-22 | Task 1.7 locally verified: 14 focused logging tests passed; backend pytest 76 passed and 12 PostgreSQL tests skipped because `TEST_DATABASE_URL` was unavailable locally. Awaiting human commit and CI. | 1.7; next 1.8 | None |
 | 2026-10-19 | Task 1.6 commits `daea51f` and `3cb8ee4` are committed and CI-green; CI passed all backend tests, including PostgreSQL-backed CSRF/logout tests. | 1.6; next 1.7 | None |
