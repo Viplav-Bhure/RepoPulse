@@ -11,6 +11,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Protocol
 
@@ -112,6 +113,7 @@ class HttpRequest:
 class HttpResponse:
     status: int
     body: bytes = field(repr=False)
+    headers: Mapping[str, str] = field(default_factory=dict, repr=False)
 
     def __repr__(self) -> str:
         return f"HttpResponse(status={self.status}, body=<redacted>)"
@@ -150,7 +152,11 @@ class UrllibTransport:
                 body = response.read(MAX_RESPONSE_BYTES + 1)
                 if len(body) > MAX_RESPONSE_BYTES:
                     raise OAuthResponseError()
-                return HttpResponse(status=response.status, body=body)
+                return HttpResponse(
+                    status=response.status,
+                    body=body,
+                    headers=dict(response.headers.items()),
+                )
         except (OAuthRedirectError, OAuthResponseError):
             raise
         except urllib.error.HTTPError as error:
@@ -158,7 +164,11 @@ class UrllibTransport:
                 body = error.read(MAX_RESPONSE_BYTES + 1)
             except Exception:
                 body = b""
-            return HttpResponse(status=error.code, body=body)
+            return HttpResponse(
+                status=error.code,
+                body=body,
+                headers=dict(error.headers.items()) if error.headers else {},
+            )
         except urllib.error.URLError as error:
             if isinstance(error.reason, TimeoutError):
                 raise OAuthTimeoutError() from None
