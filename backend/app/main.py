@@ -12,6 +12,7 @@ from app.auth.csrf import frontend_origin
 from app.auth.routes import router as auth_router
 from app.config import settings  # noqa: F401 -- imported to trigger fail-fast validation
 from app.logging import configure_logging
+from app.repositories.routes import router as repositories_router
 
 configure_logging()
 
@@ -28,6 +29,7 @@ app.add_middleware(
     allow_headers=["Content-Type"],
 )
 app.include_router(auth_router)
+app.include_router(repositories_router)
 
 
 @app.get("/health", tags=["ops"])
