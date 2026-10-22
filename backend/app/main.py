@@ -11,6 +11,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.auth.csrf import frontend_origin
 from app.auth.routes import router as auth_router
 from app.config import settings  # noqa: F401 -- imported to trigger fail-fast validation
+from app.logging import configure_logging
+
+configure_logging()
 
 app = FastAPI(
     title="RepoPulse API",

@@ -1,6 +1,7 @@
 """Opaque PostgreSQL-backed browser sessions."""
 
 import hashlib
+import logging
 import secrets
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
@@ -20,6 +21,7 @@ SESSION_LIFETIME_SECONDS = int(SESSION_LIFETIME.total_seconds())
 SESSION_TOKEN_BYTES = 32
 SESSION_TOKEN_LENGTH = 43
 AUTHENTICATION_REQUIRED = "Authentication required."
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, slots=True, repr=False)
@@ -124,5 +126,6 @@ def get_current_user(
     token = request.cookies.get(SESSION_COOKIE_NAME)
     user = get_session_user(database_session, token)
     if user is None:
+        logger.warning("session_authentication_failed reason=missing_or_invalid")
         raise HTTPException(status_code=401, detail=AUTHENTICATION_REQUIRED)
     return user

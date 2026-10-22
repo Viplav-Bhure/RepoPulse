@@ -1,5 +1,6 @@
 """Temporary GitHub OAuth route orchestration."""
 
+import logging
 from typing import Annotated
 from urllib.parse import urlsplit
 
@@ -34,6 +35,7 @@ from app.database.session import get_db
 router = APIRouter(prefix="/auth", tags=["auth"])
 STATE_COOKIE_NAME = "repopulse_oauth_state"
 AUTHENTICATION_ERROR = "GitHub authentication could not be completed."
+logger = logging.getLogger(__name__)
 
 
 def _secure_cookie() -> bool:
@@ -97,6 +99,7 @@ def github_login() -> Response:
             session_secret=settings.SESSION_SECRET,
         )
     except Exception:
+        logger.warning("github_oauth_login_failed reason=authorization_request")
         return JSONResponse(
             status_code=500,
             content={"detail": AUTHENTICATION_ERROR},
@@ -149,6 +152,7 @@ def github_callback(
             user = _upsert_user(database_session, profile)
             session_token = create_session(database_session, user.id)
             database_session.commit()
+            logger.info("user_authenticated user_id=%s", user.id)
             response = RedirectResponse(
                 url=f"{settings.FRONTEND_URL.rstrip('/')}/",
                 status_code=302,
@@ -156,18 +160,21 @@ def github_callback(
             _set_session_cookie(response, session_token)
     except OAuthStateError:
         database_session.rollback()
+        logger.warning("github_oauth_callback_failed reason=state_validation")
         response = JSONResponse(
             status_code=400,
             content={"detail": AUTHENTICATION_ERROR},
         )
     except OAuthError:
         database_session.rollback()
+        logger.warning("github_oauth_callback_failed reason=provider")
         response = JSONResponse(
             status_code=502,
             content={"detail": AUTHENTICATION_ERROR},
         )
     except Exception:
         database_session.rollback()
+        logger.error("github_oauth_callback_failed reason=unexpected")
         response = JSONResponse(
             status_code=500,
             content={"detail": AUTHENTICATION_ERROR},
@@ -202,6 +209,7 @@ def logout(
     database_session: Annotated[DatabaseSession, Depends(get_db)],
 ) -> Response:
     revoke_session(database_session, request.cookies.get(SESSION_COOKIE_NAME))
+    logger.info("user_logged_out")
     response = Response(status_code=204)
     response.delete_cookie(
         key=SESSION_COOKIE_NAME,

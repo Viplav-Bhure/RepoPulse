@@ -4,8 +4,8 @@
 
 | | |
 | --- | --- |
-| **Last updated** | 2026-10-19 |
-| **Updated by** | AI builder (task 1.6 committed and CI-green, including PostgreSQL-backed CSRF/logout tests) |
+| **Last updated** | 2026-10-22 |
+| **Updated by** | AI builder (task 1.7 locally verified; awaiting human commit and CI) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -14,9 +14,9 @@
 
 | | |
 | --- | --- |
-| **Overall status** | **Phase 0 done; Phase 1 in progress.** Tasks 1.1 (`f4b78dc`), 1.3, 1.4 (`f1f0321`), 1.5, and 1.6 (`daea51f`, follow-up fix `3cb8ee4`) are committed and CI-green. CI passed all backend tests, including PostgreSQL-backed CSRF/logout tests for task 1.6. |
+| **Overall status** | **Phase 0 done; Phase 1 in progress.** Tasks 1.1 (`f4b78dc`), 1.3, 1.4 (`f1f0321`), 1.5, and 1.6 (`daea51f`, follow-up fix `3cb8ee4`) are committed and CI-green. Task 1.7 is locally verified and awaiting human commit and CI. CI passed all backend tests, including PostgreSQL-backed CSRF/logout tests for task 1.6. |
 | **Current phase** | Phase 1 - Identity and Repositories (in progress) |
-| **Next task** | Phase 1 task 1.7 |
+| **Next task** | Phase 1 task 1.8 |
 | **Blocked?** | No |
 | **Last human approval** | 2026-10-18, Phase 0 exit review |
 
@@ -48,9 +48,9 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 | --- | --- |
 | **Task ID** | Phase 1 task 1.7 |
 | **Title** | Ensure tokens and cookies never appear in logs |
-| **Status** | Not started |
+| **Status** | Locally verified; awaiting human commit and CI |
 | **Plan** | Ensure credentials and cookies are excluded from application logs. |
-| **Notes / problems** | Phase 0 Done, Gate G0 passed. Tasks 1.1, 1.3, 1.4, 1.5, and 1.6 are committed and CI-green. Task 1.6 commits are `daea51f` and follow-up fix `3cb8ee4`; CI passed all backend tests, including PostgreSQL-backed CSRF/logout tests. Locally, backend pytest had 60 passed and 12 PostgreSQL tests skipped because Docker and `TEST_DATABASE_URL` were unavailable. Task 1.2 real OAuth App registration remains deferred to Stage 4. The approved task 1.5 cookie decision is host-only with no Domain; Architecture section 34 needs a later approved documentation correction. |
+| **Notes / problems** | Task 1.7: 14 focused logging tests passed; full backend pytest had 76 passed and 12 PostgreSQL tests skipped because `TEST_DATABASE_URL` was unavailable locally. Tasks 1.1, 1.3, 1.4, 1.5, and 1.6 are committed and CI-green. Task 1.6 commits are `daea51f` and follow-up fix `3cb8ee4`; CI passed all backend tests, including PostgreSQL-backed CSRF/logout tests. Task 1.2 real OAuth App registration remains deferred to Stage 4. The approved task 1.5 cookie decision is host-only with no Domain; Architecture section 34 needs a later approved documentation correction. |
 
 ---
 
@@ -60,6 +60,7 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 
 | Task ID | Date | PR / commit | Tests run and result | Notes |
 |---|---|---|---|---|
+| 1.7 | 2026-10-22 | awaiting human commit and CI | Focused logging tests: 14 passed; backend pytest: 76 passed, 12 PostgreSQL tests skipped because `TEST_DATABASE_URL` was unavailable locally; Ruff check and format check passed; `git diff --check` passed | Locally verified; awaiting human commit and CI. |
 | 1.6 | 2026-10-19 | `daea51f`, follow-up fix `3cb8ee4`; committed and CI-green | Local backend pytest: 60 passed, 12 PostgreSQL tests skipped; CI passed all backend tests, including PostgreSQL-backed CSRF/logout tests | Implemented, fixed repeated logout with an empty session cookie, and CI-verified. Local PostgreSQL tests were skipped because Docker and `TEST_DATABASE_URL` were unavailable. |
 | 1.5 | 2026-10-19 | committed; CI-green | Local focused auth-route pytest: 11 passed, 9 skipped; Ruff check and format check passed; backend pytest: 59 passed, 9 skipped; CI passed, including PostgreSQL-backed tests | Implemented and locally verified. Local PostgreSQL tests were skipped because `TEST_DATABASE_URL` was unavailable; CI verified the PostgreSQL-backed tests. Host-only cookie with no Domain is approved; Architecture section 34 needs a later approved documentation correction. |
 | 1.4 | 2026-10-19 | `f1f0321`; committed and CI-green | Focused auth-route pytest: 12 passed; Ruff check and format check passed; backend pytest: 60 passed; `git diff --check` passed | Implemented and verified; `.env` excluded/restored for tests. OAuth App registration remains deferred to Stage 4. |
@@ -166,6 +167,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-10-22 | Task 1.7 locally verified: 14 focused logging tests passed; backend pytest 76 passed and 12 PostgreSQL tests skipped because `TEST_DATABASE_URL` was unavailable locally. Awaiting human commit and CI. | 1.7; next 1.8 | None |
 | 2026-10-19 | Task 1.6 commits `daea51f` and `3cb8ee4` are committed and CI-green; CI passed all backend tests, including PostgreSQL-backed CSRF/logout tests. | 1.6; next 1.7 | None |
 | 2026-10-19 | Task 1.6 implemented and locally verified: backend pytest 60 passed, 12 PostgreSQL tests skipped because Docker and `TEST_DATABASE_URL` were unavailable. CI must verify those tests. Task 1.5 is committed and CI-green, including PostgreSQL tests. | 1.6; next 1.7 | CI PostgreSQL integration verification for task 1.6. |
 | 2026-10-19 | Task 1.5 implemented and locally verified: backend pytest 59 passed, 9 PostgreSQL tests skipped because `TEST_DATABASE_URL` was unavailable. CI must provide the dedicated database and verify those tests. Host-only cookie approved; Architecture section 34 needs a later approved correction. | 1.5; next 1.6 | CI PostgreSQL integration verification. |
