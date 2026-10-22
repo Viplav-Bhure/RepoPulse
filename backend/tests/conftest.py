@@ -32,6 +32,17 @@ def client() -> Generator[TestClient, None, None]:
         yield test_client
 
 
+@pytest.fixture(autouse=True)
+def mock_default_github_repos(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Mock GitHub list_repositories during route tests to prevent network I/O."""
+    try:
+        from app.auth import routes
+
+        monkeypatch.setattr(routes, "list_repositories", lambda token: ())
+    except (ImportError, AttributeError):
+        pass
+
+
 @pytest.fixture(scope="session")
 def test_database_engine() -> Generator[Engine, None, None]:
     database_url = os.environ.get("TEST_DATABASE_URL")

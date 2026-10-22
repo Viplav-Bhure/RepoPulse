@@ -1,4 +1,4 @@
-"""Temporary GitHub OAuth route orchestration."""
+"""GitHub OAuth route orchestration."""
 
 import logging
 from typing import Annotated
@@ -31,6 +31,8 @@ from app.auth.session import (
 from app.config import settings
 from app.database.models import User
 from app.database.session import get_db
+from app.github.client import GitHubClientError, list_repositories
+from app.repositories.sync import sync_repositories
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 STATE_COOKIE_NAME = "repopulse_oauth_state"
@@ -150,6 +152,14 @@ def github_callback(
             if not _valid_profile(profile):
                 raise OAuthError()
             user = _upsert_user(database_session, profile)
+            # D1: fetch repos with the transient token in memory; never persist it.
+            repos = list_repositories(token.access_token)
+            sync_repositories(
+                database_session,
+                user.id,
+                profile.username,
+                repos,
+            )
             session_token = create_session(database_session, user.id)
             database_session.commit()
             logger.info("user_authenticated user_id=%s", user.id)
@@ -168,6 +178,13 @@ def github_callback(
     except OAuthError:
         database_session.rollback()
         logger.warning("github_oauth_callback_failed reason=provider")
+        response = JSONResponse(
+            status_code=502,
+            content={"detail": AUTHENTICATION_ERROR},
+        )
+    except GitHubClientError:
+        database_session.rollback()
+        logger.warning("github_oauth_callback_failed reason=repository_sync")
         response = JSONResponse(
             status_code=502,
             content={"detail": AUTHENTICATION_ERROR},
