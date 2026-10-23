@@ -5,7 +5,7 @@
 | | |
 | --- | --- |
 | **Last updated** | 2026-10-23 |
-| **Updated by** | AI builder (task 1.12 locally verified; awaiting human commit and CI) |
+| **Updated by** | AI builder (task 1.13 locally verified; awaiting human commit and CI) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -14,9 +14,9 @@
 
 | | |
 | --- | --- |
-| **Overall status** | **Phase 0 done; Phase 1 in progress.** Tasks 1.1 (`f4b78dc`), 1.3, 1.4 (`f1f0321`), 1.5, 1.6 (`daea51f`, follow-up fix `3cb8ee4`), 1.7 (`52172d0`), 1.8 (`b429656`), 1.9 (`5b4c87a`), 1.10 (`2823d2f`), and 1.11 (`59c4529`) are committed and CI-green. Task 1.12 is implemented and locally verified, awaiting human commit and CI. Full backend pytest passed 147 tests locally; 46 PostgreSQL tests were skipped because `TEST_DATABASE_URL` was unavailable. |
+| **Overall status** | **Phase 0 done; Phase 1 in progress.** Tasks 1.1 (`f4b78dc`), 1.3, 1.4 (`f1f0321`), 1.5, 1.6 (`daea51f`, follow-up fix `3cb8ee4`), 1.7 (`52172d0`), 1.8 (`b429656`), 1.9 (`5b4c87a`), 1.10 (`2823d2f`), 1.11 (`59c4529`), and 1.12 (`229e5e7`) are committed and CI-green. Task 1.13 is implemented and locally verified, awaiting human commit and CI. Full backend pytest passed 147 tests locally; 46 PostgreSQL tests were skipped because `TEST_DATABASE_URL` was unavailable. |
 | **Current phase** | Phase 1 - Identity and Repositories (in progress) |
-| **Next task** | Phase 1 task 1.13 |
+| **Next task** | Phase 1 task 1.14 |
 | **Blocked?** | No |
 | **Last human approval** | 2026-10-18, Phase 0 exit review |
 
@@ -46,11 +46,11 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 
 | | |
 | --- | --- |
-| **Task ID** | Phase 1 task 1.12 |
-| **Title** | Reusable repository ownership dependency |
+| **Task ID** | Phase 1 task 1.13 |
+| **Title** | Authorization-chain planning contracts |
 | **Status** | Locally verified; awaiting human commit and CI |
-| **Plan** | get_owned_repository(repo_id, current_user) dependency loading repository and verifying repository.user_id == current_user.id with 404 for missing or not-owned per PRD/Architecture. |
-| **Notes / problems** | Focused task 1.12 tests: 5 skipped because `TEST_DATABASE_URL` was unavailable. Full backend pytest: 147 passed, 46 skipped for the same reason; no failures. Ruff check and format check passed; `git diff --check` passed. PostgreSQL integration behavior remains for CI or a configured local PostgreSQL run. |
+| **Plan** | Reserve get_owned_file and get_owned_finding signatures for the file -> analysis -> repository -> user ownership chain without implementing later resource behavior. |
+| **Notes / problems** | Contract-only change; no new focused tests required. Full backend pytest: 147 passed, 46 skipped because `TEST_DATABASE_URL` was unavailable; no failures. Ruff check and format check passed; `git diff --check` passed. |
 
 ---
 
@@ -60,7 +60,8 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 
 | Task ID | Date | PR / commit | Tests run and result | Notes |
 |---|---|---|---|---|
-| 1.12 | 2026-10-23 | awaiting human commit and CI | Focused authorization tests: 5 skipped because `TEST_DATABASE_URL` was unavailable; full backend pytest: 147 passed, 46 skipped; Ruff check and format check passed; `git diff --check` passed | Implemented and locally verified without PostgreSQL; awaiting human commit and CI. |
+| 1.13 | 2026-10-23 | awaiting human commit and CI | Contract-only change; no new focused tests; full backend pytest: 147 passed, 46 skipped because `TEST_DATABASE_URL` was unavailable; Ruff check and format check passed; `git diff --check` passed | Implemented and locally verified; awaiting human commit and CI. |
+| 1.12 | 2026-10-23 | `229e5e7`; committed and CI-green | Focused authorization tests: 5 skipped because `TEST_DATABASE_URL` was unavailable; full backend pytest: 147 passed, 46 skipped; Ruff check and format check passed; `git diff --check` passed | Implemented, committed as 229e5e7, and CI-green. |
 | 1.11 | 2026-10-22 | `59c4529`; committed and CI-green | Focused repository-listing tests: 17 passed; full backend pytest: 188 passed (0 skipped); Ruff check and format check passed; `git diff --check` passed | Implemented and locally verified with PostgreSQL; committed as 59c4529 and CI-green. |
 | 1.10 | 2026-10-22 | `2823d2f`; committed and CI-green | Focused repository-sync tests: 13 passed; focused callback-sync tests: 6 passed; full backend pytest: 171 passed (0 skipped); Ruff check and format check passed; `git diff --check` passed | Implemented and locally verified with PostgreSQL; committed as 2823d2f and CI-green. |
 | 1.9 | 2026-10-22 | `5b4c87a`; committed and CI-green | Ownership filter tests: 10 passed; backend pytest: 140 passed, 12 PostgreSQL tests skipped because `TEST_DATABASE_URL` was unavailable locally; Ruff check and format check passed; `git diff --check` passed | Implemented, committed as 5b4c87a, and CI-green. |
@@ -172,6 +173,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-10-23 | Task 1.13 implemented and locally verified: added only get_owned_file/get_owned_finding authorization-chain contracts; full backend pytest 147 passed and 46 skipped because `TEST_DATABASE_URL` was unavailable. Ruff check, format check, and git diff --check passed. Awaiting human commit and CI. | 1.13; next 1.14 | None |
 | 2026-10-23 | Task 1.12 implemented and locally verified: focused authorization tests 5 skipped because `TEST_DATABASE_URL` was unavailable; full backend pytest 147 passed and 46 skipped; Ruff check, format check, and git diff --check passed. Awaiting human commit and CI. | 1.12; next 1.13 | None |
 | 2026-10-22 | Task 1.11 implemented and locally verified with PostgreSQL: repository-listing tests 17 passed; full backend pytest 188 passed (0 skipped). Ruff check, format check, and git diff --check passed. Awaiting human commit and CI. | 1.11; next 1.12 | None |
 | 2026-10-22 | Task 1.10 implemented and locally verified with PostgreSQL: repo-sync tests 13 passed; callback-sync tests 6 passed; auth-routes tests 25 passed; full backend pytest 171 passed (0 skipped). Ruff check, format check, and git diff --check passed. Awaiting human commit and CI. | 1.10; next 1.11 | None |

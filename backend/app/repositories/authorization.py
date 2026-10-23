@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, NoReturn
 
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session as DatabaseSession
@@ -24,3 +24,21 @@ def get_owned_repository(
     if repository is None or repository.user_id != current_user.id:
         raise HTTPException(status_code=404, detail=REPOSITORY_NOT_FOUND)
     return repository
+
+
+def get_owned_file(
+    file_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    database_session: Annotated[DatabaseSession, Depends(get_db)],
+) -> NoReturn:
+    """Reserve the file -> analysis -> repository -> user authorization contract."""
+    raise NotImplementedError("File authorization is implemented in Phase 2.")
+
+
+def get_owned_finding(
+    finding_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    database_session: Annotated[DatabaseSession, Depends(get_db)],
+) -> NoReturn:
+    """Reserve the finding -> file -> analysis -> repository -> user contract."""
+    raise NotImplementedError("Finding authorization is implemented in Phase 2.")
