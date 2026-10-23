@@ -366,7 +366,7 @@ Next.js repository page
 - The frontend never receives the GitHub client secret.
 - OAuth credentials stay on the backend.
 - Tokens/secrets are never written to logs.
-- The user's GitHub access token is **not persisted [Decided]**. **[Proposed]** It is held in memory only during the OAuth callback, used to fetch the user's repository list, and then discarded.
+- The user's GitHub access token is **not persisted [Decided]**. It is held in memory only during the OAuth callback, used to fetch the user's repository list, and then discarded. Later refresh operations use the server-side public-data credential `GITHUB_PUBLIC_API_TOKEN`.
 - Session cookies are HTTP-only.
 - Production cookies should be `Secure`.
 - CSRF/origin protection must be implemented for cookie-authenticated state-changing requests.
@@ -427,9 +427,9 @@ other-user/project-e
 
 User-owned forks are included because the owner is still the authenticated user.
 
-### Repository list refresh [Proposed]
+### Repository list refresh [Decided]
 
-Because the user's token is not stored, the repository list is fetched and upserted into `repositories` during the OAuth callback. Later refreshes and the pre-analysis size check use a server-side public-data credential (`GITHUB_PUBLIC_API_TOKEN`), so they do not depend on a per-user token and do not share a low unauthenticated rate limit across all users. Only public data is requested, and ownership is still verified against the stored `repositories.user_id`.
+Because the user's token is not stored, the repository list is fetched and upserted into `repositories` during the OAuth callback using the transient OAuth access token in memory only. Later refresh operations and the pre-analysis size check use a server-side public-data credential (`GITHUB_PUBLIC_API_TOKEN`), so they do not depend on a per-user token and do not share a low unauthenticated rate limit across all users. Only public data is requested, and ownership is still verified against the stored `repositories.user_id`. The current-phase refresh action is the internal `refresh_repositories()` service boundary; task 1.10 does not require an HTTP refresh route.
 
 Every resource must also follow the ownership chain:
 
@@ -1647,7 +1647,7 @@ Required considerations:
 5. CSRF/origin protection for state-changing requests.
 6. OAuth callback URL must match the production topology.
 
-**[Decided cookie/domain strategy; hosting providers remain Open]** The frontend and backend production hosts use the same registrable/parent domain. The exact hosting providers remain open and must be selected before production authentication is configured.
+**[Decided cookie strategy; hosting providers remain Open]** The frontend and backend production hosts may use separate hosts under the same registrable/parent domain so browser requests remain same-site. The exact hosting providers remain open and must be selected before production authentication is configured.
 
 The production domain shape is therefore expected to be, for example:
 
@@ -1656,9 +1656,11 @@ app.example.com
 api.example.com
 ```
 
-The proxy approach is not the selected v1 strategy; use same-parent-domain hosts.
+The proxy approach is not the selected v1 strategy; use same-site hosts where the selected deployment supports them.
 
-**Prerequisite:** this strategy requires a domain you own, DNS control for it, and hosting providers that allow custom domains on the chosen plans. The default domains that providers assign to free projects do not share a parent domain. The session cookie's `Domain` attribute and the GitHub OAuth callback URL must use the same parent domain. Local development is unaffected because `localhost` ports are the same site.
+**Cookie requirements:** the session cookie is host-only: no `Domain` attribute is set. It is `HttpOnly`, `Path=/`, and `SameSite=Lax`; `Secure` is set only when the backend uses HTTPS in production. Exact CORS origins and credentialed requests remain required, and the GitHub OAuth callback URL must match the backend host. Local development uses the same settings without `Secure` because it runs over HTTP.
+
+**Deployment prerequisite:** if separate production hosts are used, the deployment still requires a domain you own, DNS control for it, and hosting providers that allow the selected custom domains. The cookie remains scoped to the backend host rather than the parent domain.
 
 ---
 
@@ -2067,11 +2069,10 @@ These are the remaining implementation choices. Confirmed product decisions are 
 | 12 | Deployment migration strategy | Manual vs automatic migrations |
 | 13 | Own-code test coverage target | Final quality bar for the project itself |
 | 14 | Function-to-file aggregation rule | Mean, top-3 mean, or maximum; determines the stored file score |
-| 15 | GitHub API access after login | Proposed: list at the OAuth callback plus a server-side public-data credential |
 | 16 | Failed-run retention | Completes the retention policy |
 | 17 | Test-file treatment | Default summaries and ML scores for test files |
 
-Confirmed and therefore closed: JM1 dataset, per-function prediction aggregated to a file-level score, essential-stage policy, RepoPulse-owned Tree-sitter metric extraction without a production metrics library, PostgreSQL-backed opaque sessions, no GitHub token persistence, same-parent-domain production hosts, unparseable-file policy, concurrency policy, coverage formats, deterministic alias resolution policy, four static thresholds plus lightweight duplicate detection, Vitest + Testing Library + Playwright, archived/empty repository display policy, source/test distinction, latest-10 retention, and Phase 7 portfolio deliverables.
+Confirmed and therefore closed: JM1 dataset, per-function prediction aggregated to a file-level score, essential-stage policy, RepoPulse-owned Tree-sitter metric extraction without a production metrics library, PostgreSQL-backed opaque sessions, no GitHub token persistence, callback repository sync with the transient OAuth token in memory only, later refreshes with `GITHUB_PUBLIC_API_TOKEN`, host-only session cookies, same-site production hosts, unparseable-file policy, concurrency policy, coverage formats, deterministic alias resolution policy, four static thresholds plus lightweight duplicate detection, Vitest + Testing Library + Playwright, archived/empty repository display policy, source/test distinction, latest-10 retention, and Phase 7 portfolio deliverables.
 
 # 44. Implementation Order
 
@@ -2395,4 +2396,3 @@ Structured evidence
 ```
 
 This keeps RepoPulse technically ambitious enough to demonstrate parsing, graphs, Git, databases, authentication, machine learning, LLM integration, full-stack development, testing, and DevOps — while avoiding infrastructure that does not materially improve the core product.
-

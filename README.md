@@ -4,4 +4,4 @@ An AI-powered repository intelligence platform that analyzes public GitHub repos
 
 See [`docs/`](docs/) for full product and architecture documentation.
 
-**Status: Phase 0 — Foundations (in progress)**
+**Status: Phase 1 - Identity and Repositories (awaiting exit review)**

@@ -112,7 +112,6 @@ Deadlines below are the latest phase boundary by which the decision must be made
 
 | Decision | Settle by | Why then |
 |---|---|---|
-| GitHub API access after login (proposed: list at callback plus a server-side public-data credential) | Start of Phase 1 | Without a stored token, listing and the size pre-check need a defined path |
 | Test-file handling in default summaries and ML | Phase 2 (summaries), Phase 4 (ML) | Keeps test code from distorting dashboards |
 | Failed-run retention | Phase 2 | Completes the retention policy |
 | Function-to-file aggregation rule | Phase 4, before final evaluation | Determines the stored file score |
@@ -122,12 +121,12 @@ Deadlines below are the latest phase boundary by which the decision must be made
 | Dependency-graph layout algorithm | Phase 6 | Needed for SVG coordinate generation |
 | Large-graph grouping threshold | Phase 6 | Pick after viewing real graphs |
 | OpenAI model and snippet cap | Phase 5 | Needed for the client |
-| Hosting providers and domain | Start of Phase 6; latest Phase 7 | Providers must allow custom domains and you must own the domain for the same-parent-domain cookie strategy |
+| Hosting providers and domain | Start of Phase 6; latest Phase 7 | Providers must allow custom domains and you must own the domain for the same-site host topology and host-only cookie strategy |
 | Final database indexes | Phase 7 | Based on actual query patterns |
 | Deployment migration strategy | Phase 7 | Determines release procedure |
 | Own-code test coverage target | Phase 7 | Final quality bar |
 
-Already decided: per-function prediction aggregated to a file-level score, essential-stage policy, RepoPulse-owned Tree-sitter metric extraction without a production metrics library, PostgreSQL-backed opaque sessions, same-parent-domain production hosts, no OAuth-token persistence, unparseable-file policy, concurrency policy, coverage formats, deterministic alias policy, static-analysis scope, frontend/E2E tooling, repository display policy, test-file handling, latest-10 retention, and Phase 7 portfolio output.
+Already decided: per-function prediction aggregated to a file-level score, essential-stage policy, RepoPulse-owned Tree-sitter metric extraction without a production metrics library, PostgreSQL-backed opaque sessions, same-site production hosts with host-only cookies, no OAuth-token persistence, OAuth-callback repository synchronization with the transient token in memory only, later refreshes and the size pre-check using `GITHUB_PUBLIC_API_TOKEN`, the internal `refresh_repositories()` service boundary for task 1.10 with no HTTP refresh route, unparseable-file policy, concurrency policy, coverage formats, deterministic alias policy, static-analysis scope, frontend/E2E tooling, repository display policy, test-file handling, latest-10 retention, and Phase 7 portfolio output.
 
 # Phase 0 — Foundations
 
@@ -220,9 +219,9 @@ Phase 0 complete. Decisions made (see section 3): session mechanism, cookie/doma
 | Decision | Options | Notes |
 |---|---|---|
 | Session mechanism **[Decided]** | PostgreSQL-backed opaque server-side sessions with a secure HTTP-only cookie | Supports server-side revocation/logout and keeps the browser cookie small. |
-| Cookie/domain strategy for production **[Decided]** | Frontend and backend use different hosts under the same parent/registrable domain | This preserves the decided same-site deployment topology; exact providers remain open. It requires an owned custom domain, DNS control, and hosts that allow custom domains on their chosen plans. |
+| Cookie/domain strategy for production **[Decided]** | Frontend and backend may use different same-site hosts under the same registrable/parent domain; the session cookie is host-only with no `Domain` attribute, `HttpOnly`, `Path=/`, `SameSite=Lax`, and `Secure` only over production HTTPS | This preserves the decided same-site deployment topology while keeping the cookie scoped to the backend host; exact providers remain open. It requires an owned custom domain, DNS control, and hosts that allow custom domains on their chosen plans. |
 | OAuth token storage **[Decided]** | Do not persist the GitHub OAuth access token | The token is used only as needed during the OAuth flow/request context and is not stored in PostgreSQL. |
-| GitHub API access after login **[Proposed]** | List and upsert the user's repositories during the OAuth callback (token in memory only, then discarded); later refreshes and the size pre-check use a server-side public-data credential (`GITHUB_PUBLIC_API_TOKEN`) | With no stored token, a per-user call after login is impossible, and unauthenticated calls from one server IP share a low rate limit across all users. |
+| GitHub API access after login **[Decided]** | During the OAuth callback, synchronize repositories using the transient OAuth access token in memory only; never persist the token. Later refreshes and the size pre-check use `GITHUB_PUBLIC_API_TOKEN`. Task 1.10's refresh action is the internal `refresh_repositories()` service boundary; no HTTP refresh route is required. | With no stored token, later repository work uses the server-side public-data credential rather than a per-user token. |
 
 ## Tasks
 
@@ -230,7 +229,7 @@ Phase 0 complete. Decisions made (see section 3): session mechanism, cookie/doma
 - [ ] **1.1** Models + Alembic migration for `users` (`github_user_id` unique, `username`, `email` nullable, `created_at`) and `repositories` (`user_id`, `github_repo_id`, `name`, `owner`, `default_branch`, `is_fork`, timestamps). Add a unique constraint on (`user_id`, `github_repo_id`). If using server-side sessions, add `sessions`.
 
 ### B. OAuth flow (`backend/app/auth/`)
-- [ ] **1.2** Register a **GitHub OAuth App** for local development (callback pointing to your backend, e.g., `http://localhost:8000/auth/github/callback`). Request the minimum scope for public data. Store client ID/secret in `.env` only.
+- [ ] **1.2** **Deferred to Phase 4; not a Phase 1 task.** Do not register or implement the GitHub OAuth App as Phase 1 work, and do not mark this task complete in Phase 1. When the task is resumed, use a callback pointing to your backend (for example, `http://localhost:8000/auth/github/callback`), request the minimum scope for public data, and store client ID/secret in `.env` only.
 - [ ] **1.3** `oauth.py`: build the authorization URL with a random `state` value; verify `state` on callback; exchange the code for a token; fetch the GitHub user profile.
 - [ ] **1.4** `routes.py`: `GET /auth/github/login` (redirect), `GET /auth/github/callback` (exchange, upsert user, create session, set cookie, redirect to the frontend), `GET /auth/me`, `POST /auth/logout`.
 - [ ] **1.5** `session.py`: create/validate/destroy sessions; cookie flags `HttpOnly`, `Secure` in production, `SameSite` per your cookie strategy, sensible expiry. A FastAPI dependency `get_current_user` that returns 401 when absent/invalid.
@@ -238,9 +237,9 @@ Phase 0 complete. Decisions made (see section 3): session mechanism, cookie/doma
 - [ ] **1.7** Ensure tokens and cookies never appear in logs (add a logging filter or review log statements).
 
 ### C. Repository listing (`backend/app/github/client.py`, `repositories/`)
-- [ ] **1.8** GitHub client with timeouts and error mapping. During the OAuth callback, use the user's access token **in memory only** to fetch their repositories, then discard it **[Proposed]**. For later refreshes and the 2.7 size check, use the server-side public-data credential.
+- [ ] **1.8** GitHub client with timeouts and error mapping. During the OAuth callback, use the user's access token **in memory only** to fetch their repositories, then discard it **[Decided]**. For later refreshes and the 2.7 size check, use `GITHUB_PUBLIC_API_TOKEN`.
 - [ ] **1.9** Ownership filter: keep only repositories where the owner login equals the authenticated user's GitHub username (case-insensitive) and the owner type is a user. **User-owned forks are included [Decided]**; organization-owned repos are excluded.
-- [ ] **1.10** Upsert filtered repositories into the `repositories` table; return name, primary language, last-updated time, and a repository ID. Provide a refresh action that re-syncs the list using the server-side public-data credential, not a user token **[Proposed]**.
+- [ ] **1.10** Upsert filtered repositories into the `repositories` table; return name, primary language, last-updated time, and a repository ID. Provide the internal `refresh_repositories()` service boundary as the refresh action; it re-syncs the list using `GITHUB_PUBLIC_API_TOKEN`, not a user token. No HTTP refresh route is required **[Decided]**.
 - [ ] **1.11** `GET /repositories` returns the list. Archived or empty repositories are shown with explanatory status; Analyze is disabled when the repository is unsupported for analysis.
 
 ### D. Authorization (`repositories/authorization.py`)
@@ -265,6 +264,8 @@ Phase 0 complete. Decisions made (see section 3): session mechanism, cookie/doma
 | Token leakage | Do not store unless needed; never log; encrypt if stored |
 | OAuth `state` forgotten/misimplemented | Covered by a dedicated test |
 | Authorization added route-by-route and one is forgotten | Use the shared dependency; Phase 7 adds an automated route-enumeration test |
+
+Task 1.2 is deferred to Phase 4 and is not required for the Phase 1 exit criteria below.
 
 ## Exit criteria
 - [ ] You can sign in and out, and `GET /auth/me` returns your profile.
@@ -306,7 +307,7 @@ Phase 1 complete; Gate G0 decisions available (metric definitions, method, unit-
 - [ ] **2.6** **Deadline handling:** the 5-minute maximum **[Decided]**. A thread cannot be forcibly killed, so check a deadline between stages and between files, and abort cleanly with a "timed out" error. Subprocess calls (`git clone`) get their own timeouts.
 
 ### B. Safe repository retrieval (`github/clone.py`)
-- [ ] **2.7** Pre-check: read the repository size reported by GitHub (in KB) and reject early if it exceeds the 50 MB limit **[Decided]**. Use the server-side public-data credential for this call **[Proposed]**.
+- [ ] **2.7** Pre-check: read the repository size reported by GitHub (in KB) and reject early if it exceeds the 50 MB limit **[Decided]**. Use `GITHUB_PUBLIC_API_TOKEN` for this call **[Decided]**.
 - [ ] **2.8** Clone with the `git` binary into a per-run temp directory (`TEMP_CLONE_DIR/<run_id>`):
   - Default branch only **[Decided]**; **[Proposed]** `--single-branch`.
   - Full history of that branch (needed for `git log`).
@@ -736,7 +737,7 @@ Phase 6 complete. Hosting providers chosen (latest by the start of this phase).
 
 ### D. Deployment
 - [ ] **7.15** Provision the backend host with PostgreSQL and the frontend host. Set environment variables (`DATABASE_URL`, GitHub OAuth credentials, session secret, `OPENAI_API_KEY`, `OPENAI_MODEL`, `GITHUB_PUBLIC_API_TOKEN`, `FRONTEND_URL`, `API_BASE_URL`, `MAX_REPO_SIZE_MB`, `MAX_SOURCE_FILES`, `ANALYSIS_TIMEOUT_SECONDS`, `TEMP_CLONE_DIR`).
-- [ ] **7.15a** Obtain or confirm the domain, create DNS records for the frontend (for example `app.`) and backend (for example `api.`) hosts under the same parent domain, confirm both providers allow custom domains on the chosen plans, and set the session cookie's `Domain` attribute and the OAuth callback URL accordingly.
+- [ ] **7.15a** Obtain or confirm the domain, create DNS records for the frontend (for example `app.`) and backend (for example `api.`) hosts under the same registrable/parent domain, confirm both providers allow custom domains on the chosen plans, configure a host-only session cookie with no `Domain` attribute, `HttpOnly`, `Path=/`, `SameSite=Lax`, and `Secure` only over production HTTPS, and set the OAuth callback URL to the backend host.
 - [ ] **7.16** Create a **production GitHub OAuth App** with the real callback URL; keep the development app separate.
 - [ ] **7.17** Apply the cookie/domain strategy chosen in Phase 1 and verify sign-in works in real browsers (including one that restricts third-party cookies).
 - [ ] **7.18** Run migrations as part of the deploy process; decide manual vs. automatic deployment **[Open]**.
@@ -842,7 +843,6 @@ These are the remaining questions that can change details inside the phases. Non
 3. **Hosting providers and domain:** the topology and cookie/domain strategy are decided; the providers (which must allow custom domains) and the domain itself remain open until Phase 6.
 4. **ML success targets:** F1, ROC-AUC, and PR-AUC targets remain open and are set before the final evaluation in Phase 4. Preliminary experiments suggest modest values.
 5. **Aggregation rule:** mean, top-3 mean, or maximum for turning function probabilities into the file score (Phase 4).
-6. **GitHub API access after login:** confirm the proposed approach (list at the OAuth callback, then a server-side public-data credential).
-7. **Failed-run retention:** confirm or change the proposal to keep only the most recent failed run per repository.
-8. **Test files:** confirm that default summaries cover source files with a toggle for test files, and decide whether ML scores are shown for test files.
-9. **Git workflow:** short-lived branches and pull requests (section 2.1) remain **[Proposed]** unless you change them.
+6. **Failed-run retention:** confirm or change the proposal to keep only the most recent failed run per repository.
+7. **Test files:** confirm that default summaries cover source files with a toggle for test files, and decide whether ML scores are shown for test files.
+8. **Git workflow:** short-lived branches and pull requests (section 2.1) remain **[Proposed]** unless you change them.
