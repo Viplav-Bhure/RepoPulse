@@ -158,7 +158,7 @@ There is **one application role: `USER`**. There is no Admin, Developer, Manager
 | FR-GH-4 | The repository list SHALL display repository name, primary language, and last-updated time, with an **Analyze** action. |
 | FR-GH-5 | The UI SHALL NOT provide any input for arbitrary repository URLs. |
 | FR-GH-6 | GitHub API failures SHALL produce a clear error ("Unable to retrieve repository") without crashing the application. |
-| FR-GH-7 | The system SHALL NOT persist the user's GitHub access token. **Proposed mechanism:** the token is held in memory only during the OAuth callback to fetch and store the user's repository list; later GitHub API calls for public data (repository refresh, size pre-check) use a server-side credential that is not tied to any user. |
+| FR-GH-7 | The system SHALL NOT persist the user's GitHub access token. During the OAuth callback, repository synchronization uses the transient OAuth access token in memory only; later refreshes and public-data calls (including the size pre-check) use `GITHUB_PUBLIC_API_TOKEN`. Task 1.10 exposes the internal `refresh_repositories()` service boundary; no HTTP refresh route is required for task 1.10. |
 
 ### 7.3 Repository Retrieval and File Handling
 
@@ -567,7 +567,7 @@ Push → Install dependencies → Lint → Unit tests → Integration tests → 
 | Model generalization to real-world repositories | Acknowledged limitation (§9.7); claims are constrained. |
 | Unit mismatch: JM1 rows are functions, files are much larger | Mitigated by per-function prediction aggregated to a file score (§9.1) and a feature-range sanity check on real repositories. |
 | Duplicated and conflicting JM1 instances inflate evaluation scores | Mitigated by deduplicating on metrics and removing conflicting vectors before the split (§9.2). |
-| Same-parent-domain hosting needs an owned domain | Requires a domain, DNS control, and hosting providers that allow custom domains on the chosen plans; settle before Phase 6. |
+| Same-site split-host deployment needs an owned domain | Requires a domain, DNS control, and hosting providers that allow custom domains on the chosen plans; settle before Phase 6. |
 | Free/low-cost hosting limits (memory, CPU, request/idle behavior) | Background analysis runs inside the FastAPI process; host limits could constrain analysis duration or reliability. Confirm against the chosen host. |
 | Large repositories | Mitigated by hard size/file/duration limits. |
 | Scope creep | Mitigated by the explicit non-goals and removed-scope lists. |
@@ -594,11 +594,10 @@ Only implementation details that were not resolved by the current decisions rema
 | Deployment migration strategy | Manual vs automatic database migrations during deployment |
 | Own-code test coverage target | Final coverage target for RepoPulse itself |
 | Function-to-file aggregation rule | Mean, top-3 mean, or maximum of function probabilities; chosen in Phase 4 validation |
-| GitHub API access after login | Proposed: list repositories during the OAuth callback and use a server-side public-data credential for later calls; to be confirmed |
 | Failed-run retention | Whether and how failed runs are pruned (proposal: keep only the most recent failed run per repository) |
 | Test-file treatment | Whether default summaries exclude test files (proposed) and whether ML scores are shown for them |
 
-Decisions already confirmed—JM1, per-function prediction aggregated to a file-level score, essential-stage policy, RepoPulse-owned Tree-sitter metric extraction without a production metrics library, PostgreSQL-backed sessions, no OAuth-token persistence, same-parent-domain production hosts, unparseable-file policy, concurrency policy, coverage formats, alias policy, static-analysis scope, frontend/E2E tooling, repository display policy, test-file handling, retention, and Phase 7 portfolio output—are not open decisions.
+Decisions already confirmed—JM1, per-function prediction aggregated to a file-level score, essential-stage policy, RepoPulse-owned Tree-sitter metric extraction without a production metrics library, PostgreSQL-backed sessions, no OAuth-token persistence, OAuth-callback repository synchronization with the transient token in memory only, later refreshes and public-data calls using `GITHUB_PUBLIC_API_TOKEN`, the internal `refresh_repositories()` service boundary for task 1.10 with no HTTP refresh route, same-site production hosts with host-only cookies, unparseable-file policy, concurrency policy, coverage formats, alias policy, static-analysis scope, frontend/E2E tooling, repository display policy, test-file handling, retention, and Phase 7 portfolio output—are not open decisions.
 
 ## 17. Decision Log
 
@@ -645,7 +644,7 @@ Decisions confirmed by the author while preparing this PRD:
 | 15 | Metric implementation | RepoPulse owns one Tree-sitter extractor for Python, JavaScript, and TypeScript; no production metrics library |
 | 16 | Session mechanism | PostgreSQL-backed opaque server-side sessions with a secure HTTP-only cookie |
 | 17 | OAuth token storage | Do not persist GitHub access tokens |
-| 18 | Production cookie/domain strategy | Same parent/registrable domain for frontend and backend hosts; exact providers remain open |
+| 18 | Production cookie/domain strategy | Frontend and backend may use separate same-site hosts under the same registrable/parent domain; the session cookie is host-only with no `Domain` attribute, `HttpOnly`, `Path=/`, and `SameSite=Lax`; `Secure` is set only over production HTTPS; exact providers remain open |
 | 19 | Unparseable files | Minor parse errors continue; unusable files are skipped and recorded as warnings |
 | 20 | Analysis concurrency | One active analysis per repository plus a small global concurrency cap |
 | 21 | Coverage | Cobertura XML + lcov + Istanbul JSON |
@@ -665,6 +664,7 @@ Decisions confirmed by the author while preparing this PRD:
 | 35 | JM1 compatibility rule | A feature enters the serving schema only if its definition is verified by the data check or fixed by an approved convention; it can be implemented consistently across Python, JavaScript, and TypeScript with every approximation justified in the matrix (consistently, not identically); and its serving range stays within a stable range of JM1 (0.9.9). Derived fields use only admitted features. Record before model results. |
 | 36 | Prediction-unit rules | The same rules apply to all three languages. Units are outermost function-like nodes with block/statement bodies; nested functions, closures, and callbacks belong to their containing unit. Python lambdas and expression-bodied arrows are not units; TypeScript overload signatures and bodyless abstract/declare functions are not units. Qualifying module-level code is defined by control flow or a call expression outside imports, decorators, and exports; unit subtrees are excluded. See `ml/README.md` 0.9.8 for the complete rules and fixture cases. |
 | 37 | JM1 feature subset | Use `loc`, `v(g)`, `uniq_Op`, `uniq_Opnd`, `total_Op`, `total_Opnd`, `n`, `v`, `l`, `d`, `i`, `b`, in that order. Drop `ev(g)`, `iv(g)`, and `branchCount` because they are not verifiable or language-neutral (`branchCount = v(g)-1` had zero exact matches); drop `e` and `t` because their JM1/serving median ratios exceed 10 in JavaScript (10.535) and TypeScript (11.899); drop the four line-class metrics for simplicity because individual definitions are unverified, aggregate fit is about 80%, and the classes are style-dependent. |
+| 38 | GitHub API access after login | During the OAuth callback, repository synchronization uses the transient OAuth access token in memory only; OAuth tokens are never persisted; later refreshes and public-data calls use `GITHUB_PUBLIC_API_TOKEN`; task 1.10 exposes the internal `refresh_repositories()` service boundary, with no HTTP refresh route required. |
 
 ## 18. Delivery Phases (no dates)
 

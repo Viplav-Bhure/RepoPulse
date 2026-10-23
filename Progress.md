@@ -148,7 +148,7 @@ Later decisions (aggregation rule, risk thresholds, ML targets, graph layout, Op
 
 **Watch items from the start:**
 
-- Phase 1 task 1.2 remains listed as a Phase 1 task in `Phases.md` but is intentionally deferred to Phase 4 by the approved project scope decision; `Phases.md` was not changed.
+- Phase 1 task 1.2 remains a numbered task in `Phases.md` but is explicitly deferred to Phase 4 and remains incomplete; the relevant Phase 1 documentation in `Phases.md` was subsequently corrected.
 
 ---
 
