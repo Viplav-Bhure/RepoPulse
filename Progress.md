@@ -5,7 +5,7 @@
 | | |
 | --- | --- |
 | **Last updated** | 2026-10-23 |
-| **Updated by** | AI builder (task 1.13 locally verified; awaiting human commit and CI) |
+| **Updated by** | AI builder (task 1.14 manually verified; Phase 1 awaiting exit review) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -14,9 +14,9 @@
 
 | | |
 | --- | --- |
-| **Overall status** | **Phase 0 done; Phase 1 in progress.** Tasks 1.1 (`f4b78dc`), 1.3, 1.4 (`f1f0321`), 1.5, 1.6 (`daea51f`, follow-up fix `3cb8ee4`), 1.7 (`52172d0`), 1.8 (`b429656`), 1.9 (`5b4c87a`), 1.10 (`2823d2f`), 1.11 (`59c4529`), and 1.12 (`229e5e7`) are committed and CI-green. Task 1.13 is implemented and locally verified, awaiting human commit and CI. Full backend pytest passed 147 tests locally; 46 PostgreSQL tests were skipped because `TEST_DATABASE_URL` was unavailable. |
-| **Current phase** | Phase 1 - Identity and Repositories (in progress) |
-| **Next task** | Phase 1 task 1.14 |
+| **Overall status** | **Phase 0 done; Phase 1 awaiting exit review.** Tasks 1.1 (`f4b78dc`), 1.3, 1.4 (`f1f0321`), 1.5, 1.6 (`daea51f`, follow-up fix `3cb8ee4`), 1.7 (`52172d0`), 1.8 (`b429656`), 1.9 (`5b4c87a`), 1.10 (`2823d2f`), 1.11 (`59c4529`), and 1.12 (`229e5e7`) are committed and CI-green. Task 1.13 is implemented and locally verified, awaiting human commit and CI. Task 1.14 manual browser verification is complete. |
+| **Current phase** | Phase 1 - Identity and Repositories (awaiting approval) |
+| **Next task** | Phase 1 exit review/approval |
 | **Blocked?** | No |
 | **Last human approval** | 2026-10-18, Phase 0 exit review |
 
@@ -30,7 +30,7 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 | Phase | Name | Status | Started | Finished | Tag |
 | --- | --- | --- | --- | --- | --- |
 | 0 | Foundations (includes **Gate G0**: ML feasibility) | Done | 2026-10-10 | 2026-10-18 | - |
-| 1 | Identity and Repositories | In progress | 2026-10-19 | - | `v0.1` |
+| 1 | Identity and Repositories | Awaiting approval | 2026-10-19 | - | `v0.1` |
 | 2 | Analysis Core | Not started | - | - | `v0.2` |
 | 3 | Repository Context | Not started | - | - | `v0.3` |
 | 4 | ML | Not started | - | - | `v0.4` |
@@ -46,11 +46,11 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 
 | | |
 | --- | --- |
-| **Task ID** | Phase 1 task 1.13 |
-| **Title** | Authorization-chain planning contracts |
-| **Status** | Locally verified; awaiting human commit and CI |
-| **Plan** | Reserve get_owned_file and get_owned_finding signatures for the file -> analysis -> repository -> user ownership chain without implementing later resource behavior. |
-| **Notes / problems** | Contract-only change; no new focused tests required. Full backend pytest: 147 passed, 46 skipped because `TEST_DATABASE_URL` was unavailable; no failures. Ruff check and format check passed; `git diff --check` passed. |
+| **Task ID** | Phase 1 task 1.14 |
+| **Title** | Manual browser verification |
+| **Status** | Manually verified and complete; Phase 1 awaiting exit review |
+| **Plan** | Verify the local Compose stack, browser/API auth flow, repository listing, logout, CORS, and credential-leak checks without changing application code. |
+| **Notes / problems** | `docker compose up -d --build` succeeded; PostgreSQL, backend, and frontend were healthy. `http://localhost:3000/` returned the existing frontend placeholder with HTTP 200. `http://localhost:8000/docs` and `/health` returned HTTP 200. Unauthenticated `/auth/me` and `/repositories` returned HTTP 401. Callback without required parameters returned HTTP 400 with the expected authentication error. After correcting the local OAuth App configuration, GitHub OAuth completed and redirected back to the local application; authenticated `/auth/me` returned the GitHub profile without tokens or secrets; `/repositories` returned only the authenticated user's available repositories. Logout returned HTTP 204 twice; afterward `/auth/me` and `/repositories` returned HTTP 401. CORS preflight from `http://localhost:3000` succeeded; `http://evil.example` returned HTTP 400 with no allowed origin. Backend log scanning found no access tokens, client secrets, authorization headers, cookie values, or GitHub-token patterns. No secrets, tokens, cookies, or authorization-code values were printed or added to files. This was backend/API manual verification; the frontend remains a placeholder. |
 
 ---
 
@@ -60,6 +60,7 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 
 | Task ID | Date | PR / commit | Tests run and result | Notes |
 |---|---|---|---|---|
+| 1.14 | 2026-10-23 | awaiting human commit and CI | Manual browser/API verification completed: Compose build succeeded; services healthy; frontend and docs 200; health 200; unauthenticated auth and repository routes 401; callback without parameters 400; OAuth login and callback redirect succeeded after local OAuth App configuration correction; authenticated profile and repository listing verified; logout 204 twice and post-logout routes 401; CORS allow/deny checks passed; log scan found no credential patterns | Backend/API verification only; frontend remains a placeholder. No secrets, tokens, cookies, or authorization-code values were printed or added to files. |
 | 1.13 | 2026-10-23 | awaiting human commit and CI | Contract-only change; no new focused tests; full backend pytest: 147 passed, 46 skipped because `TEST_DATABASE_URL` was unavailable; Ruff check and format check passed; `git diff --check` passed | Implemented and locally verified; awaiting human commit and CI. |
 | 1.12 | 2026-10-23 | `229e5e7`; committed and CI-green | Focused authorization tests: 5 skipped because `TEST_DATABASE_URL` was unavailable; full backend pytest: 147 passed, 46 skipped; Ruff check and format check passed; `git diff --check` passed | Implemented, committed as 229e5e7, and CI-green. |
 | 1.11 | 2026-10-22 | `59c4529`; committed and CI-green | Focused repository-listing tests: 17 passed; full backend pytest: 188 passed (0 skipped); Ruff check and format check passed; `git diff --check` passed | Implemented and locally verified with PostgreSQL; committed as 59c4529 and CI-green. |
@@ -173,6 +174,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-10-23 | Task 1.14 manually verified against the local Compose stack and FastAPI docs: services healthy; unauthenticated routes 401; callback without parameters 400; corrected local GitHub OAuth flow completed and redirected back; authenticated profile and own repository list verified; logout 204 twice and post-logout routes 401; CORS allow/deny checks passed; log scan found no credential patterns. Backend/API verification only; frontend remains a placeholder. Phase 1 is awaiting exit review. | 1.14; Phase 1 exit review next | None |
 | 2026-10-23 | Task 1.13 implemented and locally verified: added only get_owned_file/get_owned_finding authorization-chain contracts; full backend pytest 147 passed and 46 skipped because `TEST_DATABASE_URL` was unavailable. Ruff check, format check, and git diff --check passed. Awaiting human commit and CI. | 1.13; next 1.14 | None |
 | 2026-10-23 | Task 1.12 implemented and locally verified: focused authorization tests 5 skipped because `TEST_DATABASE_URL` was unavailable; full backend pytest 147 passed and 46 skipped; Ruff check, format check, and git diff --check passed. Awaiting human commit and CI. | 1.12; next 1.13 | None |
 | 2026-10-22 | Task 1.11 implemented and locally verified with PostgreSQL: repository-listing tests 17 passed; full backend pytest 188 passed (0 skipped). Ruff check, format check, and git diff --check passed. Awaiting human commit and CI. | 1.11; next 1.12 | None |
