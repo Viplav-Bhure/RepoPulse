@@ -1341,6 +1341,16 @@ repositories
 - default_branch
 - created_at
 
+sessions
+- id
+- user_id
+- token_hash (CHAR(64), unique)
+- created_at
+- expires_at
+
+The `sessions.expires_at` column has an index for expiry cleanup. The raw
+session token is never stored.
+
 analysis_runs
 - id
 - repository_id
@@ -1656,7 +1666,7 @@ app.example.com
 api.example.com
 ```
 
-The proxy approach is not the selected v1 strategy; use same-site hosts where the selected deployment supports them.
+The proxy approach is not the selected v1 strategy; production must use same-site hosts (the same registrable domain); otherwise SameSite=Lax cookies are not sent and sign-in fails.
 
 **Cookie requirements:** the session cookie is host-only: no `Domain` attribute is set. It is `HttpOnly`, `Path=/`, and `SameSite=Lax`; `Secure` is set only when the backend uses HTTPS in production. Exact CORS origins and credentialed requests remain required, and the GitHub OAuth callback URL must match the backend host. Local development uses the same settings without `Secure` because it runs over HTTP.
 
@@ -2350,6 +2360,10 @@ Metrics      Static Rules      Dependencies    Security
 | Metric implementation | RepoPulse-owned Tree-sitter extraction; no production metrics library |
 | Session mechanism | PostgreSQL-backed opaque server-side sessions with secure HTTP-only cookie |
 | OAuth token storage | Do not persist GitHub access tokens |
+| CSRF | SameSite=Lax cookies plus an exact single Origin match for cookie-authenticated state-changing routes, plus exact-origin CORS with credentials |
+| Session token | Opaque 32-byte random token in the cookie, only its SHA-256 stored, absolute 7-day expiry (no sliding renewal), a new session per login, older sessions not revoked |
+| OAuth state | HMAC-signed HttpOnly cookie (10 minutes) holding the state and PKCE S256 verifier, not server-side single-use |
+| Ownership 404 | Non-existent and non-owned repositories both return 404 |
 | Production cookie/domain strategy | Frontend and backend hosts use the same parent/registrable domain; exact providers remain open |
 | Coverage | Cobertura XML + lcov + Istanbul JSON |
 | Unparseable files | Minor parse errors continue; unusable files are skipped and recorded as warnings |

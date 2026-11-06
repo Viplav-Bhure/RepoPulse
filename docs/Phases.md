@@ -229,11 +229,11 @@ Phase 0 complete. Decisions made (see section 3): session mechanism, cookie/doma
 - [ ] **1.1** Models + Alembic migration for `users` (`github_user_id` unique, `username`, `email` nullable, `created_at`) and `repositories` (`user_id`, `github_repo_id`, `name`, `owner`, `default_branch`, `is_fork`, timestamps). Add a unique constraint on (`user_id`, `github_repo_id`). If using server-side sessions, add `sessions`.
 
 ### B. OAuth flow (`backend/app/auth/`)
-- [ ] **1.2** **Deferred to Phase 4; not a Phase 1 task.** Do not register or implement the GitHub OAuth App as Phase 1 work, and do not mark this task complete in Phase 1. When the task is resumed, use a callback pointing to your backend (for example, `http://localhost:8000/auth/github/callback`), request the minimum scope for public data, and store client ID/secret in `.env` only.
+- [ ] **1.2** **Done by the human: local OAuth App registered (callback http://localhost:8000/auth/github/callback, no scope, client ID/secret in .env only); verified in task 1.14.**
 - [ ] **1.3** `oauth.py`: build the authorization URL with a random `state` value; verify `state` on callback; exchange the code for a token; fetch the GitHub user profile.
 - [ ] **1.4** `routes.py`: `GET /auth/github/login` (redirect), `GET /auth/github/callback` (exchange, upsert user, create session, set cookie, redirect to the frontend), `GET /auth/me`, `POST /auth/logout`.
 - [ ] **1.5** `session.py`: create/validate/destroy sessions; cookie flags `HttpOnly`, `Secure` in production, `SameSite` per your cookie strategy, sensible expiry. A FastAPI dependency `get_current_user` that returns 401 when absent/invalid.
-- [ ] **1.6** CSRF protection for state-changing routes (`POST /auth/logout`, later `analyze` and `explain`). **[Proposed]** restrictive `SameSite` plus an `Origin`/`Referer` check or a CSRF token.
+- [ ] **1.6** CSRF protection for state-changing routes (`POST /auth/logout`, later `analyze` and `explain`). **[Decided]** SameSite=Lax cookies plus an exact single Origin match, with exact-origin CORS and credentials.
 - [ ] **1.7** Ensure tokens and cookies never appear in logs (add a logging filter or review log statements).
 
 ### C. Repository listing (`backend/app/github/client.py`, `repositories/`)
@@ -243,7 +243,7 @@ Phase 0 complete. Decisions made (see section 3): session mechanism, cookie/doma
 - [ ] **1.11** `GET /repositories` returns the list. Archived or empty repositories are shown with explanatory status; Analyze is disabled when the repository is unsupported for analysis.
 
 ### D. Authorization (`repositories/authorization.py`)
-- [ ] **1.12** A dependency `get_owned_repository(repo_id, current_user)` that loads the repository and verifies `repository.user_id == current_user.id`. **[Proposed]** return **404** for both "does not exist" and "belongs to someone else" so IDs cannot be probed.
+- [ ] **1.12** A dependency `get_owned_repository(repo_id, current_user)` that loads the repository and verifies `repository.user_id == current_user.id`. **[Decided]** return **404** for both "does not exist" and "belongs to someone else" so IDs cannot be probed.
 - [ ] **1.13** Plan the chain for later resources: file → analysis run → repository → user. Write the function signature now (`get_owned_file`, `get_owned_finding`) even if they are filled in during Phase 2.
 
 ### E. Manual verification (no real UI yet)
@@ -264,8 +264,6 @@ Phase 0 complete. Decisions made (see section 3): session mechanism, cookie/doma
 | Token leakage | Do not store unless needed; never log; encrypt if stored |
 | OAuth `state` forgotten/misimplemented | Covered by a dedicated test |
 | Authorization added route-by-route and one is forgotten | Use the shared dependency; Phase 7 adds an automated route-enumeration test |
-
-Task 1.2 is deferred to Phase 4 and is not required for the Phase 1 exit criteria below.
 
 ## Exit criteria
 - [ ] You can sign in and out, and `GET /auth/me` returns your profile.

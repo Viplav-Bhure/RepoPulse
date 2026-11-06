@@ -14,7 +14,7 @@
 
 | | |
 | --- | --- |
-| **Overall status** | **Phase 0 done; Phase 1 awaiting exit review.** Tasks 1.1 (`f4b78dc`), 1.3, 1.4 (`f1f0321`), 1.5, 1.6 (`daea51f`, follow-up fix `3cb8ee4`), 1.7 (`52172d0`), 1.8 (`b429656`), 1.9 (`5b4c87a`), 1.10 (`2823d2f`), 1.11 (`59c4529`), 1.12 (`229e5e7`), and 1.13 (`2be3658`) are committed and CI-green. Task 1.14 (`deb9d96`) manual browser verification is complete and CI-green. Task 1.2 is intentionally deferred to Phase 4; the local OAuth App exists and was used for manual verification. |
+| **Overall status** | **Phase 0 done; Phase 1 awaiting exit review.** Tasks 1.1 (`f4b78dc`), 1.3 (`08aef33`), 1.4 (`f1f0321`), 1.5 (`4940595`), 1.6 (`daea51f`, follow-up fix `3cb8ee4`), 1.7 (`52172d0`), 1.8 (`b429656`), 1.9 (`5b4c87a`), 1.10 (`2823d2f`), 1.11 (`59c4529`), 1.12 (`229e5e7`), and 1.13 (`2be3658`) are committed and CI-green. Task 1.14 (`deb9d96`) manual browser verification is complete and CI-green. The human-registered local OAuth App was used for manual verification. |
 | **Current phase** | Phase 1 - Identity and Repositories (awaiting approval) |
 | **Next task** | Phase 1 exit review/approval |
 | **Blocked?** | No |
@@ -48,8 +48,8 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 | --- | --- |
 | **Task ID** | Phase 1 task 1.14 |
 | **Title** | Manual browser verification |
-| **Status** | Manually verified and complete; Phase 1 awaiting exit review |
-| **Plan** | Verify the local Compose stack, browser/API auth flow, repository listing, logout, CORS, and credential-leak checks without changing application code. |
+| **Status** | Manual verification and approved fixes complete; Phase 1 awaiting exit review |
+| **Plan** | Review the Phase 1 implementation and verify the approved test-database, GitHub refresh, logging, configuration, and documentation fixes. |
 | **Notes / problems** | `docker compose up -d --build` succeeded; PostgreSQL, backend, and frontend were healthy. `http://localhost:3000/` returned the existing frontend placeholder with HTTP 200. `http://localhost:8000/docs` and `/health` returned HTTP 200. Unauthenticated `/auth/me` and `/repositories` returned HTTP 401. Callback without required parameters returned HTTP 400 with the expected authentication error. After correcting the local OAuth App configuration, GitHub OAuth completed and redirected back to the local application; authenticated `/auth/me` returned the GitHub profile with HTTP 200 and no tokens or secrets; authenticated `/repositories` returned only the user's available repositories with HTTP 200. Logout returned HTTP 204 twice; afterward `/auth/me` and `/repositories` returned HTTP 401. CORS preflight from `http://localhost:3000` succeeded; `http://evil.example` returned HTTP 400 with no allowed origin. Archived/empty repository behavior was not separately observed in the real browser flow; automated tests cover those states. Backend log scanning found no access tokens, client secrets, authorization headers, cookie values, or GitHub-token patterns. No secrets, tokens, cookies, or authorization-code values were printed or added to files. This was backend/API manual verification; the frontend remains a placeholder. |
 
 ---
@@ -69,9 +69,9 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 | 1.8 | 2026-10-22 | `b429656`; committed and CI-green | GitHub-client tests: 54 passed; OAuth tests: 32 passed; backend pytest: 130 passed, 12 PostgreSQL tests skipped because `TEST_DATABASE_URL` was unavailable locally; Ruff check and format check passed; `git diff --check` passed | Implemented, committed as b429656, and CI-green. |
 | 1.7 | 2026-10-22 | `52172d0`; committed and CI-green | Focused logging tests: 14 passed; backend pytest: 76 passed, 12 PostgreSQL tests skipped because `TEST_DATABASE_URL` was unavailable locally; Ruff check and format check passed; `git diff --check` passed | Implemented, committed as 52172d0, and CI-green. |
 | 1.6 | 2026-10-19 | `daea51f`, follow-up fix `3cb8ee4`; committed and CI-green | Local backend pytest: 60 passed, 12 PostgreSQL tests skipped; CI passed all backend tests, including PostgreSQL-backed CSRF/logout tests | Implemented, fixed repeated logout with an empty session cookie, and CI-verified. Local PostgreSQL tests were skipped because Docker and `TEST_DATABASE_URL` were unavailable. |
-| 1.5 | 2026-10-19 | committed; CI-green | Local focused auth-route pytest: 11 passed, 9 skipped; Ruff check and format check passed; backend pytest: 59 passed, 9 skipped; CI passed, including PostgreSQL-backed tests | Implemented and locally verified. Local PostgreSQL tests were skipped because `TEST_DATABASE_URL` was unavailable; CI verified the PostgreSQL-backed tests. Host-only cookie with no Domain is approved. |
+| 1.5 | 2026-10-19 | `4940595`; committed and CI-green | Local focused auth-route pytest: 11 passed, 9 skipped; Ruff check and format check passed; backend pytest: 59 passed, 9 skipped; CI passed, including PostgreSQL-backed tests | Implemented and locally verified. Local PostgreSQL tests were skipped because `TEST_DATABASE_URL` was unavailable; CI verified the PostgreSQL-backed tests. Host-only cookie with no Domain is approved. |
 | 1.4 | 2026-10-19 | `f1f0321`; committed and CI-green | Focused auth-route pytest: 12 passed; Ruff check and format check passed; backend pytest: 60 passed; `git diff --check` passed | Implemented and verified; `.env` excluded/restored for tests. The local OAuth App was created later for manual verification. |
-| 1.3 | 2026-10-19 | committed; CI-green | Ruff check and format check passed; focused OAuth pytest: 32 passed; backend pytest: 48 passed | Implemented and verified; no real credentials or network used. |
+| 1.3 | 2026-10-19 | `08aef33`; committed and CI-green | Ruff check and format check passed; focused OAuth pytest: 32 passed; backend pytest: 48 passed | Implemented and verified; no real credentials or network used. |
 | 1.1 | 2026-10-19 | `f4b78dc`; CI-green | Ruff check and format check passed; backend pytest: 16 passed; human verified Compose migration upgrade and `alembic current` reports `0002_identity (head)`; all four CI jobs passed | Committed and CI-green. |
 | 0.1 | 2026-10-10 | awaiting human commit | None required (infrastructure only) | Done; `.gitignore`, `.env.example`, `README.md`, `frontend/`, `backend/`, `ml/` `.gitkeep` files created. Ignore rules verified with `git check-ignore`. |
 | 0.2 | 2026-10-10 | awaiting human commit | `GET /health` -> `{"status":"ok"}` verified via `Invoke-WebRequest` (200 OK) | `backend/requirements.txt`, `backend/app/__init__.py`, `backend/app/main.py`, `backend/app/config.py`, `backend/.env` created. `.env.example` SESSION_SECRET_KEY -> SESSION_SECRET corrected. `.venv` created with `py -3.12`. |
@@ -109,7 +109,7 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 | Python and Node.js toolchains installed | Phase 0 (tasks 0.2-0.5) | [x] Python 3.12 (via py launcher) + 3.13.14, Node.js 24.21.0 |
 | `git` available locally | Phase 0 | [x] git 2.49.0.windows.1 |
 | JM1 dataset file `jm1.csv` available (from the supplied `NASA_dataset.zip`); SHA-256 `1ec66eb3568ae8bb4e2709cf0bd28b11db41c7c0ae771325c0952997e35e4dff` | Phase 0 (Gate G0, task 0.9) | [x] |
-| GitHub OAuth App registered for local development | Phase 1 manual verification | [x] Local OAuth App created and OAuth login/callback verified; task 1.2 remains intentionally deferred to Phase 4 for project tracking. |
+| GitHub OAuth App registered for local development | Phase 1 manual verification | [x] Local OAuth App created and OAuth login/callback verified. |
 | OpenAI API key | Phase 5 | [ ] |
 | A domain you own, with DNS access, and hosts that allow custom domains | Start of Phase 6 (latest Phase 7) | [ ] |
 
@@ -119,7 +119,7 @@ The full schedule is in `Phases.md` section 3. The AI must **ask** for each deci
 
 | Decision | Due | Status | Human's answer |
 | --- | --- | --- | --- |
-| Phase 1 task 1.2 treatment | Phase 1 | Deferred to Phase 4 | Do not mark task 1.2 complete in Phase 1. The local OAuth App exists and was used for manual verification; no task 1.2 implementation work is required in this phase. |
+| Task 1.2 | Phase 1 | Done (human) | Local OAuth App registered and verified in task 1.14; callback is `http://localhost:8000/auth/github/callback`, no scope, and client ID/secret are in `.env` only. |
 | Final JM1 feature subset | End of Phase 0 (G0) | Decided | Use `loc`, `v(g)`, `uniq_Op`, `uniq_Opnd`, `total_Op`, `total_Opnd`, `n`, `v`, `l`, `d`, `i`, `b`. Drop `ev(g)`, `iv(g)`, and `branchCount` as not verifiable/language-neutral; drop `e` and `t` by the median range rule; drop the four line-class fields for simplicity because individual definitions are unverified, aggregate fit is about 80%, and they are style-dependent. Recorded in `ml/README.md` 0.9.10. |
 | Exact metrics library, if any | End of Phase 0 (G0) | Decided | No metrics library in production. RepoPulse owns one Tree-sitter extractor for Python, JavaScript, and TypeScript. Radon, Lizard, and typhonjs-escomplex are G0 cross-checks only; revisit only if the 0.9.9 prototype cannot meet the compatibility rule (0.9.7). |
 | Rules for anomalous JM1 rows (`id=1`, `lOCode` > `loc`, `total_Op` = 0) | End of Phase 0 (G0) | Decided | Drop `id=1` (the only row with `lOCode` > `loc`) and all 1,332 rows with `total_Op` = 0 and `loc` >= 1. Order: drop the five `?` rows, drop `id=1`, drop the group, remove conflicting-label metric vectors and deduplicate, then split. |
@@ -145,10 +145,10 @@ Later decisions (aggregation rule, risk thresholds, ML targets, graph layout, Op
 | Watch 4 | PowerShell may wrap normal Docker Compose stderr progress as `NativeCommandError`, including when a command succeeds. | Check the saved command log and native exit code before treating the wrapper as a failure. | Observed |
 | Watch 5 | npm flags `eslint@9.39.5` as deprecated in CI ("no longer supported"). | Review in Phase 7. | Open |
 | Watch 6 | Tree-sitter core/grammar compatibility: the Phase 2 smoke test must parse a LARGE file and walk every node, not a tiny sample. | Verify core and grammar wheel compatibility on a large fixture before Phase 2 metric work. | Open |
+| Watch 7 | Phase 7 hardening list (from the Phase 1 review) | Page cap and `affiliation=owner` in the GitHub client; expired-session DELETE on every request; no per-user session cap and no revocation of older sessions at login; no rate limiting on login/callback; `__Host-` cookie prefix; log redaction over-matches names such as `status_code` and drops tracebacks; normalize the `FRONTEND_URL` origin (lowercase, default ports); verify empty-repository detection (`default_branch`) with a real empty repository; move the shared HTTP transport out of `app/auth/oauth.py`; remove the unused `_validate_callback_uri`. | Open |
 
 **Watch items from the start:**
 
-- Phase 1 task 1.2 remains a numbered task in `Phases.md` but is explicitly deferred to Phase 4 and remains incomplete; the relevant Phase 1 documentation in `Phases.md` was subsequently corrected.
 
 ---
 
@@ -175,6 +175,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-10-26 | Applied the human-approved Phase 1 fixes: guarded PostgreSQL test database, required CI database, schema-drift check, named-user GitHub refresh, safer error logging, minimum session-secret length, package initializers, sync docstrings, README test recipe, and approved decision-log updates. Ruff and non-PostgreSQL tests passed; the required PostgreSQL run could not start because the Docker Desktop Linux engine was unavailable. Phase 1 remains awaiting exit review. | Phase 1 fixes; exit review | Docker Desktop engine must be available for the PostgreSQL test run |
 | 2026-10-23 | Phase 1 documentation blockers resolved: task 1.13 marked committed and CI-green; local OAuth App marked complete for verification while task 1.2 remains deferred to Phase 4; callback/refresh token handling decision recorded; refresh action documented as the internal `refresh_repositories()` boundary; manual verification updated with authenticated 200 results and browser limitation. Phase 1 remains awaiting exit review. | Phase 1 exit review | None |
 | 2026-10-23 | Task 1.14 manually verified against the local Compose stack and FastAPI docs: services healthy; unauthenticated routes 401; callback without parameters 400; corrected local GitHub OAuth flow completed and redirected back; authenticated profile and own repository list returned 200; logout 204 twice and post-logout routes 401; CORS allow/deny checks passed; log scan found no credential patterns. Backend/API verification only; frontend remains a placeholder. Archived/empty repository behavior was not separately observed in the real browser flow. Phase 1 is awaiting exit review. | 1.14; Phase 1 exit review next | None |
 | 2026-10-23 | Task 1.13 implemented and locally verified: added only get_owned_file/get_owned_finding authorization-chain contracts; full backend pytest 147 passed and 46 skipped because `TEST_DATABASE_URL` was unavailable. Ruff check, format check, and git diff --check passed. Committed as 2be3658 and CI-green. | 1.13; next 1.14 | None |

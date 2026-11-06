@@ -665,6 +665,10 @@ Decisions confirmed by the author while preparing this PRD:
 | 36 | Prediction-unit rules | The same rules apply to all three languages. Units are outermost function-like nodes with block/statement bodies; nested functions, closures, and callbacks belong to their containing unit. Python lambdas and expression-bodied arrows are not units; TypeScript overload signatures and bodyless abstract/declare functions are not units. Qualifying module-level code is defined by control flow or a call expression outside imports, decorators, and exports; unit subtrees are excluded. See `ml/README.md` 0.9.8 for the complete rules and fixture cases. |
 | 37 | JM1 feature subset | Use `loc`, `v(g)`, `uniq_Op`, `uniq_Opnd`, `total_Op`, `total_Opnd`, `n`, `v`, `l`, `d`, `i`, `b`, in that order. Drop `ev(g)`, `iv(g)`, and `branchCount` because they are not verifiable or language-neutral (`branchCount = v(g)-1` had zero exact matches); drop `e` and `t` because their JM1/serving median ratios exceed 10 in JavaScript (10.535) and TypeScript (11.899); drop the four line-class metrics for simplicity because individual definitions are unverified, aggregate fit is about 80%, and the classes are style-dependent. |
 | 38 | GitHub API access after login | During the OAuth callback, repository synchronization uses the transient OAuth access token in memory only; OAuth tokens are never persisted; later refreshes and public-data calls use `GITHUB_PUBLIC_API_TOKEN`; task 1.10 exposes the internal `refresh_repositories()` service boundary, with no HTTP refresh route required. |
+| 39 | CSRF | SameSite=Lax cookies plus an exact single Origin match for cookie-authenticated state-changing routes, plus exact-origin CORS with credentials. |
+| 40 | Session token | Opaque 32-byte random token in the cookie, only its SHA-256 stored, absolute 7-day expiry (no sliding renewal), a new session per login, older sessions not revoked. |
+| 41 | OAuth state | HMAC-signed HttpOnly cookie (10 minutes) holding the state and PKCE S256 verifier, not server-side single-use. |
+| 42 | Ownership 404 | Non-existent and non-owned repositories both return 404. |
 
 ## 18. Delivery Phases (no dates)
 
