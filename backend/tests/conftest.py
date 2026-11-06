@@ -1,13 +1,17 @@
 """Pytest configuration and shared fixtures for backend tests."""
 
 import os
-from collections.abc import Generator
+from collections.abc import Generator, Iterable
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.engine import Connection, Engine
+from sqlalchemy import create_engine, text
+from sqlalchemy.engine import Connection, Engine, make_url
+from sqlalchemy.exc import ArgumentError
 from sqlalchemy.orm import Session as DatabaseSession
+
+_ORIGINAL_DATABASE_URL = os.environ.get("DATABASE_URL")
+_ORIGINAL_POSTGRES_DB = os.environ.get("POSTGRES_DB")
 
 # Set dummy environment variables before any app modules are imported.
 # Direct assignment guarantees tests do not rely on an external .env file
@@ -21,6 +25,31 @@ os.environ["GITHUB_CLIENT_SECRET"] = "test-github-client-secret"
 os.environ["GITHUB_PUBLIC_API_TOKEN"] = "test-public-api-token"
 os.environ["FRONTEND_URL"] = "http://localhost:3000"
 os.environ["API_BASE_URL"] = "http://localhost:8000"
+
+
+def _database_name(url: str) -> str | None:
+    try:
+        return make_url(url).database
+    except ArgumentError:
+        return None
+
+
+def assert_safe_test_database(url: str, forbidden_names: Iterable[str | None]) -> None:
+    """Reject test database URLs that could point at a development database."""
+    try:
+        parsed_url = make_url(url)
+    except ArgumentError:
+        pytest.fail("TEST_DATABASE_URL is not a valid PostgreSQL URL.")
+
+    if parsed_url.get_backend_name() != "postgresql":
+        pytest.fail("TEST_DATABASE_URL must use PostgreSQL.")
+
+    database_name = parsed_url.database
+    if not database_name or not database_name.endswith("_test"):
+        pytest.fail("TEST_DATABASE_URL database name must end with '_test'.")
+
+    if database_name in {name for name in forbidden_names if name}:
+        pytest.fail("TEST_DATABASE_URL must differ from the development database.")
 
 
 @pytest.fixture
@@ -47,12 +76,17 @@ def mock_default_github_repos(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_database_engine() -> Generator[Engine, None, None]:
     database_url = os.environ.get("TEST_DATABASE_URL")
     if not database_url:
+        if os.environ.get("REQUIRE_TEST_DATABASE") == "1":
+            pytest.fail("TEST_DATABASE_URL is required for PostgreSQL tests.")
         pytest.skip("TEST_DATABASE_URL is not configured for PostgreSQL tests.")
 
+    forbidden_names = [_ORIGINAL_POSTGRES_DB]
+    development_url = _ORIGINAL_DATABASE_URL
+    if development_url:
+        forbidden_names.append(_database_name(development_url))
+    assert_safe_test_database(database_url, forbidden_names)
+
     engine = create_engine(database_url)
-    if engine.dialect.name != "postgresql":
-        engine.dispose()
-        pytest.fail("Session tests require PostgreSQL; SQLite is not supported.")
 
     from app.database.models import Base
 
@@ -60,7 +94,9 @@ def test_database_engine() -> Generator[Engine, None, None]:
     try:
         yield engine
     finally:
-        Base.metadata.drop_all(engine)
+        with engine.begin() as connection:
+            Base.metadata.drop_all(connection)
+            connection.execute(text("DROP TABLE IF EXISTS alembic_version"))
         engine.dispose()
 
 

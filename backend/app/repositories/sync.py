@@ -40,7 +40,7 @@ from sqlalchemy.orm import Session as DatabaseSession
 
 from app.config import settings
 from app.database.models import Repository
-from app.github.client import GitHubRepository, list_repositories
+from app.github.client import GitHubRepository, list_user_public_repositories
 from app.repositories.filter import filter_owned_repositories
 
 logger = logging.getLogger(__name__)
@@ -60,9 +60,6 @@ def sync_repositories(
     """Upsert *repos* for *user_id* and mark absent rows is_available=False.
 
     The caller is responsible for committing (or rolling back) the session.
-    The function uses savepoints so partial failures inside the upsert loop
-    can be handled without losing the outer transaction -- but in practice
-    the whole upsert is one bulk statement followed by a bulk update.
 
     Args:
         db:       An open SQLAlchemy session.  The caller owns the transaction.
@@ -106,14 +103,14 @@ def refresh_repositories(
 ) -> None:
     """Re-sync the repository list using the server-side public API token.
 
-    This is the callable boundary exposed for task 1.11.  It does NOT use a
-    per-user OAuth token.  The caller owns the transaction.
+    This is the internal refresh_repositories() boundary from decision 38.
+    It does NOT use a per-user OAuth token.  The caller owns the transaction.
 
     Raises:
-        GitHubClientError: propagated from list_repositories; caller handles.
+        GitHubClientError: propagated from the GitHub client; caller handles.
     """
     token = settings.GITHUB_PUBLIC_API_TOKEN
-    repos = list_repositories(token)
+    repos = list_user_public_repositories(username, token)
     sync_repositories(db, user_id, username, repos)
 
 

@@ -17,6 +17,7 @@ from app.github.client import (
     GITHUB_API_URL,
     GITHUB_USER_AGENT,
     GitHubAuthenticationError,
+    GitHubConfigurationError,
     GitHubForbiddenError,
     GitHubNotFoundError,
     GitHubProviderError,
@@ -28,6 +29,7 @@ from app.github.client import (
     GitHubTimeoutError,
     GitHubTransportError,
     list_repositories,
+    list_user_public_repositories,
 )
 
 ACCESS_TOKEN = "github-access-token-sentinel"
@@ -123,6 +125,60 @@ def test_follows_github_link_pagination() -> None:
     assert transport.requests[1].url == (
         f"{GITHUB_API_URL}?visibility=public&per_page=100&page=2"
     )
+
+
+def test_lists_public_repositories_for_named_user_and_follows_same_path() -> None:
+    transport = FakeTransport(
+        json_response(
+            [repository_payload(owner={"login": "bob", "type": "User"})],
+            headers={
+                "Link": (
+                    "<https://api.github.com/users/bob/repos?type=owner&per_page=100"
+                    '&page=2>; rel="next"'
+                )
+            },
+        ),
+        json_response(
+            [repository_payload(id=456, owner={"login": "bob", "type": "User"})]
+        ),
+    )
+
+    repositories = list_user_public_repositories(
+        "bob", ACCESS_TOKEN, transport=transport
+    )
+
+    assert [repository.github_repo_id for repository in repositories] == [123, 456]
+    assert transport.requests[0].url == (
+        "https://api.github.com/users/bob/repos?type=owner&per_page=100&page=1"
+    )
+    assert transport.requests[1].url == (
+        "https://api.github.com/users/bob/repos?type=owner&per_page=100&page=2"
+    )
+    assert all("/user/repos" not in request.url for request in transport.requests)
+
+
+@pytest.mark.parametrize("username", ["", "-bob", "bob/name", "bob_"])
+def test_named_user_rejects_invalid_username_before_request(username: str) -> None:
+    transport = FakeTransport(json_response([]))
+
+    with pytest.raises(GitHubConfigurationError):
+        list_user_public_repositories(username, ACCESS_TOKEN, transport=transport)
+
+    assert transport.requests == []
+
+
+def test_named_user_rejects_next_link_with_wrong_path() -> None:
+    transport = FakeTransport(
+        json_response(
+            [],
+            headers={
+                "Link": '<https://api.github.com/users/alice/repos?page=2>; rel="next"'
+            },
+        )
+    )
+
+    with pytest.raises(GitHubResponseError):
+        list_user_public_repositories("bob", ACCESS_TOKEN, transport=transport)
 
 
 def test_builds_authenticated_request_without_leaking_secret_repr() -> None:

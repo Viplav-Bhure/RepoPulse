@@ -33,6 +33,7 @@ jobs:
           --health-retries 10
     env:
       TEST_DATABASE_URL: postgresql+psycopg://repopulse_ci:ci-only-password@localhost:5432/repopulse_ci_test
+      REQUIRE_TEST_DATABASE: "1"
     defaults:
       run:
         working-directory: backend

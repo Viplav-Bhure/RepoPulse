@@ -1,6 +1,10 @@
 """Phase 1 model metadata tests."""
 
-from sqlalchemy import CHAR, BigInteger, Integer, UniqueConstraint
+from alembic import command
+from alembic.autogenerate import compare_metadata
+from alembic.config import Config
+from alembic.migration import MigrationContext
+from sqlalchemy import CHAR, BigInteger, Integer, UniqueConstraint, text
 
 from app.database.models import Base
 
@@ -71,3 +75,33 @@ def test_repository_owner_lookup_uses_composite_unique_index() -> None:
     )
 
     assert owner_lookup_constraint.name == "uq_repositories_user_github_repo"
+
+
+def test_migrations_match_metadata_on_empty_database(
+    test_database_engine, monkeypatch
+) -> None:
+    from app import config
+
+    with test_database_engine.begin() as connection:
+        Base.metadata.drop_all(connection)
+        connection.execute(text("DROP TABLE IF EXISTS alembic_version"))
+
+    test_url = test_database_engine.url.render_as_string(hide_password=False)
+    monkeypatch.setattr(
+        config,
+        "settings",
+        config.settings.model_copy(update={"DATABASE_URL": test_url}),
+    )
+    alembic_config = Config("alembic.ini")
+    alembic_config.set_main_option("script_location", "app/database/migrations")
+    command.upgrade(alembic_config, "head")
+
+    def include_object(object_, name, type_, reflected, compare_to) -> bool:
+        return type_ != "table" or name != "alembic_version"
+
+    with test_database_engine.connect() as connection:
+        context = MigrationContext.configure(
+            connection,
+            opts={"include_object": include_object},
+        )
+        assert compare_metadata(context, Base.metadata) == []

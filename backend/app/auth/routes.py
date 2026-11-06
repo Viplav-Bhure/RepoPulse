@@ -189,9 +189,12 @@ def github_callback(
             status_code=502,
             content={"detail": AUTHENTICATION_ERROR},
         )
-    except Exception:
+    except Exception as error:
         database_session.rollback()
-        logger.error("github_oauth_callback_failed reason=unexpected")
+        logger.error(
+            "github_oauth_callback_failed reason=unexpected error_type=%s",
+            type(error).__name__,
+        )
         response = JSONResponse(
             status_code=500,
             content={"detail": AUTHENTICATION_ERROR},

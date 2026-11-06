@@ -128,15 +128,15 @@ def test_callback_uses_transient_token_not_public_token(
 def test_refresh_repositories_uses_public_api_token(
     postgres_session: Connection, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """refresh_repositories must call list_repositories with GITHUB_PUBLIC_API_TOKEN."""
+    """refresh_repositories must call the named-user endpoint with the public token."""
     from app.repositories import sync as sync_mod
 
-    tokens_used: list[str] = []
+    calls: list[tuple[str, str]] = []
 
     monkeypatch.setattr(
         sync_mod,
-        "list_repositories",
-        lambda token, **kw: tokens_used.append(token) or (),
+        "list_user_public_repositories",
+        lambda username, token, **kw: calls.append((username, token)) or (),
     )
 
     with DatabaseSession(
@@ -150,10 +150,78 @@ def test_refresh_repositories_uses_public_api_token(
 
         refresh_repositories(db, user.id, user.username)
 
-    assert len(tokens_used) == 1
-    assert tokens_used[0] == settings.GITHUB_PUBLIC_API_TOKEN
+    assert calls == [("octocat", settings.GITHUB_PUBLIC_API_TOKEN)]
     # Must NOT use any other token
-    assert TOKEN_SENTINEL not in tokens_used
+    assert TOKEN_SENTINEL not in {token for _, token in calls}
+
+
+@pytest.mark.usefixtures("postgres_session")
+def test_refresh_for_user_does_not_use_token_owner_repositories(
+    postgres_session: Connection, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.repositories import sync as sync_mod
+
+    calls: list[tuple[str, str]] = []
+    monkeypatch.setattr(
+        sync_mod,
+        "list_user_public_repositories",
+        lambda username, token, **kw: (
+            calls.append((username, token)) or (_good_repo_payload(owner_login="bob"),)
+        ),
+    )
+
+    with DatabaseSession(
+        bind=postgres_session, join_transaction_mode="create_savepoint"
+    ) as db:
+        bob = User(github_user_id=78, username="bob", email=None)
+        db.add(bob)
+        db.flush()
+        sync_repositories = sync_mod.sync_repositories
+        sync_repositories(
+            db, bob.id, bob.username, (_good_repo_payload(owner_login="bob"),)
+        )
+        db.flush()
+        refresh_repositories = sync_mod.refresh_repositories
+        refresh_repositories(db, bob.id, bob.username)
+        db.flush()
+
+        rows = list(db.scalars(select(Repository).where(Repository.user_id == bob.id)))
+        assert len(rows) == 1
+        assert rows[0].is_available is True
+
+    assert calls == [("bob", settings.GITHUB_PUBLIC_API_TOKEN)]
+
+
+@pytest.mark.usefixtures("postgres_session")
+def test_refresh_failure_leaves_existing_repositories_unchanged(
+    postgres_session: Connection, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.github.client import GitHubServerError
+    from app.repositories import sync as sync_mod
+
+    monkeypatch.setattr(
+        sync_mod,
+        "list_user_public_repositories",
+        lambda username, token, **kw: (_ for _ in ()).throw(GitHubServerError()),
+    )
+
+    with DatabaseSession(
+        bind=postgres_session, join_transaction_mode="create_savepoint"
+    ) as db:
+        bob = User(github_user_id=79, username="bob", email=None)
+        db.add(bob)
+        db.flush()
+        sync_mod.sync_repositories(
+            db, bob.id, bob.username, (_good_repo_payload(owner_login="bob"),)
+        )
+        db.flush()
+
+        with pytest.raises(GitHubServerError):
+            sync_mod.refresh_repositories(db, bob.id, bob.username)
+
+        rows = list(db.scalars(select(Repository).where(Repository.user_id == bob.id)))
+        assert len(rows) == 1
+        assert rows[0].is_available is True
 
 
 # ---------------------------------------------------------------------------

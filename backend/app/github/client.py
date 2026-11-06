@@ -6,7 +6,7 @@ import json
 import re
 import urllib.error
 import urllib.parse
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
@@ -27,8 +27,10 @@ from app.auth.oauth import (
 )
 
 GITHUB_API_URL = "https://api.github.com/user/repos"
+GITHUB_USER_REPOS_API_URL = "https://api.github.com/users"
 GITHUB_USER_AGENT = "RepoPulse"
 PAGE_SIZE = 100
+GITHUB_USERNAME_PATTERN = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$")
 
 
 class GitHubClientError(Exception):
@@ -111,14 +113,42 @@ def list_repositories(
     transport: OAuthTransport | None = None,
 ) -> tuple[GitHubRepository, ...]:
     """Return public repositories visible to the token, following GitHub pages."""
-    if (
-        not isinstance(access_token, str)
-        or not access_token
-        or "\r" in access_token
-        or "\n" in access_token
-    ):
-        raise GitHubConfigurationError()
+    _validate_access_token(access_token)
+    return _list_repositories(
+        access_token,
+        page_url=lambda page: _page_url(page),
+        expected_path="/user/repos",
+        transport=transport,
+    )
 
+
+def list_user_public_repositories(
+    username: str,
+    access_token: str,
+    *,
+    transport: OAuthTransport | None = None,
+) -> tuple[GitHubRepository, ...]:
+    """Return public repositories owned by *username*, following GitHub pages."""
+    if not isinstance(username, str) or not GITHUB_USERNAME_PATTERN.fullmatch(username):
+        raise GitHubConfigurationError()
+    _validate_access_token(access_token)
+    encoded_username = urllib.parse.quote(username, safe="")
+    expected_path = f"/users/{encoded_username}/repos"
+    return _list_repositories(
+        access_token,
+        page_url=lambda page: _user_page_url(encoded_username, page),
+        expected_path=expected_path,
+        transport=transport,
+    )
+
+
+def _list_repositories(
+    access_token: str,
+    *,
+    page_url: Callable[[int], str],
+    expected_path: str,
+    transport: OAuthTransport | None,
+) -> tuple[GitHubRepository, ...]:
     selected_transport = transport if transport is not None else UrllibTransport()
     repositories: list[GitHubRepository] = []
     page = 1
@@ -127,7 +157,7 @@ def list_repositories(
     while True:
         request = HttpRequest(
             method="GET",
-            url=_page_url(page),
+            url=page_url(page),
             headers={
                 "Accept": "application/vnd.github+json",
                 "Authorization": f"Bearer {access_token}",
@@ -142,13 +172,23 @@ def list_repositories(
         repositories.extend(_parse_repository(item) for item in payload)
 
         link_header = _header(response.headers, "link")
-        next_page = _next_page(link_header, page)
+        next_page = _next_page(link_header, page, expected_path=expected_path)
         if next_page is None:
             return tuple(repositories)
         if next_page in seen_pages:
             raise GitHubResponseError()
         seen_pages.add(next_page)
         page = next_page
+
+
+def _validate_access_token(access_token: str) -> None:
+    if (
+        not isinstance(access_token, str)
+        or not access_token
+        or "\r" in access_token
+        or "\n" in access_token
+    ):
+        raise GitHubConfigurationError()
 
 
 def _send(request: HttpRequest, transport: OAuthTransport) -> HttpResponse:
@@ -300,7 +340,9 @@ def _header(headers: object, name: str) -> str | None:
     return None
 
 
-def _next_page(link_header: str | None, current_page: int) -> int | None:
+def _next_page(
+    link_header: str | None, current_page: int, *, expected_path: str
+) -> int | None:
     if link_header is None:
         return None
 
@@ -320,7 +362,7 @@ def _next_page(link_header: str | None, current_page: int) -> int | None:
     if (
         parsed.scheme != "https"
         or parsed.netloc.lower() != "api.github.com"
-        or parsed.path != "/user/repos"
+        or parsed.path != expected_path
         or parsed.fragment
     ):
         raise GitHubResponseError()
@@ -340,6 +382,13 @@ def _next_page(link_header: str | None, current_page: int) -> int | None:
 
 def _page_url(page: int) -> str:
     return f"{GITHUB_API_URL}?visibility=public&per_page={PAGE_SIZE}&page={page}"
+
+
+def _user_page_url(encoded_username: str, page: int) -> str:
+    query = urllib.parse.urlencode(
+        {"type": "owner", "per_page": PAGE_SIZE, "page": page}
+    )
+    return f"{GITHUB_USER_REPOS_API_URL}/{encoded_username}/repos?{query}"
 
 
 def _retry_after_seconds(value: str | None) -> int | None:

@@ -19,13 +19,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 #                       -> .parent = repo root -> .env
 _ENV_FILE = Path(__file__).parent.parent.parent / ".env"
 NonEmptyString = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+SessionSecret = Annotated[str, StringConstraints(strip_whitespace=True, min_length=32)]
 
 
 class Settings(BaseSettings):
     # Required -- must be present in the environment or .env file.
     # Used from Phase 1 onward for session signing; declared now so the app
     # fails fast rather than silently starting with an insecure state.
-    SESSION_SECRET: str
+    SESSION_SECRET: SessionSecret
     DATABASE_URL: str
     GITHUB_CLIENT_ID: NonEmptyString
     GITHUB_CLIENT_SECRET: NonEmptyString

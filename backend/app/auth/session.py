@@ -126,6 +126,9 @@ def get_current_user(
     token = request.cookies.get(SESSION_COOKIE_NAME)
     user = get_session_user(database_session, token)
     if user is None:
-        logger.warning("session_authentication_failed reason=missing_or_invalid")
+        if token is None:
+            logger.debug("session_authentication_failed reason=missing_or_invalid")
+        else:
+            logger.warning("session_authentication_failed reason=missing_or_invalid")
         raise HTTPException(status_code=401, detail=AUTHENTICATION_REQUIRED)
     return user

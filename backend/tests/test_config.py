@@ -1,6 +1,7 @@
 """Configuration tests for required environment variables."""
 
 import pytest
+from conftest import assert_safe_test_database
 from pydantic import ValidationError
 
 from app.config import Settings
@@ -42,6 +43,41 @@ def test_blank_github_public_api_token_is_rejected() -> None:
     with pytest.raises(ValidationError) as exc_info:
         Settings(_env_file=None, **values)
     assert "GITHUB_PUBLIC_API_TOKEN" in str(exc_info.value)
+
+
+def test_short_session_secret_is_rejected() -> None:
+    values = REQUIRED_SETTINGS | {"SESSION_SECRET": "too-short"}
+
+    with pytest.raises(ValidationError) as exc_info:
+        Settings(_env_file=None, **values)
+
+    assert "SESSION_SECRET" in str(exc_info.value)
+
+
+def test_safe_test_database_name_is_accepted() -> None:
+    assert_safe_test_database(
+        "postgresql+psycopg://user:password@localhost:5432/repopulse_test",
+        {"repopulse"},
+    )
+
+
+@pytest.mark.parametrize(
+    ("url", "forbidden_names"),
+    [
+        (
+            "postgresql+psycopg://user:password@localhost:5432/repopulse",
+            set(),
+        ),
+        (
+            "postgresql+psycopg://user:password@localhost:5432/repopulse_test",
+            {"repopulse_test"},
+        ),
+        ("sqlite:///repopulse_test.db", set()),
+    ],
+)
+def test_unsafe_test_database_is_rejected(url: str, forbidden_names: set[str]) -> None:
+    with pytest.raises(BaseException, match="TEST_DATABASE_URL"):
+        assert_safe_test_database(url, forbidden_names)
 
 
 def test_missing_settings_error_redacts_process_environment_values(
