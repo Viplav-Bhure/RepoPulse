@@ -226,28 +226,28 @@ Phase 0 complete. Decisions made (see section 3): session mechanism, cookie/doma
 ## Tasks
 
 ### A. Data model
-- [ ] **1.1** Models + Alembic migration for `users` (`github_user_id` unique, `username`, `email` nullable, `created_at`) and `repositories` (`user_id`, `github_repo_id`, `name`, `owner`, `default_branch`, `is_fork`, timestamps). Add a unique constraint on (`user_id`, `github_repo_id`). If using server-side sessions, add `sessions`.
+- [x] **1.1** Models + Alembic migration for `users` (`github_user_id` unique, `username`, `email` nullable, `created_at`) and `repositories` (`user_id`, `github_repo_id`, `name`, `owner`, `default_branch`, `is_fork`, timestamps). Add a unique constraint on (`user_id`, `github_repo_id`). If using server-side sessions, add `sessions`.
 
 ### B. OAuth flow (`backend/app/auth/`)
-- [ ] **1.2** **Done by the human: local OAuth App registered (callback http://localhost:8000/auth/github/callback, no scope, client ID/secret in .env only); verified in task 1.14.**
-- [ ] **1.3** `oauth.py`: build the authorization URL with a random `state` value; verify `state` on callback; exchange the code for a token; fetch the GitHub user profile.
-- [ ] **1.4** `routes.py`: `GET /auth/github/login` (redirect), `GET /auth/github/callback` (exchange, upsert user, create session, set cookie, redirect to the frontend), `GET /auth/me`, `POST /auth/logout`.
-- [ ] **1.5** `session.py`: create/validate/destroy sessions; cookie flags `HttpOnly`, `Secure` in production, `SameSite` per your cookie strategy, sensible expiry. A FastAPI dependency `get_current_user` that returns 401 when absent/invalid.
-- [ ] **1.6** CSRF protection for state-changing routes (`POST /auth/logout`, later `analyze` and `explain`). **[Decided]** SameSite=Lax cookies plus an exact single Origin match, with exact-origin CORS and credentials.
-- [ ] **1.7** Ensure tokens and cookies never appear in logs (add a logging filter or review log statements).
+- [x] **1.2** **Done by the human: local OAuth App registered (callback http://localhost:8000/auth/github/callback, no scope, client ID/secret in .env only); verified in task 1.14.**
+- [x] **1.3** `oauth.py`: build the authorization URL with a random `state` value; verify `state` on callback; exchange the code for a token; fetch the GitHub user profile.
+- [x] **1.4** `routes.py`: `GET /auth/github/login` (redirect), `GET /auth/github/callback` (exchange, upsert user, create session, set cookie, redirect to the frontend), `GET /auth/me`, `POST /auth/logout`.
+- [x] **1.5** `session.py`: create/validate/destroy sessions; cookie flags `HttpOnly`, `Secure` in production, `SameSite` per your cookie strategy, sensible expiry. A FastAPI dependency `get_current_user` that returns 401 when absent/invalid.
+- [x] **1.6** CSRF protection for state-changing routes (`POST /auth/logout`, later `analyze` and `explain`). **[Decided]** SameSite=Lax cookies plus an exact single Origin match, with exact-origin CORS and credentials.
+- [x] **1.7** Ensure tokens and cookies never appear in logs (add a logging filter or review log statements).
 
 ### C. Repository listing (`backend/app/github/client.py`, `repositories/`)
-- [ ] **1.8** GitHub client with timeouts and error mapping. During the OAuth callback, use the user's access token **in memory only** to fetch their repositories, then discard it **[Decided]**. For later refreshes and the 2.7 size check, use `GITHUB_PUBLIC_API_TOKEN`.
-- [ ] **1.9** Ownership filter: keep only repositories where the owner login equals the authenticated user's GitHub username (case-insensitive) and the owner type is a user. **User-owned forks are included [Decided]**; organization-owned repos are excluded.
-- [ ] **1.10** Upsert filtered repositories into the `repositories` table; return name, primary language, last-updated time, and a repository ID. Provide the internal `refresh_repositories()` service boundary as the refresh action; it re-syncs the list using `GITHUB_PUBLIC_API_TOKEN`, not a user token. No HTTP refresh route is required **[Decided]**.
-- [ ] **1.11** `GET /repositories` returns the list. Archived or empty repositories are shown with explanatory status; Analyze is disabled when the repository is unsupported for analysis.
+- [x] **1.8** GitHub client with timeouts and error mapping. During the OAuth callback, use the user's access token **in memory only** to fetch their repositories, then discard it **[Decided]**. For later refreshes and the 2.7 size check, use `GITHUB_PUBLIC_API_TOKEN`.
+- [x] **1.9** Ownership filter: keep only repositories where the owner login equals the authenticated user's GitHub username (case-insensitive) and the owner type is a user. **User-owned forks are included [Decided]**; organization-owned repos are excluded.
+- [x] **1.10** Upsert filtered repositories into the `repositories` table; return name, primary language, last-updated time, and a repository ID. Provide the internal `refresh_repositories()` service boundary as the refresh action; it re-syncs the list using `GITHUB_PUBLIC_API_TOKEN`, not a user token. No HTTP refresh route is required **[Decided]**.
+- [x] **1.11** `GET /repositories` returns the list. Archived or empty repositories are shown with explanatory status; Analyze is disabled when the repository is unsupported for analysis.
 
 ### D. Authorization (`repositories/authorization.py`)
-- [ ] **1.12** A dependency `get_owned_repository(repo_id, current_user)` that loads the repository and verifies `repository.user_id == current_user.id`. **[Decided]** return **404** for both "does not exist" and "belongs to someone else" so IDs cannot be probed.
-- [ ] **1.13** Plan the chain for later resources: file → analysis run → repository → user. Write the function signature now (`get_owned_file`, `get_owned_finding`) even if they are filled in during Phase 2.
+- [x] **1.12** A dependency `get_owned_repository(repo_id, current_user)` that loads the repository and verifies `repository.user_id == current_user.id`. **[Decided]** return **404** for both "does not exist" and "belongs to someone else" so IDs cannot be probed.
+- [x] **1.13** Plan the chain for later resources: file → analysis run → repository → user. Write the function signature now (`get_owned_file`, `get_owned_finding`) even if they are filled in during Phase 2.
 
 ### E. Manual verification (no real UI yet)
-- [ ] **1.14** Test the full flow with a browser against the backend endpoints and FastAPI's `/docs`. A throwaway "Sign in with GitHub" link on the placeholder page is fine; the real UI comes in Phase 6.
+- [x] **1.14** Test the full flow with a browser against the backend endpoints and FastAPI's `/docs`. A throwaway "Sign in with GitHub" link on the placeholder page is fine; the real UI comes in Phase 6.
 
 ## Tests
 - Unit: `state` mismatch rejected; expired/forged session rejected; ownership filter excludes other owners and organizations, includes own forks.
@@ -266,11 +266,11 @@ Phase 0 complete. Decisions made (see section 3): session mechanism, cookie/doma
 | Authorization added route-by-route and one is forgotten | Use the shared dependency; Phase 7 adds an automated route-enumeration test |
 
 ## Exit criteria
-- [ ] You can sign in and out, and `GET /auth/me` returns your profile.
-- [ ] `GET /repositories` returns only your own public repositories (forks included; organizations excluded).
-- [ ] Another account (or a mocked second user) cannot access your repository IDs.
-- [ ] All auth tests pass in CI.
-- [ ] Session, cookie-strategy, and token-storage decisions are recorded in the decision log.
+- [x] You can sign in and out, and `GET /auth/me` returns your profile.
+- [x] `GET /repositories` returns only your own public repositories (forks included; organizations excluded).
+- [x] Another account (or a mocked second user) cannot access your repository IDs.
+- [x] All auth tests pass in CI.
+- [x] Session, cookie-strategy, and token-storage decisions are recorded in the decision log.
 
 ---
 

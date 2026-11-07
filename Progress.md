@@ -4,8 +4,8 @@
 
 | | |
 | --- | --- |
-| **Last updated** | 2026-10-23 |
-| **Updated by** | AI builder (Phase 1 documentation blockers resolved; awaiting exit review) |
+| **Last updated** | 2026-11-07 |
+| **Updated by** | AI builder (Phase 1 exit review approved) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -14,11 +14,11 @@
 
 | | |
 | --- | --- |
-| **Overall status** | **Phase 0 done; Phase 1 awaiting exit review.** Tasks 1.1 (`f4b78dc`), 1.3 (`08aef33`), 1.4 (`f1f0321`), 1.5 (`4940595`), 1.6 (`daea51f`, follow-up fix `3cb8ee4`), 1.7 (`52172d0`), 1.8 (`b429656`), 1.9 (`5b4c87a`), 1.10 (`2823d2f`), 1.11 (`59c4529`), 1.12 (`229e5e7`), and 1.13 (`2be3658`) are committed and CI-green. Task 1.14 (`deb9d96`) manual browser verification is complete and CI-green. The human-registered local OAuth App was used for manual verification. |
-| **Current phase** | Phase 1 - Identity and Repositories (awaiting approval) |
-| **Next task** | Phase 1 exit review/approval |
+| **Overall status** | Phase 1 done |
+| **Current phase** | Phase 2 - Analysis Core (not started) |
+| **Next task** | Phase 2 planning: decisions and stage plan to be agreed with the human |
 | **Blocked?** | No |
-| **Last human approval** | 2026-10-18, Phase 0 exit review |
+| **Last human approval** | 2026-11-07, Phase 1 exit review |
 
 ---
 
@@ -30,7 +30,7 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 | Phase | Name | Status | Started | Finished | Tag |
 | --- | --- | --- | --- | --- | --- |
 | 0 | Foundations (includes **Gate G0**: ML feasibility) | Done | 2026-10-10 | 2026-10-18 | - |
-| 1 | Identity and Repositories | Awaiting approval | 2026-10-19 | - | `v0.1` |
+| 1 | Identity and Repositories | Done | 2026-10-19 | 2026-11-07 | `v0.1` |
 | 2 | Analysis Core | Not started | - | - | `v0.2` |
 | 3 | Repository Context | Not started | - | - | `v0.3` |
 | 4 | ML | Not started | - | - | `v0.4` |
@@ -46,11 +46,11 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 
 | | |
 | --- | --- |
-| **Task ID** | Phase 1 task 1.14 |
-| **Title** | Manual browser verification |
-| **Status** | Manual verification and approved fixes complete; Phase 1 awaiting exit review |
-| **Plan** | Review the Phase 1 implementation and verify the approved test-database, GitHub refresh, logging, configuration, and documentation fixes. |
-| **Notes / problems** | `docker compose up -d --build` succeeded; PostgreSQL, backend, and frontend were healthy. `http://localhost:3000/` returned the existing frontend placeholder with HTTP 200. `http://localhost:8000/docs` and `/health` returned HTTP 200. Unauthenticated `/auth/me` and `/repositories` returned HTTP 401. Callback without required parameters returned HTTP 400 with the expected authentication error. After correcting the local OAuth App configuration, GitHub OAuth completed and redirected back to the local application; authenticated `/auth/me` returned the GitHub profile with HTTP 200 and no tokens or secrets; authenticated `/repositories` returned only the user's available repositories with HTTP 200. Logout returned HTTP 204 twice; afterward `/auth/me` and `/repositories` returned HTTP 401. CORS preflight from `http://localhost:3000` succeeded; `http://evil.example` returned HTTP 400 with no allowed origin. Archived/empty repository behavior was not separately observed in the real browser flow; automated tests cover those states. Backend log scanning found no access tokens, client secrets, authorization headers, cookie values, or GitHub-token patterns. No secrets, tokens, cookies, or authorization-code values were printed or added to files. This was backend/API manual verification; the frontend remains a placeholder. |
+| **Task ID** | Phase 2 planning |
+| **Title** | Agree on the Phase 2 plan |
+| **Status** | Not started |
+| **Plan** | Agree the Phase 2 stage plan with the human before any code |
+| **Notes / problems** | Phase 1 Done; the human tags v0.1 |
 
 ---
 
@@ -147,9 +147,6 @@ Later decisions (aggregation rule, risk thresholds, ML targets, graph layout, Op
 | Watch 6 | Tree-sitter core/grammar compatibility: the Phase 2 smoke test must parse a LARGE file and walk every node, not a tiny sample. | Verify core and grammar wheel compatibility on a large fixture before Phase 2 metric work. | Open |
 | Watch 7 | Phase 7 hardening list (from the Phase 1 review) | Page cap and `affiliation=owner` in the GitHub client; expired-session DELETE on every request; no per-user session cap and no revocation of older sessions at login; no rate limiting on login/callback; `__Host-` cookie prefix; log redaction over-matches names such as `status_code` and drops tracebacks; normalize the `FRONTEND_URL` origin (lowercase, default ports); verify empty-repository detection (`default_branch`) with a real empty repository; move the shared HTTP transport out of `app/auth/oauth.py`; remove the unused `_validate_callback_uri`. | Open |
 
-**Watch items from the start:**
-
-
 ---
 
 ## 7. Document Status and Known Doc Items
@@ -175,6 +172,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-11-07 | Phase 1 exit approved by the human: sign-in/out, `/auth/me`, and `/repositories` manually verified in task 1.14; mocked second-user authorization tests passed; all four CI jobs green on latest `main` with 207 backend tests passed and none skipped; 207 also passed locally against throwaway PostgreSQL. Session, cookie, and token decisions recorded. Verified commits `154ec65` and `f61a6b0`. | Phase 1 exit review | None |
 | 2026-10-26 | Applied the human-approved Phase 1 fixes: guarded PostgreSQL test database, required CI database, schema-drift check, named-user GitHub refresh, safer error logging, minimum session-secret length, package initializers, sync docstrings, README test recipe, and approved decision-log updates. Ruff and non-PostgreSQL tests passed; the required PostgreSQL run could not start because the Docker Desktop Linux engine was unavailable. Phase 1 remains awaiting exit review. | Phase 1 fixes; exit review | Docker Desktop engine must be available for the PostgreSQL test run |
 | 2026-10-23 | Phase 1 documentation blockers resolved: task 1.13 marked committed and CI-green; local OAuth App marked complete for verification while task 1.2 remains deferred to Phase 4; callback/refresh token handling decision recorded; refresh action documented as the internal `refresh_repositories()` boundary; manual verification updated with authenticated 200 results and browser limitation. Phase 1 remains awaiting exit review. | Phase 1 exit review | None |
 | 2026-10-23 | Task 1.14 manually verified against the local Compose stack and FastAPI docs: services healthy; unauthenticated routes 401; callback without parameters 400; corrected local GitHub OAuth flow completed and redirected back; authenticated profile and own repository list returned 200; logout 204 twice and post-logout routes 401; CORS allow/deny checks passed; log scan found no credential patterns. Backend/API verification only; frontend remains a placeholder. Archived/empty repository behavior was not separately observed in the real browser flow. Phase 1 is awaiting exit review. | 1.14; Phase 1 exit review next | None |
