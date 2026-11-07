@@ -4,7 +4,7 @@ An AI-powered repository intelligence platform that analyzes public GitHub repos
 
 See [`docs/`](docs/) for full product and architecture documentation.
 
-**Status: Phase 1 - Identity and Repositories (awaiting exit review)**
+Status: Phase 1 complete (v0.1); Phase 2 - Analysis Core next (not started)
 
 ## Running the backend tests
 
@@ -19,7 +19,7 @@ Wait for `pg_isready`, then set `TEST_DATABASE_URL` to
 and `REQUIRE_TEST_DATABASE=1` for the current process. From `backend`, run:
 
 ```powershell
-backend\.venv\Scripts\python.exe -m pytest -v
+.\.venv\Scripts\python.exe -m pytest -v
 ```
 
 Stop the container with `docker stop repopulse-test-pg`, clear both variables,
