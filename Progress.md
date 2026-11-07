@@ -5,7 +5,7 @@
 | | |
 | --- | --- |
 | **Last updated** | 2026-11-07 |
-| **Updated by** | AI builder (Phase 1 exit review approved) |
+| **Updated by** | AI builder (Phase 2 plan approved) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -14,11 +14,11 @@
 
 | | |
 | --- | --- |
-| **Overall status** | Phase 1 done |
-| **Current phase** | Phase 2 - Analysis Core (not started) |
-| **Next task** | Phase 2 planning: decisions and stage plan to be agreed with the human |
+| **Overall status** | Phase 2 in progress (planning stages) |
+| **Current phase** | Phase 2 - Analysis Core |
+| **Next task** | S1 planning: parser, Tree-sitter dependencies, and large-file smoke test (PLAN ONLY) |
 | **Blocked?** | No |
-| **Last human approval** | 2026-11-07, Phase 1 exit review |
+| **Last human approval** | 2026-11-07, Phase 2 plan and decisions |
 
 ---
 
@@ -31,7 +31,7 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 | --- | --- | --- | --- | --- | --- |
 | 0 | Foundations (includes **Gate G0**: ML feasibility) | Done | 2026-10-10 | 2026-10-18 | - |
 | 1 | Identity and Repositories | Done | 2026-10-19 | 2026-11-07 | `v0.1` |
-| 2 | Analysis Core | Not started | - | - | `v0.2` |
+| 2 | Analysis Core | In progress | 2026-11-07 | - | `v0.2` |
 | 3 | Repository Context | Not started | - | - | `v0.3` |
 | 4 | ML | Not started | - | - | `v0.4` |
 | 5 | AI Explanation | Not started | - | - | `v0.5` |
@@ -46,11 +46,27 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 
 | | |
 | --- | --- |
-| **Task ID** | Phase 2 planning |
-| **Title** | Agree on the Phase 2 plan |
-| **Status** | Not started |
-| **Plan** | Agree the Phase 2 stage plan with the human before any code |
-| **Notes / problems** | Phase 1 Done; the human tags v0.1 |
+| **Task ID** | S1 planning |
+| **Title** | Plan parser and Tree-sitter validation |
+| **Status** | Pending |
+| **Plan** | Start a new agent chat for each stage; PLAN ONLY first, with a review point after each stage. S1 covers tasks 2.15-2.17 and Watch 6. |
+| **Notes / problems** | Phase 2 plan approved. No Phase 2 code has started. S1 plan must establish by command whether Tree-sitter 0.25.2 offers a parse timeout or progress callback. |
+
+### Phase 2 approved stage map
+
+| Stage | Scope |
+|---|---|
+| S1 | Parser, Tree-sitter dependencies, and Watch 6 large-file smoke test (2.15-2.17) |
+| S2 | Data model, migration 0003, state machine, and startup reconciliation (2.1, 2.2, 2.5) |
+| S3 | Safe clone (2.7-2.11) |
+| S4 | Discovery and source/test classification (2.12-2.14) |
+| S5 | Metrics and G0 extractor integration (2.18-2.20) |
+| S6 | Static rules and duplicate detection (2.21-2.24) |
+| S7 | Security checks (2.25-2.28) |
+| S8 | Pipeline, background run, deadline, API, retention, and logging (2.3, 2.4, 2.6, 2.29-2.33) |
+| S9 | Exit run on a real small repository and close-out |
+
+Each stage starts in a new agent chat with PLAN ONLY; review the plan before implementation. S3 also requires Docker validation as UID 10001 when Docker Desktop is available. S5 must preserve all 29 ML tests, the ML final-set output, and JM1 hash byte-identically.
 
 ---
 
@@ -127,8 +143,9 @@ The full schedule is in `Phases.md` section 3. The AI must **ask** for each deci
 | **Python runtime and Docker base image** | Phase 0 (task 0.2) | **Decided** | Python 3.12; Docker base image `python:3.12-slim-bookworm`; local `.venv` created with `py -3.12`. Wheels verified 2026-10-10. Recorded in Architecture decision log. |
 | PostgreSQL driver and major version | Task 0.6 | Decided | psycopg[binary] (psycopg 3); SQLAlchemy URL scheme `postgresql+psycopg://`; PostgreSQL 17 (development), production host to match. |
 | GitHub API access after login | Start of Phase 1 | Decided | OAuth callback repository sync uses the transient OAuth access token only in memory; later refresh operations use `GITHUB_PUBLIC_API_TOKEN`; OAuth tokens are never persisted. |
-| Test-file handling in summaries and ML | Phase 2 / Phase 4 | Open (proposal awaiting confirmation) | |
-| Failed-run retention | Phase 2 | Open (proposal awaiting confirmation) | |
+| Test-file handling in summaries and ML | Phase 2 / Phase 4 | Decided (human, 2026-11-07) | Store files.file_kind as source or test; list endpoints default to source and include tests when include_tests=true; secrets in test files are LOW. |
+| Failed-run retention | Phase 2 | Decided (human, 2026-11-07) | Keep only the most recent failed run per repository. |
+| Phase 2 approved decisions P1-P9 | Phase 2 | Decided (human, 2026-11-07) | P1 file complexity is the maximum function complexity. P2 settings: MAX_SOURCE_FILE_SIZE_BYTES=1048576 and MAX_CONCURRENT_ANALYSES=2; TEMP_CLONE_DIR is optional, defaults to <system temp>/repopulse-clones, and the app creates it mode 0700. Fixed limits: depth 64, 100000 entries; minified if name matches *.min.* or size is >5120 bytes with average line length (excluding terminators) >300. P3 no pre-clone file-count query; enforce size precheck and post-clone file/entry limits. P4 run directory run-<int>; repository name matches ^[A-Za-z0-9._-]{1,100}$ and is not . or ..; precheck by repository-ID endpoint, requiring ID == stored github_repo_id and a public repository; clone URL from validated full_name; mismatch/private/404 gives "Unable to retrieve repository." P5 warnings are JSONB [{stage,code,message}] default []; parse warnings capped at 50 plus total count; error codes repo_too_large, repo_unavailable, analysis_failed, no_supported_files, timed_out, interrupted; timeout message "Analysis timed out."; interrupted message "Analysis was interrupted. Please run it again."; cleanup failure adds cleanup_failed warning and log without changing run status; no supported files fails with no_supported_files and "Repository analysis failed.", with the unsupported-files message as a warning; findings retain nullable masked excerpt but API never returns it. P6 pagination default 50/max 100 with offset, ordered by path; files endpoint uses latest completed run and returns an empty page if none; GET /analysis with no run returns 200 status none; errors are 409 analysis_in_progress, 409 repository_not_analyzable (using Phase 1 archived/empty flags; stop if flags are absent), and 429 analysis_capacity; use existing error-body convention. P7 parse in-process; add Watch 8 for Phase 7 subprocess parse isolation and container restart policy. P8 static finding severity LOW at or below 2x threshold, MEDIUM above; secrets HIGH (test-file secrets LOW); unsafe patterns MEDIUM; propose duplicate window in S6 plan. P9 G0 governs and branchCount is omitted. |
 
 Later decisions (aggregation rule, risk thresholds, ML targets, graph layout, OpenAI model and snippet cap, hosting, indexes, and others) are tracked in `Phases.md` section 3. Move them into this table when their phase approaches.
 
@@ -146,6 +163,7 @@ Later decisions (aggregation rule, risk thresholds, ML targets, graph layout, Op
 | Watch 5 | npm flags `eslint@9.39.5` as deprecated in CI ("no longer supported"). | Review in Phase 7. | Open |
 | Watch 6 | Tree-sitter core/grammar compatibility: the Phase 2 smoke test must parse a LARGE file and walk every node, not a tiny sample. | Verify core and grammar wheel compatibility on a large fixture before Phase 2 metric work. | Open |
 | Watch 7 | Phase 7 hardening list (from the Phase 1 review) | Page cap and `affiliation=owner` in the GitHub client; expired-session DELETE on every request; no per-user session cap and no revocation of older sessions at login; no rate limiting on login/callback; `__Host-` cookie prefix; log redaction over-matches names such as `status_code` and drops tracebacks; normalize the `FRONTEND_URL` origin (lowercase, default ports); verify empty-repository detection (`default_branch`) with a real empty repository; move the shared HTTP transport out of `app/auth/oauth.py`; remove the unused `_validate_callback_uri`. | Open |
+| Watch 8 | Tree-sitter parsing is in-process for Phase 2, so a native crash can terminate the API process. | Phase 7: assess subprocess parse isolation and container restart policy. | Open |
 
 ---
 
@@ -163,6 +181,10 @@ Later decisions (aggregation rule, risk thresholds, ML targets, graph layout, Op
 
 1. `Phases.md` (4.16, 4.18, exit criteria) report one combined **Not scored** count; splitting it into "no code to score" and "ML unavailable" is optional.
 2. `Phases.md` section 2.1 describes a pull-request workflow marked [Proposed]; `AGENTS.md` section 9.1 now says the human commits directly to `main`. Update `Phases.md` section 2.1 when convenient.
+3. `Phases.md` 2.18 says "branch count"; this is stale because the approved G0 schema omits `branchCount`.
+4. `Phases.md` 2.1 does not list `file_kind`, the `warnings` field, or the masked excerpt retained for secret findings.
+5. `Phases.md` section 3 lists test-file handling and failed-run retention as both open and decided.
+6. `Phases.md` 2.31 should specify that the files endpoint reads the latest completed run.
 
 ---
 
@@ -172,6 +194,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-11-07 | Phase 2 plan approved with P1-P9 decisions. Recorded the S1-S9 map; implementation has not started. Each stage requires a new agent chat, PLAN ONLY first, and a review point after. | Phase 2 planning | S6 duplicate-detection window to be proposed in that stage plan; S3 Docker verification awaits Docker Desktop availability. |
 | 2026-11-07 | Phase 1 exit approved by the human: sign-in/out, `/auth/me`, and `/repositories` manually verified in task 1.14; mocked second-user authorization tests passed; all four CI jobs green on latest `main` with 207 backend tests passed and none skipped; 207 also passed locally against throwaway PostgreSQL. Session, cookie, and token decisions recorded. Verified commits `154ec65` and `f61a6b0`. | Phase 1 exit review | None |
 | 2026-10-26 | Applied the human-approved Phase 1 fixes: guarded PostgreSQL test database, required CI database, schema-drift check, named-user GitHub refresh, safer error logging, minimum session-secret length, package initializers, sync docstrings, README test recipe, and approved decision-log updates. Ruff and non-PostgreSQL tests passed; the required PostgreSQL run could not start because the Docker Desktop Linux engine was unavailable. Phase 1 remains awaiting exit review. | Phase 1 fixes; exit review | Docker Desktop engine must be available for the PostgreSQL test run |
 | 2026-10-23 | Phase 1 documentation blockers resolved: task 1.13 marked committed and CI-green; local OAuth App marked complete for verification while task 1.2 remains deferred to Phase 4; callback/refresh token handling decision recorded; refresh action documented as the internal `refresh_repositories()` boundary; manual verification updated with authenticated 200 results and browser limitation. Phase 1 remains awaiting exit review. | Phase 1 exit review | None |
