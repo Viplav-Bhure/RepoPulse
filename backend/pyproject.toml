@@ -5,6 +5,7 @@
 [tool.ruff]
 target-version = "py312"
 line-length = 88
+exclude = ["tests/fixtures"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B"]
@@ -12,3 +13,5 @@ select = ["E", "F", "W", "I", "UP", "B"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+python_files = ["test_*.py"]
+norecursedirs = ["fixtures"]

@@ -5,7 +5,7 @@
 | | |
 | --- | --- |
 | **Last updated** | 2026-11-07 |
-| **Updated by** | AI builder (Phase 2 plan approved) |
+| **Updated by** | AI builder (S1 implementation; Q5 dropped by human) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -16,7 +16,7 @@
 | --- | --- |
 | **Overall status** | Phase 2 in progress (planning stages) |
 | **Current phase** | Phase 2 - Analysis Core |
-| **Next task** | S1 planning: parser, Tree-sitter dependencies, and large-file smoke test (PLAN ONLY) |
+| **Next task** | S2 planning: data model, migration, and run state (PLAN ONLY) |
 | **Blocked?** | No |
 | **Last human approval** | 2026-11-07, Phase 2 plan and decisions |
 
@@ -46,11 +46,11 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 
 | | |
 | --- | --- |
-| **Task ID** | S1 planning |
-| **Title** | Plan parser and Tree-sitter validation |
+| **Task ID** | S2 planning |
+| **Title** | Plan data model, migration, and run state |
 | **Status** | Pending |
-| **Plan** | Start a new agent chat for each stage; PLAN ONLY first, with a review point after each stage. S1 covers tasks 2.15-2.17 and Watch 6. |
-| **Notes / problems** | Phase 2 plan approved. No Phase 2 code has started. S1 plan must establish by command whether Tree-sitter 0.25.2 offers a parse timeout or progress callback. |
+| **Plan** | Start a new agent chat for each stage; PLAN ONLY first, with a review point after each stage. S2 covers tasks 2.1, 2.2, and 2.5. |
+| **Notes / problems** | S1 tasks 2.15-2.17 are implemented and awaiting human commit. Q5 per-parse deadline support was dropped by the human; parser uses plain bytes only, with S8 between-file deadline checks. |
 
 ### Phase 2 approved stage map
 
@@ -76,6 +76,9 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 
 | Task ID | Date | PR / commit | Tests run and result | Notes |
 |---|---|---|---|---|
+| 2.15 | 2026-11-07 | awaiting human commit | Full backend pytest: 188 passed, 49 PostgreSQL tests skipped because `TEST_DATABASE_URL` was not configured; Linux CPython 3.12 manylinux dry run found wheels for all four pins. | Tree-sitter 0.25.2 uses a new Parser and Language per call; Q5 per-parse deadline support was dropped by the human, so parsing uses plain bytes only. Watch 6: 10 runs per grammar at 1,048,554-1,048,575 bytes; 439,726-638,261 nodes per run; zero errors; 16.640-19.553 seconds per grammar. |
+| 2.16 | 2026-11-07 | awaiting human commit | Full backend pytest: 188 passed. `pytest ml\tests`: 29 passed. | Iterative TreeCursor traversal; grammar node and field names verified against installed Language metadata. Q5 per-parse deadline support was dropped by the human. |
+| 2.17 | 2026-11-07 | awaiting human commit | Error cutoff, invalid UTF-8, and empty-file cases passed in parser tests; 3,000-level nesting and 100 malformed declarations passed their isolated tests. | G0 records parse-error files and ERROR/MISSING node counts but gives no usability cutoff; use <=1 combined ERROR/MISSING node as usable and >=2 as unusable. Q5 per-parse deadline support was dropped by the human. |
 | 1.14 | 2026-10-23 | `deb9d96`; committed and CI-green | Manual browser/API verification completed: Compose build succeeded; services healthy; frontend and docs 200; health 200; unauthenticated auth and repository routes 401; callback without parameters 400; OAuth login and callback redirect succeeded after local OAuth App configuration correction; authenticated `/auth/me` and `/repositories` returned 200; logout 204 twice and post-logout routes 401; CORS allow/deny checks passed; log scan found no credential patterns | Backend/API verification only; frontend remains a placeholder. Archived/empty repository behavior was not separately observed in the real browser flow; automated tests cover those states. No secrets, tokens, cookies, or authorization-code values were printed or added to files. |
 | 1.13 | 2026-10-23 | `2be3658`; committed and CI-green | Contract-only change; no new focused tests; full backend pytest: 147 passed, 46 skipped because `TEST_DATABASE_URL` was unavailable; Ruff check and format check passed; `git diff --check` passed | Implemented and locally verified. |
 | 1.12 | 2026-10-23 | `229e5e7`; committed and CI-green | Focused authorization tests: 5 skipped because `TEST_DATABASE_URL` was unavailable; full backend pytest: 147 passed, 46 skipped; Ruff check and format check passed; `git diff --check` passed | Implemented, committed as 229e5e7, and CI-green. |
@@ -161,9 +164,9 @@ Later decisions (aggregation rule, risk thresholds, ML targets, graph layout, Op
 | Watch 3 | `next dev` regenerates `frontend/AGENTS.md` and `node_modules/next/AGENTS.md` on every run. Do not commit; delete before commits. Notice says read `node_modules/next/dist/docs/` before writing Next code. | Ask the human how to handle before Phase 6. | Open |
 | Watch 4 | PowerShell may wrap normal Docker Compose stderr progress as `NativeCommandError`, including when a command succeeds. | Check the saved command log and native exit code before treating the wrapper as a failure. | Observed |
 | Watch 5 | npm flags `eslint@9.39.5` as deprecated in CI ("no longer supported"). | Review in Phase 7. | Open |
-| Watch 6 | Tree-sitter core/grammar compatibility: the Phase 2 smoke test must parse a LARGE file and walk every node, not a tiny sample. | Verify core and grammar wheel compatibility on a large fixture before Phase 2 metric work. | Open |
+| Watch 6 | Tree-sitter core/grammar compatibility: the Phase 2 smoke test must parse a LARGE file and walk every node, not a tiny sample. | S1 smoke passed: 10 parse-and-walk runs per grammar at 1,048,554-1,048,575 bytes; 439,726-638,261 nodes/run; zero errors; 16.640-19.553 seconds per grammar (see task 2.15). | Open |
 | Watch 7 | Phase 7 hardening list (from the Phase 1 review) | Page cap and `affiliation=owner` in the GitHub client; expired-session DELETE on every request; no per-user session cap and no revocation of older sessions at login; no rate limiting on login/callback; `__Host-` cookie prefix; log redaction over-matches names such as `status_code` and drops tracebacks; normalize the `FRONTEND_URL` origin (lowercase, default ports); verify empty-repository detection (`default_branch`) with a real empty repository; move the shared HTTP transport out of `app/auth/oauth.py`; remove the unused `_validate_callback_uri`. | Open |
-| Watch 8 | Tree-sitter parsing is in-process for Phase 2, so a native crash can terminate the API process. | Phase 7: assess subprocess parse isolation and container restart policy. | Open |
+| Watch 8 | Tree-sitter parsing is in-process for Phase 2, so a native crash can terminate the API process. | Phase 7: assess subprocess parse isolation and container restart policy. Phase 2 evidence: callback-path parse crashed natively (0xC0000005) on Windows with tree-sitter 0.25.2; cause unknown; path not used. | Open |
 
 ---
 
@@ -194,6 +197,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-11-07 | Implemented S1 parser and Tree-sitter pins; full backend pytest 188 passed and 49 PostgreSQL tests skipped without `TEST_DATABASE_URL`; all 29 ML tests passed; Ruff, Linux wheel dry run, and LF checks passed. Callback-path parsing crashed natively (0xC0000005); Q5 was dropped by the human, and the parser uses plain bytes only. | 2.15-2.17; S1 | S2 planning |
 | 2026-11-07 | Phase 2 plan approved with P1-P9 decisions. Recorded the S1-S9 map; implementation has not started. Each stage requires a new agent chat, PLAN ONLY first, and a review point after. | Phase 2 planning | S6 duplicate-detection window to be proposed in that stage plan; S3 Docker verification awaits Docker Desktop availability. |
 | 2026-11-07 | Phase 1 exit approved by the human: sign-in/out, `/auth/me`, and `/repositories` manually verified in task 1.14; mocked second-user authorization tests passed; all four CI jobs green on latest `main` with 207 backend tests passed and none skipped; 207 also passed locally against throwaway PostgreSQL. Session, cookie, and token decisions recorded. Verified commits `154ec65` and `f61a6b0`. | Phase 1 exit review | None |
 | 2026-10-26 | Applied the human-approved Phase 1 fixes: guarded PostgreSQL test database, required CI database, schema-drift check, named-user GitHub refresh, safer error logging, minimum session-secret length, package initializers, sync docstrings, README test recipe, and approved decision-log updates. Ruff and non-PostgreSQL tests passed; the required PostgreSQL run could not start because the Docker Desktop Linux engine was unavailable. Phase 1 remains awaiting exit review. | Phase 1 fixes; exit review | Docker Desktop engine must be available for the PostgreSQL test run |
