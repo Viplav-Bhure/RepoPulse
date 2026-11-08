@@ -5,7 +5,7 @@
 | | |
 | --- | --- |
 | **Last updated** | 2026-11-08 |
-| **Updated by** | AI builder (S2 implementation and verification) |
+| **Updated by** | AI builder (L1 out-of-phase logging fix) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -50,7 +50,7 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 | **Title** | Plan safe repository retrieval |
 | **Status** | Pending |
 | **Plan** | PLAN ONLY for S3 tasks 2.7-2.11, with a review point before implementation. |
-| **Notes / problems** | S2 tasks 2.1, 2.2, and 2.5 are implemented and awaiting human commit. Paths longer than 1024 characters must be skipped with a warning in S4. Q5 per-parse deadline support was dropped by the human; parser uses plain bytes only, with S8 between-file deadline checks. |
+| **Notes / problems** | S2 tasks 2.1, 2.2, and 2.5 are implemented and awaiting human commit. Paths longer than 1024 characters must be skipped with a warning in S4. Q5 per-parse deadline support was dropped by the human; parser uses plain bytes only, with S8 between-file deadline checks. L1-d S8 binding: event field names must not end in code, state, token, cookie, secret, key, or verifier; use reason, not error_code, until redaction name matching is fixed. |
 
 ### Phase 2 approved stage map
 
@@ -76,6 +76,7 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 
 | Task ID | Date | PR / commit | Tests run and result | Notes |
 |---|---|---|---|---|
+| L1 | 2026-11-08 | awaiting human commit | Focused logging tests: 20 passed; full backend pytest without a database: 198 passed, 56 skipped because `TEST_DATABASE_URL` was unset; `pytest ml\tests`: 29 passed; Ruff check and format check passed; `git diff --check` and LF/ASCII checks passed. | Out-of-phase fix before S3: preserve/redact Uvicorn access arguments; configure app INFO console logging and sanitized extra fields. |
 | 2.1 | 2026-11-08 | awaiting human commit | Full backend pytest with required PostgreSQL: 248 passed, 0 skipped; model/migration parity and downgrade/upgrade round trip passed. | Added analysis_runs, files, findings, cascades, constraints, and indexes in migration 0003_analysis. |
 | 2.2 | 2026-11-08 | awaiting human commit | Full backend pytest with required PostgreSQL: 248 passed, 0 skipped; lifecycle transition and stage-order tests passed. | Single-source state constants; status transitions use conditional updates; stage updates allow repeats and forward skips. |
 | 2.5 | 2026-11-08 | awaiting human commit | Full backend pytest with required PostgreSQL: 248 passed, 0 skipped; real-lifespan reconciliation test passed. | Lifespan fails startup on reconciliation errors; Compose migration service gates backend startup. |
@@ -182,7 +183,7 @@ Later decisions (aggregation rule, risk thresholds, ML targets, graph layout, Op
 | Watch 4 | PowerShell may wrap normal Docker Compose stderr progress as `NativeCommandError`, including when a command succeeds. | Check the saved command log and native exit code before treating the wrapper as a failure. | Observed |
 | Watch 5 | npm flags `eslint@9.39.5` as deprecated in CI ("no longer supported"). | Review in Phase 7. | Open |
 | Watch 6 | Tree-sitter core/grammar compatibility: the Phase 2 smoke test must parse a LARGE file and walk every node, not a tiny sample. | S1 smoke passed: 10 parse-and-walk runs per grammar at 1,048,554-1,048,575 bytes; 439,726-638,261 nodes/run; zero errors; 16.640-19.553 seconds per grammar (see task 2.15). | Open |
-| Watch 7 | Phase 7 hardening list (from the Phase 1 review) | Page cap and `affiliation=owner` in the GitHub client; expired-session DELETE on every request; no per-user session cap and no revocation of older sessions at login; no rate limiting on login/callback; `__Host-` cookie prefix; log redaction over-matches names such as `status_code` and drops tracebacks; normalize the `FRONTEND_URL` origin (lowercase, default ports); verify empty-repository detection (`default_branch`) with a real empty repository; move the shared HTTP transport out of `app/auth/oauth.py`; remove the unused `_validate_callback_uri`. | Open |
+| Watch 7 | Phase 7 hardening list (from the Phase 1 review) | Page cap and `affiliation=owner` in the GitHub client; expired-session DELETE on every request; no per-user session cap and no revocation of older sessions at login; no rate limiting on login/callback; `__Host-` cookie prefix; log redaction over-matches names such as `status_code` (`_sensitive_key` suffix `code`) and drops tracebacks (`SensitiveDataFilter` clears `exc_info`); Uvicorn 0.54.0 `AccessFormatter` unpacks five access args, while the old filter cleared them, raising ValueError. L1 preserves/redacts valid five-tuples; traceback dropping and name over-matching remain unchanged. Also: normalize the `FRONTEND_URL` origin (lowercase, default ports); verify empty-repository detection (`default_branch`) with a real empty repository; move the shared HTTP transport out of `app/auth/oauth.py`; remove the unused `_validate_callback_uri`. | Open |
 | Watch 8 | Tree-sitter parsing is in-process for Phase 2, so a native crash can terminate the API process. | Phase 7: assess subprocess parse isolation and container restart policy. Phase 2 evidence: callback-path parse crashed natively (0xC0000005) on Windows with tree-sitter 0.25.2; cause unknown; path not used. | Open |
 
 ---
@@ -216,6 +217,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-11-08 | Implemented L1 logging fix: valid Uvicorn access arguments are retained and redacted, app INFO events emit with sorted sanitized extra fields, and regression tests pass. Full backend pytest: 198 passed, 56 PostgreSQL tests skipped without `TEST_DATABASE_URL`; ML tests: 29 passed; Ruff checks passed. | L1 | S3 planning (next) |
 | 2026-11-08 | Implemented S2 models, migration, run lifecycle, startup reconciliation, and Compose migration gate. Ruff and format checks passed; backend pytest passed 248 with required PostgreSQL and 0 skipped; ML tests passed 29; git diff --check passed; throwaway test container stopped and docker ps was empty. | 2.1, 2.2, 2.5; S2 | S3 planning (PLAN ONLY) |
 | 2026-11-07 | Implemented S1 parser and Tree-sitter pins; full backend pytest 188 passed and 49 PostgreSQL tests skipped without `TEST_DATABASE_URL`; all 29 ML tests passed; Ruff, Linux wheel dry run, and LF checks passed. Callback-path parsing crashed natively (0xC0000005); Q5 was dropped by the human, and the parser uses plain bytes only. | 2.15-2.17; S1 | S2 planning |
 | 2026-11-07 | Phase 2 plan approved with P1-P9 decisions. Recorded the S1-S9 map; implementation has not started. Each stage requires a new agent chat, PLAN ONLY first, and a review point after. | Phase 2 planning | S6 duplicate-detection window to be proposed in that stage plan; S3 Docker verification awaits Docker Desktop availability. |

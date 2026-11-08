@@ -1,10 +1,13 @@
 """Credential redaction tests for application and request/access logs."""
 
+import io
 import logging
 import time
 
 import pytest
 from fastapi.testclient import TestClient
+from uvicorn.config import LOGGING_CONFIG
+from uvicorn.logging import AccessFormatter
 
 from app.auth import routes, session
 from app.auth.oauth import serialize_state_cookie
@@ -232,3 +235,133 @@ def test_uvicorn_access_log_redacts_callback_query_parameters(
     assert "state=<redacted>" in caplog.text
     assert "authorization-code-sentinel" not in caplog.text
     assert "oauth-state-sentinel" not in caplog.text
+
+
+@pytest.mark.parametrize("use_colors", [False, True])
+def test_uvicorn_access_formatter_preserves_and_redacts_access_args(
+    use_colors: bool,
+) -> None:
+    record = logging.LogRecord(
+        "uvicorn.access",
+        logging.INFO,
+        __file__,
+        10,
+        '%s - "%s %s HTTP/%s" %d',
+        (
+            "127.0.0.1:12345",
+            "GET",
+            "/auth/callback?token=token-sentinel&cookie=cookie-sentinel"
+            "&code=code-sentinel&state=state-sentinel",
+            "1.1",
+            400,
+        ),
+        None,
+    )
+
+    assert SensitiveDataFilter().filter(record)
+    assert record.args[0] == "127.0.0.1:12345"
+    assert record.args[1] == "GET"
+    assert record.args[4] == 400
+    formatted = AccessFormatter(
+        fmt=LOGGING_CONFIG["formatters"]["access"]["fmt"],
+        use_colors=use_colors,
+    ).format(record)
+
+    assert "/auth/callback" in formatted
+    assert all(
+        f"{name}=<redacted>" in formatted
+        for name in ("token", "cookie", "code", "state")
+    )
+    assert all(
+        secret not in formatted
+        for secret in (
+            "token-sentinel",
+            "cookie-sentinel",
+            "code-sentinel",
+            "state-sentinel",
+        )
+    )
+
+
+def test_uvicorn_access_filter_falls_back_for_wrong_shape_args() -> None:
+    record = logging.LogRecord(
+        "uvicorn.access",
+        logging.INFO,
+        __file__,
+        10,
+        "token=%s",
+        ("token-sentinel",),
+        None,
+    )
+
+    assert SensitiveDataFilter().filter(record)
+    assert record.args == ()
+    assert record.getMessage() == "token=<redacted>"
+
+
+def test_non_access_log_still_redacts_formatted_arguments() -> None:
+    record = logging.LogRecord(
+        "app.example",
+        logging.INFO,
+        __file__,
+        10,
+        "token=%s",
+        ("token-sentinel",),
+        None,
+    )
+
+    assert SensitiveDataFilter().filter(record)
+    assert record.args == ()
+    assert record.getMessage() == "token=<redacted>"
+
+
+def test_app_info_log_includes_redacted_extra_fields(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    app_logger = logging.getLogger("app")
+    assert app_logger.level == logging.INFO
+    assert app_logger.propagate
+    app_handler = next(
+        handler
+        for handler in app_logger.handlers
+        if isinstance(handler, logging.StreamHandler)
+    )
+    original_stream = app_handler.stream
+    output = io.StringIO()
+    app_handler.setStream(output)
+
+    try:
+        with caplog.at_level(logging.INFO):
+            logging.getLogger("app.database.run_lifecycle").info(
+                "Reconciled interrupted analysis runs",
+                extra={
+                    "run_count": 2,
+                    "run_ids": ("run-101", "run-202"),
+                    "api_token": "extra-token-sentinel",
+                },
+            )
+        app_handler.flush()
+    finally:
+        app_handler.setStream(original_stream)
+
+    formatted = output.getvalue()
+    assert (
+        "INFO: app.database.run_lifecycle: Reconciled interrupted analysis runs"
+        in formatted
+    )
+    assert "run_count=2" in formatted
+    assert "run_ids=('run-101', 'run-202')" in formatted
+    assert "api_token=<redacted>" in formatted
+    assert "extra-token-sentinel" not in formatted
+    assert formatted.index("api_token=") < formatted.index("run_count=")
+    assert formatted.index("run_count=") < formatted.index("run_ids=")
+    assert "Reconciled interrupted analysis runs" in caplog.text
+
+
+def test_configure_logging_adds_only_one_app_handler() -> None:
+    configure_logging()
+    configure_logging()
+
+    app_handlers = logging.getLogger("app").handlers
+    assert len(app_handlers) == 1
+    assert isinstance(app_handlers[0], logging.StreamHandler)

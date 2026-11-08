@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+import sys
 from collections.abc import Mapping
 from typing import Any
 
@@ -89,14 +90,24 @@ class SensitiveDataFilter(logging.Filter):
     """Sanitize a log record before any configured handler formats it."""
 
     def filter(self, record: logging.LogRecord) -> bool:
-        record.args = redact_sensitive_data(record.args)
-        message = record.getMessage()
-        if record.exc_info and record.exc_info[1] is not None:
-            error = record.exc_info[1]
-            message = f"{message} ({type(error).__name__}: {error})"
-
-        record.msg = redact_sensitive_data(message)
-        record.args = ()
+        access_args = (
+            record.name == "uvicorn.access"
+            and isinstance(record.args, tuple)
+            and len(record.args) == 5
+        )
+        if access_args:
+            record.args = tuple(
+                redact_sensitive_data(value) if isinstance(value, str) else value
+                for value in record.args
+            )
+        else:
+            record.args = redact_sensitive_data(record.args)
+            message = record.getMessage()
+            if record.exc_info and record.exc_info[1] is not None:
+                error = record.exc_info[1]
+                message = f"{message} ({type(error).__name__}: {error})"
+            record.msg = redact_sensitive_data(message)
+            record.args = ()
         record.exc_info = None
         record.exc_text = None
         if record.stack_info is not None:
@@ -108,6 +119,24 @@ class SensitiveDataFilter(logging.Filter):
                     _REDACTED if _sensitive_key(name) else redact_sensitive_data(value)
                 )
         return True
+
+
+class _AppFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        extra_fields = sorted(
+            (name, value)
+            for name, value in record.__dict__.items()
+            if name not in _STANDARD_RECORD_FIELDS
+        )
+        message = super().format(record)
+        if not extra_fields:
+            return message
+
+        rendered_fields = " ".join(
+            f"{name}={value!r}" if isinstance(value, tuple) else f"{name}={value}"
+            for name, value in extra_fields
+        )
+        return f"{message} {rendered_fields}"
 
 
 _configured = False
@@ -137,4 +166,12 @@ def configure_logging() -> None:
         logging.getLogger(logger_name).addFilter(sensitive_filter)
     for handler in logging.getLogger().handlers:
         handler.addFilter(sensitive_filter)
+
+    app_logger = logging.getLogger("app")
+    app_logger.setLevel(logging.INFO)
+    app_logger.propagate = True
+    app_handler = logging.StreamHandler(sys.stderr)
+    app_handler.addFilter(sensitive_filter)
+    app_handler.setFormatter(_AppFormatter("%(levelname)s: %(name)s: %(message)s"))
+    app_logger.addHandler(app_handler)
     _configured = True
