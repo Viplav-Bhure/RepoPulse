@@ -4,8 +4,8 @@
 
 | | |
 | --- | --- |
-| **Last updated** | 2026-11-07 |
-| **Updated by** | AI builder (S1 implementation; Q5 dropped by human) |
+| **Last updated** | 2026-11-08 |
+| **Updated by** | AI builder (S2 implementation and verification) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -16,9 +16,9 @@
 | --- | --- |
 | **Overall status** | Phase 2 in progress (planning stages) |
 | **Current phase** | Phase 2 - Analysis Core |
-| **Next task** | S2 planning: data model, migration, and run state (PLAN ONLY) |
+| **Next task** | S3 planning: safe repository retrieval (PLAN ONLY) |
 | **Blocked?** | No |
-| **Last human approval** | 2026-11-07, Phase 2 plan and decisions |
+| **Last human approval** | 2026-11-08, S2 schema/lifecycle decisions and Compose migration gate |
 
 ---
 
@@ -46,11 +46,11 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 
 | | |
 | --- | --- |
-| **Task ID** | S2 planning |
-| **Title** | Plan data model, migration, and run state |
+| **Task ID** | S3 planning |
+| **Title** | Plan safe repository retrieval |
 | **Status** | Pending |
-| **Plan** | Start a new agent chat for each stage; PLAN ONLY first, with a review point after each stage. S2 covers tasks 2.1, 2.2, and 2.5. |
-| **Notes / problems** | S1 tasks 2.15-2.17 are implemented and awaiting human commit. Q5 per-parse deadline support was dropped by the human; parser uses plain bytes only, with S8 between-file deadline checks. |
+| **Plan** | PLAN ONLY for S3 tasks 2.7-2.11, with a review point before implementation. |
+| **Notes / problems** | S2 tasks 2.1, 2.2, and 2.5 are implemented and awaiting human commit. Paths longer than 1024 characters must be skipped with a warning in S4. Q5 per-parse deadline support was dropped by the human; parser uses plain bytes only, with S8 between-file deadline checks. |
 
 ### Phase 2 approved stage map
 
@@ -76,6 +76,9 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 
 | Task ID | Date | PR / commit | Tests run and result | Notes |
 |---|---|---|---|---|
+| 2.1 | 2026-11-08 | awaiting human commit | Full backend pytest with required PostgreSQL: 248 passed, 0 skipped; model/migration parity and downgrade/upgrade round trip passed. | Added analysis_runs, files, findings, cascades, constraints, and indexes in migration 0003_analysis. |
+| 2.2 | 2026-11-08 | awaiting human commit | Full backend pytest with required PostgreSQL: 248 passed, 0 skipped; lifecycle transition and stage-order tests passed. | Single-source state constants; status transitions use conditional updates; stage updates allow repeats and forward skips. |
+| 2.5 | 2026-11-08 | awaiting human commit | Full backend pytest with required PostgreSQL: 248 passed, 0 skipped; real-lifespan reconciliation test passed. | Lifespan fails startup on reconciliation errors; Compose migration service gates backend startup. |
 | 2.15 | 2026-11-07 | awaiting human commit | Full backend pytest: 188 passed, 49 PostgreSQL tests skipped because `TEST_DATABASE_URL` was not configured; Linux CPython 3.12 manylinux dry run found wheels for all four pins. | Tree-sitter 0.25.2 uses a new Parser and Language per call; Q5 per-parse deadline support was dropped by the human, so parsing uses plain bytes only. Watch 6: 10 runs per grammar at 1,048,554-1,048,575 bytes; 439,726-638,261 nodes per run; zero errors; 16.640-19.553 seconds per grammar. |
 | 2.16 | 2026-11-07 | awaiting human commit | Full backend pytest: 188 passed. `pytest ml\tests`: 29 passed. | Iterative TreeCursor traversal; grammar node and field names verified against installed Language metadata. Q5 per-parse deadline support was dropped by the human. |
 | 2.17 | 2026-11-07 | awaiting human commit | Error cutoff, invalid UTF-8, and empty-file cases passed in parser tests; 3,000-level nesting and 100 malformed declarations passed their isolated tests. | G0 records parse-error files and ERROR/MISSING node counts but gives no usability cutoff; use <=1 combined ERROR/MISSING node as usable and >=2 as unusable. Q5 per-parse deadline support was dropped by the human. |
@@ -150,6 +153,20 @@ The full schedule is in `Phases.md` section 3. The AI must **ask** for each deci
 | Failed-run retention | Phase 2 | Decided (human, 2026-11-07) | Keep only the most recent failed run per repository. |
 | Phase 2 approved decisions P1-P9 | Phase 2 | Decided (human, 2026-11-07) | P1 file complexity is the maximum function complexity. P2 settings: MAX_SOURCE_FILE_SIZE_BYTES=1048576 and MAX_CONCURRENT_ANALYSES=2; TEMP_CLONE_DIR is optional, defaults to <system temp>/repopulse-clones, and the app creates it mode 0700. Fixed limits: depth 64, 100000 entries; minified if name matches *.min.* or size is >5120 bytes with average line length (excluding terminators) >300. P3 no pre-clone file-count query; enforce size precheck and post-clone file/entry limits. P4 run directory run-<int>; repository name matches ^[A-Za-z0-9._-]{1,100}$ and is not . or ..; precheck by repository-ID endpoint, requiring ID == stored github_repo_id and a public repository; clone URL from validated full_name; mismatch/private/404 gives "Unable to retrieve repository." P5 warnings are JSONB [{stage,code,message}] default []; parse warnings capped at 50 plus total count; error codes repo_too_large, repo_unavailable, analysis_failed, no_supported_files, timed_out, interrupted; timeout message "Analysis timed out."; interrupted message "Analysis was interrupted. Please run it again."; cleanup failure adds cleanup_failed warning and log without changing run status; no supported files fails with no_supported_files and "Repository analysis failed.", with the unsupported-files message as a warning; findings retain nullable masked excerpt but API never returns it. P6 pagination default 50/max 100 with offset, ordered by path; files endpoint uses latest completed run and returns an empty page if none; GET /analysis with no run returns 200 status none; errors are 409 analysis_in_progress, 409 repository_not_analyzable (using Phase 1 archived/empty flags; stop if flags are absent), and 429 analysis_capacity; use existing error-body convention. P7 parse in-process; add Watch 8 for Phase 7 subprocess parse isolation and container restart policy. P8 static finding severity LOW at or below 2x threshold, MEDIUM above; secrets HIGH (test-file secrets LOW); unsafe patterns MEDIUM; propose duplicate window in S6 plan. P9 G0 governs and branchCount is omitted. |
 
+| P10 analysis stage column | Phase 2 | Decided (human, 2026-11-08) | Name the run field stage, not current_stage. Correct Architecture 27.2 during close-out. |
+| P11 analysis stage values | Phase 2 | Decided (human, 2026-11-08) | Use the 13 values in AGENTS 5.4 and Phases 2.2; no completed stage. Stage is NULL while queued and stays at its last value when the run ends. Correct Architecture 28 during close-out. |
+| Q1 run creation time | S2 | Decided (human, 2026-11-08) | analysis_runs.created_at is timestamptz NOT NULL DEFAULT now(). |
+| Q2 commit SHA type | S2 | Decided (human, 2026-11-08) | commit_sha is nullable String(64). |
+| Q3 file path uniqueness and limit | S2 and S4 | Decided (human, 2026-11-08) | UNIQUE (analysis_id, path); no separate files.analysis_id index. S4 skips paths longer than 1024 characters with a warning. |
+| Q4 complexity without functions | S2 | Decided (human, 2026-11-08) | files.complexity is nullable; NULL means no function. |
+| Q5 coverage type | S2 | Decided (human, 2026-11-08) | files.coverage is nullable Float with no range constraint. |
+| Q6 finding optional data | S2 | Decided (human, 2026-11-08) | line, measured_value, threshold are nullable Integer; masked_excerpt is nullable Text. |
+| Q7 lifecycle module placement | S2 | Decided (human, 2026-11-08) | State constants and transitions live in database/run_states.py, independent of models; database lifecycle functions live in database/run_lifecycle.py. Models import the leaf state module. |
+| Q8 startup reconciliation | S2 | Decided (human, 2026-11-08) | Reconcile in FastAPI lifespan before yield and fail startup on error. Use an injectable session factory; patch reconciliation narrowly for non-PostgreSQL tests and test real lifespan with PostgreSQL. |
+| Q9 state update rules | S2 | Decided (human, 2026-11-08) | Status transitions are queued->running/failed and running->completed/failed; terminal states are final. Stages are forward-only, repeats and skips allowed, only while running. Conditional UPDATE and rowcount reject stale/illegal updates. |
+| Q10 authorization changes | S2 | Decided (human, 2026-11-08) | Do not modify repositories/authorization.py in S2; implement file/finding ownership in S8. |
+| Compose migration gate | S2 | Decided (human, 2026-11-08) | A one-shot Compose migration service must complete before backend startup so lifespan reconciliation cannot run against an unmigrated schema. |
+
 Later decisions (aggregation rule, risk thresholds, ML targets, graph layout, OpenAI model and snippet cap, hosting, indexes, and others) are tracked in `Phases.md` section 3. Move them into this table when their phase approaches.
 
 ---
@@ -188,6 +205,8 @@ Later decisions (aggregation rule, risk thresholds, ML targets, graph layout, Op
 4. `Phases.md` 2.1 does not list `file_kind`, the `warnings` field, or the masked excerpt retained for secret findings.
 5. `Phases.md` section 3 lists test-file handling and failed-run retention as both open and decided.
 6. `Phases.md` 2.31 should specify that the files endpoint reads the latest completed run.
+7. `Architecture.md` 27.2 uses `current_stage`, omits `error_code`, `warnings`, `file_kind`, and `masked_excerpt`, and marks failed-run retention open despite the decision in this file. Update it during close-out.
+8. `Architecture.md` 28 lists `completed` as a stage; remove it during close-out and use the 13 decided stages.
 
 ---
 
@@ -197,6 +216,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-11-08 | Implemented S2 models, migration, run lifecycle, startup reconciliation, and Compose migration gate. Ruff and format checks passed; backend pytest passed 248 with required PostgreSQL and 0 skipped; ML tests passed 29; git diff --check passed; throwaway test container stopped and docker ps was empty. | 2.1, 2.2, 2.5; S2 | S3 planning (PLAN ONLY) |
 | 2026-11-07 | Implemented S1 parser and Tree-sitter pins; full backend pytest 188 passed and 49 PostgreSQL tests skipped without `TEST_DATABASE_URL`; all 29 ML tests passed; Ruff, Linux wheel dry run, and LF checks passed. Callback-path parsing crashed natively (0xC0000005); Q5 was dropped by the human, and the parser uses plain bytes only. | 2.15-2.17; S1 | S2 planning |
 | 2026-11-07 | Phase 2 plan approved with P1-P9 decisions. Recorded the S1-S9 map; implementation has not started. Each stage requires a new agent chat, PLAN ONLY first, and a review point after. | Phase 2 planning | S6 duplicate-detection window to be proposed in that stage plan; S3 Docker verification awaits Docker Desktop availability. |
 | 2026-11-07 | Phase 1 exit approved by the human: sign-in/out, `/auth/me`, and `/repositories` manually verified in task 1.14; mocked second-user authorization tests passed; all four CI jobs green on latest `main` with 207 backend tests passed and none skipped; 207 also passed locally against throwaway PostgreSQL. Session, cookie, and token decisions recorded. Verified commits `154ec65` and `f61a6b0`. | Phase 1 exit review | None |

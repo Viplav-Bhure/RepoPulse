@@ -6,6 +6,9 @@ See [`docs/`](docs/) for full product and architecture documentation.
 
 Status: Phase 1 complete (v0.1); Phase 2 - Analysis Core next (not started)
 
+On `docker compose up`, the one-shot `migrate` service applies Alembic
+migrations after PostgreSQL is healthy and before the backend starts.
+
 ## Running the backend tests
 
 Use a throwaway PostgreSQL 17 container, never the Compose database:

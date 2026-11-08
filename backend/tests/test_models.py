@@ -4,9 +4,19 @@ from alembic import command
 from alembic.autogenerate import compare_metadata
 from alembic.config import Config
 from alembic.migration import MigrationContext
-from sqlalchemy import CHAR, BigInteger, Integer, UniqueConstraint, text
+from sqlalchemy import (
+    CHAR,
+    BigInteger,
+    CheckConstraint,
+    Float,
+    Integer,
+    Text,
+    UniqueConstraint,
+    inspect,
+    text,
+)
 
-from app.database.models import Base
+from app.database.models import AnalysisRun, Base, File
 
 
 def _unique_columns(table_name: str) -> set[frozenset[str]]:
@@ -77,6 +87,82 @@ def test_repository_owner_lookup_uses_composite_unique_index() -> None:
     assert owner_lookup_constraint.name == "uq_repositories_user_github_repo"
 
 
+def test_analysis_model_fields_constraints_and_indexes() -> None:
+    runs = Base.metadata.tables["analysis_runs"]
+    files = Base.metadata.tables["files"]
+    findings = Base.metadata.tables["findings"]
+
+    assert set(runs.c.keys()) >= {
+        "id",
+        "repository_id",
+        "commit_sha",
+        "status",
+        "stage",
+        "error_code",
+        "error_message",
+        "warnings",
+        "created_at",
+        "started_at",
+        "completed_at",
+    }
+    assert runs.c.commit_sha.type.length == 64
+    assert runs.c.commit_sha.nullable
+    assert not runs.c.created_at.nullable
+    assert not runs.c.warnings.nullable
+    assert str(runs.c.status.server_default.arg) == "'queued'"
+    assert str(runs.c.warnings.server_default.arg) == "'[]'::jsonb"
+    assert {"ck_analysis_runs_status", "ck_analysis_runs_stage"} <= {
+        constraint.name
+        for constraint in runs.constraints
+        if isinstance(constraint, CheckConstraint)
+    }
+    assert {index.name for index in runs.indexes} == {
+        "ix_analysis_runs_repository_id",
+        "uq_analysis_runs_active_repository",
+    }
+    assert "status IN ('queued', 'running')" in str(
+        next(
+            index
+            for index in runs.indexes
+            if index.name == "uq_analysis_runs_active_repository"
+        ).dialect_options["postgresql"]["where"]
+    )
+
+    assert isinstance(files.c.path.type, Text)
+    assert files.c.complexity.nullable
+    assert isinstance(files.c.coverage.type, Float)
+    assert files.c.coverage.nullable
+    assert {constraint.name for constraint in files.constraints} >= {
+        "ck_files_file_kind",
+        "uq_files_analysis_id_path",
+    }
+    assert {index.name for index in files.indexes} == set()
+
+    assert findings.c.line.nullable
+    assert findings.c.measured_value.nullable
+    assert findings.c.threshold.nullable
+    assert findings.c.masked_excerpt.nullable
+    assert isinstance(findings.c.masked_excerpt.type, Text)
+    assert {index.name for index in findings.indexes} == {"ix_findings_file_id"}
+    assert not {"predictions", "functions"} & set(Base.metadata.tables)
+
+    assert AnalysisRun.__mapper__.relationships["files"].passive_deletes
+    assert File.__mapper__.relationships["findings"].passive_deletes
+
+
+def test_analysis_foreign_keys_cascade() -> None:
+    for table_name, column_name, target in (
+        ("analysis_runs", "repository_id", "repositories.id"),
+        ("files", "analysis_id", "analysis_runs.id"),
+        ("findings", "file_id", "files.id"),
+    ):
+        foreign_key = next(
+            iter(Base.metadata.tables[table_name].c[column_name].foreign_keys)
+        )
+        assert foreign_key.target_fullname == target
+        assert foreign_key.ondelete == "CASCADE"
+
+
 def test_migrations_match_metadata_on_empty_database(
     test_database_engine, monkeypatch
 ) -> None:
@@ -105,3 +191,13 @@ def test_migrations_match_metadata_on_empty_database(
             opts={"include_object": include_object},
         )
         assert compare_metadata(context, Base.metadata) == []
+
+    command.downgrade(alembic_config, "0002_identity")
+    with test_database_engine.connect() as connection:
+        assert not {
+            "analysis_runs",
+            "files",
+            "findings",
+        } & set(inspect(connection).get_table_names())
+
+    command.upgrade(alembic_config, "head")

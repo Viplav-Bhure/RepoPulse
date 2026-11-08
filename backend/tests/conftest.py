@@ -62,6 +62,19 @@ def client() -> Generator[TestClient, None, None]:
 
 
 @pytest.fixture(autouse=True)
+def mock_startup_reconciliation(
+    monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest
+) -> None:
+    """Keep ordinary TestClient startup independent of PostgreSQL."""
+    if "real_lifespan_reconciliation" in request.fixturenames:
+        return
+
+    from app import main
+
+    monkeypatch.setattr(main, "reconcile_interrupted_runs", lambda: ())
+
+
+@pytest.fixture(autouse=True)
 def mock_default_github_repos(monkeypatch: pytest.MonkeyPatch) -> None:
     """Mock GitHub list_repositories during route tests to prevent network I/O."""
     try:
