@@ -4,8 +4,8 @@
 
 | | |
 | --- | --- |
-| **Last updated** | 2026-11-08 |
-| **Updated by** | AI builder (L1 out-of-phase logging fix) |
+| **Last updated** | 2026-11-09 |
+| **Updated by** | AI builder (S3a tasks 2.7-2.9) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -16,7 +16,7 @@
 | --- | --- |
 | **Overall status** | Phase 2 in progress (planning stages) |
 | **Current phase** | Phase 2 - Analysis Core |
-| **Next task** | S3 planning: safe repository retrieval (PLAN ONLY) |
+| **Next task** | S3b planning: cleanup, orphan sweep, and safe file reads (PLAN ONLY) |
 | **Blocked?** | No |
 | **Last human approval** | 2026-11-08, S2 schema/lifecycle decisions and Compose migration gate |
 
@@ -46,11 +46,11 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 
 | | |
 | --- | --- |
-| **Task ID** | S3 planning |
-| **Title** | Plan safe repository retrieval |
-| **Status** | Pending |
-| **Plan** | PLAN ONLY for S3 tasks 2.7-2.11, with a review point before implementation. |
-| **Notes / problems** | S2 tasks 2.1, 2.2, and 2.5 are implemented and awaiting human commit. Paths longer than 1024 characters must be skipped with a warning in S4. Q5 per-parse deadline support was dropped by the human; parser uses plain bytes only, with S8 between-file deadline checks. L1-d S8 binding: event field names must not end in code, state, token, cookie, secret, key, or verifier; use reason, not error_code, until redaction name matching is fixed. |
+| **Task ID** | S3a |
+| **Title** | Implement GitHub precheck, hardened clone, and limits |
+| **Status** | Done |
+| **Plan** | Implement tasks 2.7-2.9 only; cleanup, orphan sweep, safe reads, and Docker validation remain separate stages. |
+| **Notes / problems** | P15: S4 owns exclusion rules; S8 passes the predicate into the S3 count. P12: caller creates run_dir; clone destination is run_dir/repository. Paths longer than 1024 characters must be skipped with a warning in S4. Q5 per-parse deadline support was dropped by the human; parser uses plain bytes only, with S8 between-file deadline checks. L1-d S8 binding: event field names must not end in code, state, token, cookie, secret, key, or verifier; use reason, not error_code, until redaction name matching is fixed. |
 
 ### Phase 2 approved stage map
 
@@ -58,7 +58,9 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 |---|---|
 | S1 | Parser, Tree-sitter dependencies, and Watch 6 large-file smoke test (2.15-2.17) |
 | S2 | Data model, migration 0003, state machine, and startup reconciliation (2.1, 2.2, 2.5) |
-| S3 | Safe clone (2.7-2.11) |
+| S3a | GitHub ID precheck, hardened clone, and limits (2.7-2.9) |
+| S3b | Temp directory lifecycle, orphan sweep, and safe reads (2.10-2.11) |
+| S3c | Docker verification and tmpfs sizing (after S3 implementation; not part of 2.7-2.9) |
 | S4 | Discovery and source/test classification (2.12-2.14) |
 | S5 | Metrics and G0 extractor integration (2.18-2.20) |
 | S6 | Static rules and duplicate detection (2.21-2.24) |
@@ -66,7 +68,7 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 | S8 | Pipeline, background run, deadline, API, retention, and logging (2.3, 2.4, 2.6, 2.29-2.33) |
 | S9 | Exit run on a real small repository and close-out |
 
-Each stage starts in a new agent chat with PLAN ONLY; review the plan before implementation. S3 also requires Docker validation as UID 10001 when Docker Desktop is available. S5 must preserve all 29 ML tests, the ML final-set output, and JM1 hash byte-identically.
+Each stage starts in a new agent chat with PLAN ONLY; review the plan before implementation. S3c requires Docker validation as UID 10001 when Docker Desktop is available. S5 must preserve all 29 ML tests, the ML final-set output, and JM1 hash byte-identically.
 
 ---
 
@@ -76,13 +78,16 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 
 | Task ID | Date | PR / commit | Tests run and result | Notes |
 |---|---|---|---|---|
-| L1 | 2026-11-08 | awaiting human commit | Focused logging tests: 20 passed; full backend pytest without a database: 198 passed, 56 skipped because `TEST_DATABASE_URL` was unset; `pytest ml\tests`: 29 passed; Ruff check and format check passed; `git diff --check` and LF/ASCII checks passed. | Out-of-phase fix before S3: preserve/redact Uvicorn access arguments; configure app INFO console logging and sanitized extra fields. |
-| 2.1 | 2026-11-08 | awaiting human commit | Full backend pytest with required PostgreSQL: 248 passed, 0 skipped; model/migration parity and downgrade/upgrade round trip passed. | Added analysis_runs, files, findings, cascades, constraints, and indexes in migration 0003_analysis. |
-| 2.2 | 2026-11-08 | awaiting human commit | Full backend pytest with required PostgreSQL: 248 passed, 0 skipped; lifecycle transition and stage-order tests passed. | Single-source state constants; status transitions use conditional updates; stage updates allow repeats and forward skips. |
-| 2.5 | 2026-11-08 | awaiting human commit | Full backend pytest with required PostgreSQL: 248 passed, 0 skipped; real-lifespan reconciliation test passed. | Lifespan fails startup on reconciliation errors; Compose migration service gates backend startup. |
-| 2.15 | 2026-11-07 | awaiting human commit | Full backend pytest: 188 passed, 49 PostgreSQL tests skipped because `TEST_DATABASE_URL` was not configured; Linux CPython 3.12 manylinux dry run found wheels for all four pins. | Tree-sitter 0.25.2 uses a new Parser and Language per call; Q5 per-parse deadline support was dropped by the human, so parsing uses plain bytes only. Watch 6: 10 runs per grammar at 1,048,554-1,048,575 bytes; 439,726-638,261 nodes per run; zero errors; 16.640-19.553 seconds per grammar. |
-| 2.16 | 2026-11-07 | awaiting human commit | Full backend pytest: 188 passed. `pytest ml\tests`: 29 passed. | Iterative TreeCursor traversal; grammar node and field names verified against installed Language metadata. Q5 per-parse deadline support was dropped by the human. |
-| 2.17 | 2026-11-07 | awaiting human commit | Error cutoff, invalid UTF-8, and empty-file cases passed in parser tests; 3,000-level nesting and 100 malformed declarations passed their isolated tests. | G0 records parse-error files and ERROR/MISSING node counts but gives no usability cutoff; use <=1 combined ERROR/MISSING node as usable and >=2 as unusable. Q5 per-parse deadline support was dropped by the human. |
+| 2.7 | 2026-11-09 | awaiting human commit | Focused S3a tests: 103 passed, 1 skipped; malformed `private` values rejected. | GitHub repository-ID precheck and public/size validation. |
+| 2.8 | 2026-11-09 | awaiting human commit | Focused S3a tests: 103 passed, 1 skipped; local full-history clone, commit SHA, symlink-entry checkout, and exit-code mapping verified. | Hardened subprocess clone; no network or repository code executed. |
+| 2.9 | 2026-11-09 | awaiting human commit | Focused S3a tests: 103 passed, 1 skipped; tolerant monitor, strict scan, process cleanup on scan exception, and post-clone total-size cap verified. | Uses the P16 size bases and exact too-large message. |
+| L1 | 2026-11-08 | `a77815d` | Focused logging tests: 20 passed; full backend pytest without a database: 198 passed, 56 skipped because `TEST_DATABASE_URL` was unset; `pytest ml\tests`: 29 passed; Ruff check and format check passed; `git diff --check` and LF/ASCII checks passed. | Out-of-phase fix before S3: preserve/redact Uvicorn access arguments; configure app INFO console logging and sanitized extra fields. |
+| 2.1 | 2026-11-08 | `75012dc` | Full backend pytest with required PostgreSQL: 248 passed, 0 skipped; model/migration parity and downgrade/upgrade round trip passed. | Added analysis_runs, files, findings, cascades, constraints, and indexes in migration 0003_analysis. |
+| 2.2 | 2026-11-08 | `75012dc` | Full backend pytest with required PostgreSQL: 248 passed, 0 skipped; lifecycle transition and stage-order tests passed. | Single-source state constants; status transitions use conditional updates; stage updates allow repeats and forward skips. |
+| 2.5 | 2026-11-08 | `75012dc` | Full backend pytest with required PostgreSQL: 248 passed, 0 skipped; real-lifespan reconciliation test passed. | Lifespan fails startup on reconciliation errors; Compose migration service gates backend startup. |
+| 2.15 | 2026-11-07 | `fa8c7a5` | Full backend pytest: 188 passed, 49 PostgreSQL tests skipped because `TEST_DATABASE_URL` was not configured; Linux CPython 3.12 manylinux dry run found wheels for all four pins. | Tree-sitter 0.25.2 uses a new Parser and Language per call; Q5 per-parse deadline support was dropped by the human, so parsing uses plain bytes only. Watch 6: 10 runs per grammar at 1,048,554-1,048,575 bytes; 439,726-638,261 nodes per run; zero errors; 16.640-19.553 seconds per grammar. |
+| 2.16 | 2026-11-07 | `fa8c7a5` | Full backend pytest: 188 passed. `pytest ml\tests`: 29 passed. | Iterative TreeCursor traversal; grammar node and field names verified against installed Language metadata. Q5 per-parse deadline support was dropped by the human. |
+| 2.17 | 2026-11-07 | `fa8c7a5` | Error cutoff, invalid UTF-8, and empty-file cases passed in parser tests; 3,000-level nesting and 100 malformed declarations passed their isolated tests. | G0 records parse-error files and ERROR/MISSING node counts but gives no usability cutoff; use <=1 combined ERROR/MISSING node as usable and >=2 as unusable. Q5 per-parse deadline support was dropped by the human. |
 | 1.14 | 2026-10-23 | `deb9d96`; committed and CI-green | Manual browser/API verification completed: Compose build succeeded; services healthy; frontend and docs 200; health 200; unauthenticated auth and repository routes 401; callback without parameters 400; OAuth login and callback redirect succeeded after local OAuth App configuration correction; authenticated `/auth/me` and `/repositories` returned 200; logout 204 twice and post-logout routes 401; CORS allow/deny checks passed; log scan found no credential patterns | Backend/API verification only; frontend remains a placeholder. Archived/empty repository behavior was not separately observed in the real browser flow; automated tests cover those states. No secrets, tokens, cookies, or authorization-code values were printed or added to files. |
 | 1.13 | 2026-10-23 | `2be3658`; committed and CI-green | Contract-only change; no new focused tests; full backend pytest: 147 passed, 46 skipped because `TEST_DATABASE_URL` was unavailable; Ruff check and format check passed; `git diff --check` passed | Implemented and locally verified. |
 | 1.12 | 2026-10-23 | `229e5e7`; committed and CI-green | Focused authorization tests: 5 skipped because `TEST_DATABASE_URL` was unavailable; full backend pytest: 147 passed, 46 skipped; Ruff check and format check passed; `git diff --check` passed | Implemented, committed as 229e5e7, and CI-green. |
@@ -156,6 +161,18 @@ The full schedule is in `Phases.md` section 3. The AI must **ask** for each deci
 
 | P10 analysis stage column | Phase 2 | Decided (human, 2026-11-08) | Name the run field stage, not current_stage. Correct Architecture 27.2 during close-out. |
 | P11 analysis stage values | Phase 2 | Decided (human, 2026-11-08) | Use the 13 values in AGENTS 5.4 and Phases 2.2; no completed stage. Stage is NULL while queued and stays at its last value when the run ends. Correct Architecture 28 during close-out. |
+| P12 S3 clone destination | S3a | Decided (human, 2026-11-09) | Clone into `<run_dir>/repository`; the caller creates `run_dir` in S3b. |
+| P13 temporary storage | S3c | Decided (human, 2026-11-09) | Use tmpfs later; S3c measures a representative full-history clone before choosing capacity. |
+| P14 case-distinct paths | S3a | Decided (human, 2026-11-09) | Preserve case-distinct paths; Linux CI verifies them. |
+| P15 supported-file count | S3a / S4 / S8 | Decided (human, 2026-11-09) | `count_supported_files(root, is_excluded=None)` counts supported extensions outside `.git`, with no inventory or built-in S4 rules. S4 owns the predicate; S8 passes it. |
+| P16 clone and post-clone limits | S3a | Decided (human, 2026-11-09) | GitHub size in KB <= `MAX_REPO_SIZE_MB`; during-clone whole `run_dir` cap is 2x with `CLONE_DISK_FACTOR=2`; post-clone checkout excludes `.git` for size, and applies source-file, 100000-entry, and depth-64 caps. Any breach is `repo_too_large` with the exact limit message. |
+| P17 Git process watcher | S3a | Decided (human, 2026-11-09) | Poll every second; discard Git stdout/stderr; kill the process tree on breach/timeout and reap it. Linux uses a new session and `killpg`; Windows uses a new process group and `taskkill /PID /T /F`, without a shell. |
+| P18 ID-based precheck | S3a | Decided (human, 2026-11-09) | Require API ID == stored `github_repo_id` and public visibility. Build URL from regex-validated API owner/name; mismatch/private/404 is `repo_unavailable`. Log owner/name drift without the URL, then continue cloning. |
+| P19-P20 S3b scope | S3b | Decided (human, 2026-11-09) | Cleanup, orphan sweep, and safe-read decisions belong to S3b; do not implement in S3a. |
+| P21 clone failure mapping | S3a | Decided (human, 2026-11-09) | A nonzero clone exit maps to `repo_unavailable`; rev-parse failure, invalid SHA, and Git startup failure map to `analysis_failed`. |
+| P22 clone scan limits | S3a | Decided (human, 2026-11-09) | During-clone scans tolerate vanished entries/directories, enforce bytes and 100000 entries, and omit depth enforcement. Post-clone scans remain strict; full checkout plus `.git` must also fit the 2x clone cap. |
+| P23 CloneTarget validation | S3a | Decided (human, 2026-11-09) | `CloneTarget` validates a positive non-boolean ID, GitHub username owner, repository-name pattern excluding `.` and `..`, and a nonnegative non-boolean size. |
+| S3c bindings | S3c | Decided (human, 2026-11-09) | Git stderr is discarded (P17). When cloning a real repo, if a failure cannot be diagnosed from the exit code, ask the human before capturing any stderr. |
 | Q1 run creation time | S2 | Decided (human, 2026-11-08) | analysis_runs.created_at is timestamptz NOT NULL DEFAULT now(). |
 | Q2 commit SHA type | S2 | Decided (human, 2026-11-08) | commit_sha is nullable String(64). |
 | Q3 file path uniqueness and limit | S2 and S4 | Decided (human, 2026-11-08) | UNIQUE (analysis_id, path); no separate files.analysis_id index. S4 skips paths longer than 1024 characters with a warning. |
@@ -208,6 +225,10 @@ Later decisions (aggregation rule, risk thresholds, ML targets, graph layout, Op
 6. `Phases.md` 2.31 should specify that the files endpoint reads the latest completed run.
 7. `Architecture.md` 27.2 uses `current_stage`, omits `error_code`, `warnings`, `file_kind`, and `masked_excerpt`, and marks failed-run retention open despite the decision in this file. Update it during close-out.
 8. `Architecture.md` 28 lists `completed` as a stage; remove it during close-out and use the 13 decided stages.
+9. `Phases.md` 2.8 says `TEMP_CLONE_DIR/<run_id>`, while `Architecture.md` 35 shows `<run_dir>/repository`; P12 selects the nested checkout. Reconcile the text later.
+10. `Phases.md` 2.12 marks the source-file size cap [Open], while Progress 5.2 P2 records 1 MiB.
+11. `Architecture.md` 35 uses `/tmp/repopulse`; the decided default is `<system temp>/repopulse-clones`.
+12. `Phases.md` 2.9 does not specify the separate precheck, during-clone, and post-clone size bases; P16 records them.
 
 ---
 
@@ -217,6 +238,7 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-11-09 | Implemented and reviewed S3a (2.7-2.9): GitHub ID-based public/size precheck, hardened default-branch clone, process-tree timeout/size watcher, post-clone caps, supported-file count, and review fixes P21-P23. Focused tests: 103 passed, 1 skipped with `--noconftest`; the standalone symlink test skipped because Windows denied link creation; Git-index symlink-entry clone test passed. | 2.7-2.9; S3a | S3b planning; S3c tmpfs capacity after representative clone measurement. |
 | 2026-11-08 | Implemented L1 logging fix: valid Uvicorn access arguments are retained and redacted, app INFO events emit with sorted sanitized extra fields, and regression tests pass. Full backend pytest: 198 passed, 56 PostgreSQL tests skipped without `TEST_DATABASE_URL`; ML tests: 29 passed; Ruff checks passed. | L1 | S3 planning (next) |
 | 2026-11-08 | Implemented S2 models, migration, run lifecycle, startup reconciliation, and Compose migration gate. Ruff and format checks passed; backend pytest passed 248 with required PostgreSQL and 0 skipped; ML tests passed 29; git diff --check passed; throwaway test container stopped and docker ps was empty. | 2.1, 2.2, 2.5; S2 | S3 planning (PLAN ONLY) |
 | 2026-11-07 | Implemented S1 parser and Tree-sitter pins; full backend pytest 188 passed and 49 PostgreSQL tests skipped without `TEST_DATABASE_URL`; all 29 ML tests passed; Ruff, Linux wheel dry run, and LF checks passed. Callback-path parsing crashed natively (0xC0000005); Q5 was dropped by the human, and the parser uses plain bytes only. | 2.15-2.17; S1 | S2 planning |

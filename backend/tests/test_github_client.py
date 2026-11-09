@@ -15,6 +15,7 @@ from app.auth.oauth import (
 )
 from app.github.client import (
     GITHUB_API_URL,
+    GITHUB_REPOSITORY_API_URL,
     GITHUB_USER_AGENT,
     GitHubAuthenticationError,
     GitHubConfigurationError,
@@ -28,6 +29,7 @@ from app.github.client import (
     GitHubServerError,
     GitHubTimeoutError,
     GitHubTransportError,
+    get_repository_by_id,
     list_repositories,
     list_user_public_repositories,
 )
@@ -98,6 +100,7 @@ def test_parses_repository_into_typed_non_secret_data() -> None:
             primary_language="Python",
             updated_at=datetime(2026, 10, 22, 10, 30, tzinfo=UTC),
             size=42,
+            private=False,
         ),
     )
     assert RESPONSE_SENTINEL not in repr(repositories)
@@ -155,6 +158,30 @@ def test_lists_public_repositories_for_named_user_and_follows_same_path() -> Non
         "https://api.github.com/users/bob/repos?type=owner&per_page=100&page=2"
     )
     assert all("/user/repos" not in request.url for request in transport.requests)
+
+
+def test_get_repository_by_id_uses_immutable_id_and_parses_visibility() -> None:
+    transport = FakeTransport(json_response(repository_payload(private=False)))
+
+    result = get_repository_by_id(123, ACCESS_TOKEN, transport=transport)
+
+    assert result.github_repo_id == 123
+    assert result.private is False
+    assert transport.requests[0].method == "GET"
+    assert transport.requests[0].url == f"{GITHUB_REPOSITORY_API_URL}/123"
+    assert ACCESS_TOKEN not in repr(transport.requests[0])
+
+
+@pytest.mark.parametrize("repository_id", [0, -1, True, "123"])
+def test_get_repository_by_id_rejects_invalid_id_before_request(
+    repository_id: object,
+) -> None:
+    transport = FakeTransport(json_response(repository_payload()))
+
+    with pytest.raises(GitHubConfigurationError):
+        get_repository_by_id(repository_id, ACCESS_TOKEN, transport=transport)
+
+    assert transport.requests == []
 
 
 @pytest.mark.parametrize("username", ["", "-bob", "bob/name", "bob_"])
@@ -379,6 +406,8 @@ def test_rejects_malformed_json_or_unexpected_top_level_shape(body: bytes) -> No
         {"updated_at": "2026-10-22T10:30:00"},
         {"size": True},
         {"size": -1},
+        {"private": "false"},
+        {"private": None},
     ],
 )
 def test_rejects_missing_or_wrongly_typed_repository_fields(
@@ -402,6 +431,7 @@ def test_rejects_missing_or_wrongly_typed_repository_fields(
         "language",
         "updated_at",
         "size",
+        "private",
     ],
 )
 def test_rejects_missing_repository_fields(field: str) -> None:

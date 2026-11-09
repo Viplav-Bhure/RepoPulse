@@ -28,6 +28,7 @@ from app.auth.oauth import (
 
 GITHUB_API_URL = "https://api.github.com/user/repos"
 GITHUB_USER_REPOS_API_URL = "https://api.github.com/users"
+GITHUB_REPOSITORY_API_URL = "https://api.github.com/repositories"
 GITHUB_USER_AGENT = "RepoPulse"
 PAGE_SIZE = 100
 GITHUB_USERNAME_PATTERN = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$")
@@ -105,6 +106,7 @@ class GitHubRepository:
     primary_language: str | None
     updated_at: datetime
     size: int
+    private: bool = False
 
 
 def list_repositories(
@@ -140,6 +142,34 @@ def list_user_public_repositories(
         expected_path=expected_path,
         transport=transport,
     )
+
+
+def get_repository_by_id(
+    repository_id: int,
+    access_token: str,
+    *,
+    transport: OAuthTransport | None = None,
+) -> GitHubRepository:
+    """Return one repository by its immutable GitHub repository ID."""
+    if isinstance(repository_id, bool) or not isinstance(repository_id, int):
+        raise GitHubConfigurationError()
+    if repository_id <= 0:
+        raise GitHubConfigurationError()
+    _validate_access_token(access_token)
+    selected_transport = transport if transport is not None else UrllibTransport()
+    request = HttpRequest(
+        method="GET",
+        url=f"{GITHUB_REPOSITORY_API_URL}/{repository_id}",
+        headers={
+            "Accept": "application/vnd.github+json",
+            "Authorization": "Bearer " + access_token,
+            "User-Agent": GITHUB_USER_AGENT,
+            "X-GitHub-Api-Version": GITHUB_API_VERSION,
+        },
+    )
+    response = _send(request, selected_transport)
+    payload = _parse_json_response(response)
+    return _parse_repository(payload)
 
 
 def _list_repositories(
@@ -266,6 +296,7 @@ def _parse_repository(payload: object) -> GitHubRepository:
         "language",
         "updated_at",
         "size",
+        "private",
     }.issubset(payload) or not {"login", "type"}.issubset(owner):
         raise GitHubResponseError()
 
@@ -279,6 +310,7 @@ def _parse_repository(payload: object) -> GitHubRepository:
     primary_language = payload.get("language")
     updated_at = payload.get("updated_at")
     size = payload.get("size")
+    private = payload.get("private")
 
     if (
         isinstance(repo_id, bool)
@@ -297,6 +329,7 @@ def _parse_repository(payload: object) -> GitHubRepository:
         or isinstance(size, bool)
         or not isinstance(size, int)
         or size < 0
+        or not isinstance(private, bool)
     ):
         raise GitHubResponseError()
 
@@ -318,6 +351,7 @@ def _parse_repository(payload: object) -> GitHubRepository:
         primary_language=primary_language,
         updated_at=parsed_updated_at,
         size=size,
+        private=private,
     )
 
 
