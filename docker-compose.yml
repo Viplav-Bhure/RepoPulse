@@ -39,6 +39,8 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+    tmpfs:
+      - /tmp/repopulse-clones:size=256m,uid=10001,gid=10001,mode=0700
     ports:
       - "127.0.0.1:8000:8000"
 

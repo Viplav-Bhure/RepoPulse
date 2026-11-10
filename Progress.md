@@ -4,8 +4,8 @@
 
 | | |
 | --- | --- |
-| **Last updated** | 2026-11-09 |
-| **Updated by** | AI builder (S3b tasks 2.10-2.11) |
+| **Last updated** | 2026-11-11 |
+| **Updated by** | AI builder (S3c container verification close-out) |
 | **Placement** | Repository root, next to `AGENTS.md` |
 
 ---
@@ -14,9 +14,9 @@
 
 | | |
 | --- | --- |
-| **Overall status** | Phase 2 in progress (S3c next) |
+| **Overall status** | Phase 2 in progress (S4 planning next) |
 | **Current phase** | Phase 2 - Analysis Core |
-| **Next task** | S3c: Docker verification and tmpfs sizing |
+| **Next task** | S4 planning (PLAN ONLY) |
 | **Blocked?** | No |
 | **Last human approval** | 2026-11-08, S2 schema/lifecycle decisions and Compose migration gate |
 
@@ -46,11 +46,11 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 
 | | |
 | --- | --- |
-| **Task ID** | S3b |
-| **Title** | Implement workspace cleanup, orphan sweep, and safe reads |
-| **Status** | Done |
-| **Plan** | Implement tasks 2.10-2.11 only; S3c Docker/tmpfs validation remains separate. |
-| **Notes / problems** | S8 must create and finally clean the run dir, after clone timeout handling has killed/reaped Git; pass cleanup_run_dir the exact Path returned by create_run_dir; never pass `test_source_override`; pass S4's `is_excluded` predicate into the supported-file count; convert `SourceReadError` into S4 skip warnings. S4 note: on POSIX, read_source_file splits relative paths on backslashes, so a filename containing a backslash is unreadable. Log counts only and do not use event field names ending in code, state, token, cookie, secret, key, or verifier; use `reason`, not `error_code`. POSIX rmtree behavior was verified by the human in the production Python container; Linux CI and S3c as UID 10001 must re-prove it. |
+| **Task ID** | S4 planning |
+| **Title** | File discovery and source/test classification |
+| **Status** | Planning (PLAN ONLY) |
+| **Plan** | Prepare the S4 plan for tasks 2.12-2.14 only; do not implement before plan review. |
+| **Notes / problems** | S3 (S3a-S3c) is complete and awaiting human commit. S4 note: write a handoff message to a new chat when S4 completes. |
 
 ### Phase 2 approved stage map
 
@@ -68,7 +68,7 @@ A phase is `Done` only after the human approves its exit criteria (see `AGENTS.m
 | S8 | Pipeline, background run, deadline, API, retention, and logging (2.3, 2.4, 2.6, 2.29-2.33) |
 | S9 | Exit run on a real small repository and close-out |
 
-Each stage starts in a new agent chat with PLAN ONLY; review the plan before implementation. S3c requires Docker validation as UID 10001 when Docker Desktop is available. S5 must preserve all 29 ML tests, the ML final-set output, and JM1 hash byte-identically.
+Each stage starts in a new agent chat with PLAN ONLY; review the plan before implementation. S3c container validation is complete as UID 10001. S4 completion requires a handoff message to a new chat. S5 must preserve all 29 ML tests, the ML final-set output, and JM1 hash byte-identically.
 
 ---
 
@@ -81,8 +81,9 @@ Record each finished task by **ID only** (the task text lives in `Phases.md`; do
 | 2.7 | 2026-11-09 | `218b199` | Focused S3a tests: 103 passed, 1 skipped; malformed `private` values rejected. | GitHub repository-ID precheck and public/size validation. |
 | 2.8 | 2026-11-09 | `218b199` | Focused S3a tests: 103 passed, 1 skipped; local full-history clone, commit SHA, symlink-entry checkout, and exit-code mapping verified. | Hardened subprocess clone; no network or repository code executed. |
 | 2.9 | 2026-11-09 | `218b199` | Focused S3a tests: 103 passed, 1 skipped; tolerant monitor, strict scan, process cleanup on scan exception, and post-clone total-size cap verified. | Uses the P16 size bases and exact too-large message. |
-| 2.10 | 2026-11-09 | awaiting human commit | Agent focused workspace/clone tests: 71 passed, 8 skipped (`--noconftest`). Human-verified full backend suite against throwaway PostgreSQL 17 (`REQUIRE_TEST_DATABASE=1`): 344 passed, 8 skipped; every skip was a Windows-only case (symlink creation refused, POSIX owner/mode, junction split, Linux-only case-distinct/FIFO/race-resistant reads). Human-verified ML tests: 29 passed; JM1 hash unchanged. Human-verified real Compose startup as UID 10001: `/tmp/repopulse-clones` created `drwx------` owner `app`, sweep logged `removed_count=0 failure_count=0 skipped_count=0`, `/health` returned `ok`, no traceback. | Cleanup, orphan sweep, and workspace lifecycle verified. |
-| 2.11 | 2026-11-09 | awaiting human commit | Agent focused workspace/clone tests: 71 passed, 8 skipped (`--noconftest`). Human-verified full backend suite against throwaway PostgreSQL 17 (`REQUIRE_TEST_DATABASE=1`): 344 passed, 8 skipped; every skip was a Windows-only case (symlink creation refused, POSIX owner/mode, junction split, Linux-only case-distinct/FIFO/race-resistant reads). `test_config.py` and `test_health.py` passed in that run. Human-verified ML tests: 29 passed; JM1 hash unchanged. Human-verified real Compose startup as UID 10001: `/tmp/repopulse-clones` created `drwx------` owner `app`, sweep logged `removed_count=0 failure_count=0 skipped_count=0`, `/health` returned `ok`, no traceback. | Safe reads, decoding, settings, and lifespan sweep verified. |
+| 2.10 | 2026-11-09 | `3402a6a7fda3069595279150763c950f7881b0b1` | Agent focused workspace/clone tests: 71 passed, 8 skipped (`--noconftest`). Human-verified full backend suite against throwaway PostgreSQL 17 (`REQUIRE_TEST_DATABASE=1`): 344 passed, 8 skipped; every skip was a Windows-only case (symlink creation refused, POSIX owner/mode, junction split, Linux-only case-distinct/FIFO/race-resistant reads). Human-verified ML tests: 29 passed; JM1 hash unchanged. Human-verified real Compose startup as UID 10001: `/tmp/repopulse-clones` created `drwx------` owner `app`, sweep logged `removed_count=0 failure_count=0 skipped_count=0`, `/health` returned `ok`, no traceback. | Cleanup, orphan sweep, and workspace lifecycle verified. |
+| 2.11 | 2026-11-09 | `3402a6a7fda3069595279150763c950f7881b0b1` | Agent focused workspace/clone tests: 71 passed, 8 skipped (`--noconftest`). Human-verified full backend suite against throwaway PostgreSQL 17 (`REQUIRE_TEST_DATABASE=1`): 344 passed, 8 skipped; every skip was a Windows-only case (symlink creation refused, POSIX owner/mode, junction split, Linux-only case-distinct/FIFO/race-resistant reads). `test_config.py` and `test_health.py` passed in that run. Human-verified ML tests: 29 passed; JM1 hash unchanged. Human-verified real Compose startup as UID 10001: `/tmp/repopulse-clones` created `drwx------` owner `app`, sweep logged `removed_count=0 failure_count=0 skipped_count=0`, `/health` returned `ok`, no traceback. | Safe reads, decoding, settings, and lifespan sweep verified. |
+| S3c | 2026-11-11 | awaiting human commit | Human ran the script inside the backend image as UID 10001 with Compose tmpfs; exit code 0, 23 checks, 0 failures. Python 3.12.16; Git 2.39.5; tmpfs 256 MiB (`size=262144k,uid=10001,gid=10001,mode=700`); temp root owner 10001, mode 0700. classroom-tracker (235 KB): clone 1.77 s, total 509,521 bytes, ratio 2.12, 35 entries, checkout 275,442 bytes, 5/5 supported files readable, st_nlink 1, peak 577,536 bytes. pallets/flask (12,227 KB): clone 3.38 s, total 15,185,753 bytes, ratio 1.21, 375 entries, checkout 1,787,493 bytes, 83/83 supported files readable, st_nlink 1, peak 16,097,280 bytes. Both cleanups restored tmpfs usage to 0 bytes. Tree kill raised CloneTimedOutError at 0.3 s and left no Git processes. Symlink-safe cleanup preserved the outside marker; unsafe reads returned unsafe_path for symlink/hardlink and not_regular for FIFO; A.py and a.py both read; sweep removed 8001, kept active 8003, skipped symlink/file/odd name, and preserved outside marker. Reconcile and sweep logs appeared; no traceback. | S3 container verification complete. P13 measured total/GitHub-size ratios of 1.21-2.12; the higher ratio was for the tiny repository due to fixed .git overhead. The 2x clone cap held for these typical source repositories. Near-limit repositories with large working trees can exceed the 2x cap and be rejected as too large; revisit in S9 with the real exit run. P31 capacity confirmed for two concurrent runs at 100 MB each. S3c bindings satisfied: POSIX rmtree symlink safety, UID 10001, and st_nlink 1. |
 | L1 | 2026-11-08 | `a77815d` | Focused logging tests: 20 passed; full backend pytest without a database: 198 passed, 56 skipped because `TEST_DATABASE_URL` was unset; `pytest ml\tests`: 29 passed; Ruff check and format check passed; `git diff --check` and LF/ASCII checks passed. | Out-of-phase fix before S3: preserve/redact Uvicorn access arguments; configure app INFO console logging and sanitized extra fields. |
 | 2.1 | 2026-11-08 | `75012dc` | Full backend pytest with required PostgreSQL: 248 passed, 0 skipped; model/migration parity and downgrade/upgrade round trip passed. | Added analysis_runs, files, findings, cascades, constraints, and indexes in migration 0003_analysis. |
 | 2.2 | 2026-11-08 | `75012dc` | Full backend pytest with required PostgreSQL: 248 passed, 0 skipped; lifecycle transition and stage-order tests passed. | Single-source state constants; status transitions use conditional updates; stage updates allow repeats and forward skips. |
@@ -164,7 +165,7 @@ The full schedule is in `Phases.md` section 3. The AI must **ask** for each deci
 | P10 analysis stage column | Phase 2 | Decided (human, 2026-11-08) | Name the run field stage, not current_stage. Correct Architecture 27.2 during close-out. |
 | P11 analysis stage values | Phase 2 | Decided (human, 2026-11-08) | Use the 13 values in AGENTS 5.4 and Phases 2.2; no completed stage. Stage is NULL while queued and stays at its last value when the run ends. Correct Architecture 28 during close-out. |
 | P12 S3 clone destination | S3a | Decided (human, 2026-11-09) | Clone into `<run_dir>/repository`; the caller creates `run_dir` in S3b. |
-| P13 temporary storage | S3c | Decided (human, 2026-11-09) | Use tmpfs later; S3c measures a representative full-history clone before choosing capacity. |
+| P13 temporary storage | S3c | Decided (human, 2026-11-09; closed 2026-11-11) | Human container run measured total/GitHub-size ratios of 1.21-2.12 for classroom-tracker and pallets/flask. The higher ratio is for the tiny repository due to fixed .git overhead; the 2x cap held for these typical source repositories. Near-50 MB repositories with large working trees may exceed the cap and be rejected as too large; revisit in S9 with the real exit run. |
 | P14 case-distinct paths | S3a | Decided (human, 2026-11-09) | Preserve case-distinct paths; Linux CI verifies them. |
 | P15 supported-file count | S3a / S4 / S8 | Decided (human, 2026-11-09) | `count_supported_files(root, is_excluded=None)` counts supported extensions outside `.git`, with no inventory or built-in S4 rules. S4 owns the predicate; S8 passes it. |
 | P16 clone and post-clone limits | S3a | Decided (human, 2026-11-09) | GitHub size in KB <= `MAX_REPO_SIZE_MB`; during-clone whole `run_dir` cap is 2x with `CLONE_DISK_FACTOR=2`; post-clone checkout excludes `.git` for size, and applies source-file, 100000-entry, and depth-64 caps. Any breach is `repo_too_large` with the exact limit message. |
@@ -181,6 +182,9 @@ The full schedule is in `Phases.md` section 3. The AI must **ask** for each deci
 | P28 missing cleanup target | S3b | Decided (human, 2026-11-09) | Cleaning an already-missing run directory succeeds. |
 | P29 cleanup and sweep | S3b | Decided (human, 2026-11-09) | Use `shutil.rmtree(onexc=...)` after direct-child/name validation; retry `PermissionError` up to 3 times with short sleeps, clearing read-only on Windows. Sweep direct `run-<int>` children only; skip links/files/odd names and active IDs, return removed/failed IDs, log counts only, and continue startup for individual orphan failures. The human verified POSIX symlink safety in the `python:3.12-slim-bookworm` container; Linux CI and S3c as UID 10001 must re-prove it. |
 | P30 source-read errors | S3b | Decided (human, 2026-11-09) | Raise `SourceReadError` with reason `too_large`, `unsafe_path`, `not_regular`, or `unreadable`; S4 converts per-file failures into skip warnings. Decode UTF-8 with replacement and strip a BOM for text only. |
+| P31 backend clone tmpfs | S3c | Decided (human, 2026-11-10; confirmed 2026-11-11) | Mount only the backend service's `/tmp/repopulse-clones` as tmpfs with `size=256m,uid=10001,gid=10001,mode=0700`; do not mount it on `migrate`. Container verification confirmed a 256 MiB tmpfs, covering two concurrent runs at twice the 50 MB repository cap plus slack. Compose config validated quietly with `.env.example`. |
+| P32 container verification script | S3c | Decided (human, 2026-11-10) | Add `backend/tests/container/s3c_container_check.py`, runnable from stdin inside the backend image as UID 10001. It uses only stdlib plus `app.github.workspace` and `app.github.clone`, prints sanitized one-line PASS/FAIL results, and exits nonzero on failures; the AI must not run it. |
+| P33 S3c verification inputs | S3c | Decided (human, 2026-11-10) | The human runs the check inside the container with `S3C_REPOS=Viplav-Bhure/classroom-tracker,pallets/flask`. S3c remains awaiting that run; a `repo_too_large` result is a measurement, not itself a script failure. |
 | S3b config test scope | S3b | Decided (human, 2026-11-09) | Do not refactor module-level settings construction in S3b; settings tests use `Settings(_env_file=None, ...)`. Record the import-time `.env` read as a Phase 7 Watch 7 hardening item. |
 | S8 workspace bindings | S8 | Decided (human, 2026-11-09) | Never pass `test_source_override`; pass S4's `is_excluded` into the supported-file count; clean up in `finally` after clone timeout handling kills/reaps Git; pass cleanup_run_dir the exact Path returned by create_run_dir; map `SourceReadError` to S4 skip warnings. Log counts only and avoid event fields ending in code, state, token, cookie, secret, key, or verifier; use `reason`, not `error_code`. |
 | S3c bindings | S3c | Decided (human, 2026-11-09) | Git stderr is discarded (P17). When cloning a real repo, if a failure cannot be diagnosed from the exit code, ask the human before capturing any stderr. The TEMP_CLONE_DIR tmpfs mount must use uid=10001,gid=10001,mode=0700. As UID 10001 verify prepare_temp_root, create_run_dir, a real clone, cleanup, sweep, and read_source_file; confirm container filesystem st_nlink == 1. Re-prove shutil.rmtree POSIX symlink safety. |
@@ -249,6 +253,8 @@ Newest first. One entry per session. Keep entries short.
 
 | Date | Session summary | Tasks touched | Open questions raised |
 |---|---|---|---|
+| 2026-11-11 | Human verified S3c inside the backend image as UID 10001 using the backend Compose tmpfs: script exit 0, 23 checks, 0 failures. Both representative public repositories cloned and were cleaned up successfully; 0.3 s tree-kill, symlink-safe cleanup, unsafe reads, orphan sweep, owner/mode, and st_nlink checks passed; no Git process remained or traceback occurred. P13 closed with measured ratios 1.21-2.12; P31 capacity confirmed. S3 complete; next is S4 planning (PLAN ONLY). | S3c | None. |
+| 2026-11-10 | Added S3c container-verification tooling and the backend-only 256 MiB tmpfs mount. Ruff check/format, py_compile, quiet Compose config, diff, and ASCII/LF checks passed; the script was not run and no Docker workload was run. Human container verification is pending using the two recorded public repositories. | S3c | Human container run; then S4 planning (PLAN ONLY). |
 | 2026-11-09 | Implemented S3b (2.10-2.11): agent focused workspace/clone tests 71 passed, 8 skipped with `--noconftest`; human-verified full backend suite against throwaway PostgreSQL 17 (`REQUIRE_TEST_DATABASE=1`) 344 passed, 8 skipped (all Windows-only); human-verified `test_config.py` and `test_health.py` in that run; ML tests 29 passed and JM1 hash unchanged. Human verified Compose startup as UID 10001: `/tmp/repopulse-clones` was `drwx------` owner `app`, sweep counts were all zero, `/health` returned `ok`, and no traceback occurred. POSIX rmtree behavior was verified by the human in the production container; Linux CI and S3c as UID 10001 must re-prove it. | 2.10-2.11; S3b | S3c Docker verification and tmpfs sizing. |
 | 2026-11-09 | Implemented and reviewed S3a (2.7-2.9): GitHub ID-based public/size precheck, hardened default-branch clone, process-tree timeout/size watcher, post-clone caps, supported-file count, and review fixes P21-P23. Focused tests: 103 passed, 1 skipped with `--noconftest`; the standalone symlink test skipped because Windows denied link creation; Git-index symlink-entry clone test passed. | 2.7-2.9; S3a | S3b planning; S3c tmpfs capacity after representative clone measurement. |
 | 2026-11-08 | Implemented L1 logging fix: valid Uvicorn access arguments are retained and redacted, app INFO events emit with sorted sanitized extra fields, and regression tests pass. Full backend pytest: 198 passed, 56 PostgreSQL tests skipped without `TEST_DATABASE_URL`; ML tests: 29 passed; Ruff checks passed. | L1 | S3 planning (next) |
