@@ -15,6 +15,7 @@ from app.auth.csrf import frontend_origin
 from app.auth.routes import router as auth_router
 from app.config import settings  # noqa: F401 -- imported to trigger fail-fast validation
 from app.database.run_lifecycle import reconcile_interrupted_runs
+from app.github.workspace import prepare_temp_root, sweep_orphaned_runs
 from app.logging import configure_logging
 from app.repositories.routes import router as repositories_router
 
@@ -24,6 +25,8 @@ configure_logging()
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     reconcile_interrupted_runs()
+    temp_root = prepare_temp_root(settings.TEMP_CLONE_DIR)
+    sweep_orphaned_runs(temp_root)
     yield
 
 

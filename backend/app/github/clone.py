@@ -215,7 +215,7 @@ def scan_tree(
                             raise RepositoryTooLargeError()
 
                         mode = entry_stat.st_mode
-                        if _is_link_or_reparse(entry_stat):
+                        if is_link_or_reparse(entry_stat):
                             size_bytes += entry_stat.st_size
                         elif stat.S_ISDIR(mode):
                             pending.append((Path(entry.path), depth, False))
@@ -251,7 +251,7 @@ def count_supported_files(
 
                     relative_path = relative_directory / entry.name
                     entry_stat = entry.stat(follow_symlinks=False)
-                    if _is_link_or_reparse(entry_stat):
+                    if is_link_or_reparse(entry_stat):
                         continue
                     if stat.S_ISDIR(entry_stat.st_mode):
                         if is_excluded is None or not is_excluded(relative_path):
@@ -579,11 +579,11 @@ def _validate_run_directory(run_dir: Path) -> None:
         run_stat = run_dir.lstat()
     except OSError:
         raise CloneAnalysisError() from None
-    if not stat.S_ISDIR(run_stat.st_mode) or _is_link_or_reparse(run_stat):
+    if not stat.S_ISDIR(run_stat.st_mode) or is_link_or_reparse(run_stat):
         raise CloneAnalysisError()
 
 
-def _is_link_or_reparse(entry_stat: os.stat_result) -> bool:
+def is_link_or_reparse(entry_stat: os.stat_result) -> bool:
     if stat.S_ISLNK(entry_stat.st_mode):
         return True
     file_attributes = getattr(entry_stat, "st_file_attributes", 0)

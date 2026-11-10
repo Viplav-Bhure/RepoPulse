@@ -65,13 +65,15 @@ def client() -> Generator[TestClient, None, None]:
 def mock_startup_reconciliation(
     monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest
 ) -> None:
-    """Keep ordinary TestClient startup independent of PostgreSQL."""
+    """Keep ordinary TestClient startup independent of PostgreSQL and temp disk."""
     if "real_lifespan_reconciliation" in request.fixturenames:
         return
 
     from app import main
 
     monkeypatch.setattr(main, "reconcile_interrupted_runs", lambda: ())
+    monkeypatch.setattr(main, "prepare_temp_root", lambda root: root)
+    monkeypatch.setattr(main, "sweep_orphaned_runs", lambda root: None)
 
 
 @pytest.fixture(autouse=True)

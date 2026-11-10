@@ -1,5 +1,8 @@
 """Configuration tests for required environment variables."""
 
+import tempfile
+from pathlib import Path
+
 import pytest
 from conftest import assert_safe_test_database
 from pydantic import ValidationError
@@ -15,6 +18,7 @@ REQUIRED_SETTINGS = {
     "FRONTEND_URL": "http://localhost:3000",
     "API_BASE_URL": "http://localhost:8000",
 }
+DEFAULT_TEMP_CLONE_DIR = Path(tempfile.gettempdir()) / "repopulse-clones"
 
 
 @pytest.mark.parametrize("missing_field", REQUIRED_SETTINGS)
@@ -52,6 +56,60 @@ def test_short_session_secret_is_rejected() -> None:
         Settings(_env_file=None, **values)
 
     assert "SESSION_SECRET" in str(exc_info.value)
+
+
+def test_source_file_size_setting_default_and_boundaries() -> None:
+    default_settings = Settings(_env_file=None, **REQUIRED_SETTINGS)
+    assert default_settings.MAX_SOURCE_FILE_SIZE_BYTES == 1_048_576
+
+    for size in (1, 16_777_216):
+        configured = Settings(
+            _env_file=None,
+            **REQUIRED_SETTINGS,
+            MAX_SOURCE_FILE_SIZE_BYTES=size,
+        )
+        assert configured.MAX_SOURCE_FILE_SIZE_BYTES == size
+
+
+@pytest.mark.parametrize("size", [0, -1, 16_777_217, True, "not-an-integer"])
+def test_invalid_source_file_size_setting_is_rejected(size: object) -> None:
+    with pytest.raises(
+        ValidationError,
+        match="MAX_SOURCE_FILE_SIZE_BYTES must be an integer from 1 to 16777216.",
+    ):
+        Settings(
+            _env_file=None,
+            **REQUIRED_SETTINGS,
+            MAX_SOURCE_FILE_SIZE_BYTES=size,
+        )
+
+
+def test_temp_clone_dir_defaults_and_accepts_absolute_path(tmp_path: Path) -> None:
+    default_settings = Settings(_env_file=None, **REQUIRED_SETTINGS)
+    assert default_settings.TEMP_CLONE_DIR == DEFAULT_TEMP_CLONE_DIR
+
+    configured = Settings(
+        _env_file=None,
+        **REQUIRED_SETTINGS,
+        TEMP_CLONE_DIR=tmp_path,
+    )
+    assert configured.TEMP_CLONE_DIR == tmp_path
+
+
+@pytest.mark.parametrize("value", ["relative/path", ""])
+def test_temp_clone_dir_optional_and_rejects_relative_path(value: str) -> None:
+    if value == "":
+        settings_value = Settings(
+            _env_file=None,
+            **REQUIRED_SETTINGS,
+            TEMP_CLONE_DIR=value,
+        )
+        assert settings_value.TEMP_CLONE_DIR == DEFAULT_TEMP_CLONE_DIR
+        return
+    with pytest.raises(
+        ValidationError, match="TEMP_CLONE_DIR must be an absolute path."
+    ):
+        Settings(_env_file=None, **REQUIRED_SETTINGS, TEMP_CLONE_DIR=value)
 
 
 def test_safe_test_database_name_is_accepted() -> None:

@@ -26,6 +26,7 @@ from app.github.clone import (
     clone_repository,
     count_supported_files,
     get_clone_target,
+    is_link_or_reparse,
     scan_tree,
 )
 
@@ -775,6 +776,7 @@ def test_clone_does_not_follow_symlink(tmp_path: Path) -> None:
     except OSError as error:
         pytest.skip(f"OS refused symlink creation: {error}")
 
+    assert is_link_or_reparse(link.lstat())
     assert scan_tree(root).size_bytes < outside.stat().st_size
     assert count_supported_files(root) == 0
 

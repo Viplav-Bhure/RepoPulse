@@ -8,10 +8,11 @@ before the server accepts any request.
 Add new variables here only when a task requires them. Do not invent names.
 """
 
+import tempfile
 from pathlib import Path
 from typing import Annotated
 
-from pydantic import StringConstraints
+from pydantic import Field, StringConstraints, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Resolve .env relative to this file, not the working directory.
@@ -20,6 +21,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 _ENV_FILE = Path(__file__).parent.parent.parent / ".env"
 NonEmptyString = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 SessionSecret = Annotated[str, StringConstraints(strip_whitespace=True, min_length=32)]
+MAX_SOURCE_FILE_SIZE_BYTES_LIMIT = 16_777_216
+
+
+def _default_temp_clone_dir() -> Path:
+    return Path(tempfile.gettempdir()) / "repopulse-clones"
 
 
 class Settings(BaseSettings):
@@ -38,6 +44,38 @@ class Settings(BaseSettings):
     MAX_REPO_SIZE_MB: int = 50
     MAX_SOURCE_FILES: int = 1000
     ANALYSIS_TIMEOUT_SECONDS: int = 300
+    MAX_SOURCE_FILE_SIZE_BYTES: int = 1_048_576
+    TEMP_CLONE_DIR: Path = Field(default_factory=_default_temp_clone_dir)
+
+    @field_validator("MAX_SOURCE_FILE_SIZE_BYTES", mode="before")
+    @classmethod
+    def validate_source_file_size(cls, value: object) -> int:
+        message = "MAX_SOURCE_FILE_SIZE_BYTES must be an integer from 1 to 16777216."
+        if isinstance(value, bool):
+            raise ValueError(message)
+        if isinstance(value, str) and value.isascii() and value.isdecimal():
+            value = int(value)
+        if (
+            not isinstance(value, int)
+            or not 1 <= value <= MAX_SOURCE_FILE_SIZE_BYTES_LIMIT
+        ):
+            raise ValueError(message)
+        return value
+
+    @field_validator("TEMP_CLONE_DIR", mode="before")
+    @classmethod
+    def validate_temp_clone_dir(cls, value: object) -> Path:
+        if value is None or value == "":
+            return _default_temp_clone_dir()
+        if isinstance(value, Path):
+            path = value
+        elif isinstance(value, str):
+            path = Path(value)
+        else:
+            raise ValueError("TEMP_CLONE_DIR must be an absolute path.")
+        if not path.is_absolute():
+            raise ValueError("TEMP_CLONE_DIR must be an absolute path.")
+        return path
 
     model_config = SettingsConfigDict(
         env_file=str(_ENV_FILE),
